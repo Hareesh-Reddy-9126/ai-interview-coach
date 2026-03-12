@@ -1,0 +1,241 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    --background: 228 14% 7%;
+    --foreground: 210 20% 95%;
+
+    --card: 225 14% 10%;
+    --card-foreground: 210 20% 95%;
+
+    --popover: 225 14% 10%;
+    --popover-foreground: 210 20% 95%;
+
+    --primary: 142 72% 50%;
+    --primary-foreground: 228 14% 7%;
+
+    --secondary: 225 12% 14%;
+    --secondary-foreground: 215 14% 60%;
+
+    --muted: 225 12% 12%;
+    --muted-foreground: 215 10% 44%;
+
+    --accent: 250 55% 62%;
+    --accent-foreground: 210 20% 95%;
+
+    --destructive: 0 68% 55%;
+    --destructive-foreground: 210 20% 95%;
+
+    --border: 225 12% 16%;
+    --input: 225 12% 16%;
+    --ring: 142 72% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 228 14% 6%;
+    --sidebar-foreground: 215 10% 44%;
+    --sidebar-primary: 142 72% 50%;
+    --sidebar-primary-foreground: 228 14% 7%;
+    --sidebar-accent: 225 12% 13%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 225 12% 13%;
+    --sidebar-ring: 142 72% 50%;
+
+    --chart-1: 142 72% 50%;
+    --chart-2: 250 55% 62%;
+    --chart-3: 32 95% 60%;
+    --chart-4: 199 80% 55%;
+    --chart-5: 338 72% 58%;
+
+    --success: 142 72% 50%;
+    --warning: 32 95% 60%;
+    --info: 199 80% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+  }
+
+  .glass-border {
+    border: 1px solid hsl(var(--border) / 0.6);
+  }
+
+  .card-base {
+    @apply bg-card rounded-xl border border-border;
+  }
+
+  .card-interactive {
+    @apply card-base transition-all duration-200 cursor-pointer;
+  }
+  .card-interactive:hover {
+    border-color: hsl(var(--primary) / 0.25);
+    background: hsl(var(--secondary));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px hsl(var(--background) / 0.6);
+  }
+
+  .card-glow {
+    @apply relative overflow-hidden rounded-xl border border-border;
+    background: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--secondary) / 0.5) 100%);
+  }
+  .card-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 0%, hsl(var(--primary) / 0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  .gradient-text-subtle {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--foreground)), hsl(var(--muted-foreground)));
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground font-medium text-sm rounded-lg transition-all;
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.25), 0 0 0 1px hsl(var(--primary) / 0.15);
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground font-medium text-sm rounded-lg hover:bg-secondary/80 transition-all;
+  }
+
+  .btn-ghost {
+    @apply text-muted-foreground font-medium text-sm rounded-lg hover:text-foreground hover:bg-secondary transition-all;
+  }
+
+  .bg-mesh {
+    background-image:
+      radial-gradient(at 15% 15%, hsl(var(--primary) / 0.03) 0%, transparent 50%),
+      radial-gradient(at 85% 25%, hsl(var(--accent) / 0.025) 0%, transparent 50%),
+      radial-gradient(at 50% 80%, hsl(var(--info) / 0.015) 0%, transparent 50%);
+  }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .skeleton {
+    @apply bg-secondary rounded-lg relative overflow-hidden;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.03), transparent);
+    animation: shimmer 2s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  @keyframes typing-dot {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-3px); }
+  }
+  .typing-dot {
+    animation: typing-dot 1.4s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes progress-fill {
+    from { width: 0; }
+  }
+  .animate-progress {
+    animation: progress-fill 1s ease-out forwards;
+  }
+
+  .tag {
+    @apply text-xs px-2.5 py-0.5 rounded-full font-medium;
+  }
+  .tag-primary {
+    @apply tag;
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--primary));
+  }
+  .tag-accent {
+    @apply tag;
+    background: hsl(var(--accent) / 0.12);
+    color: hsl(var(--accent));
+  }
+  .tag-warning {
+    @apply tag;
+    background: hsl(var(--warning) / 0.12);
+    color: hsl(var(--warning));
+  }
+  .tag-info {
+    @apply tag;
+    background: hsl(var(--info) / 0.12);
+    color: hsl(var(--info));
+  }
+  .tag-destructive {
+    @apply tag;
+    background: hsl(var(--destructive) / 0.12);
+    color: hsl(var(--destructive));
+  }
+
+  .input-base {
+    @apply w-full bg-secondary/60 rounded-lg px-3.5 py-2.5 text-sm text-foreground border border-border;
+    @apply focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all;
+    @apply placeholder:text-muted-foreground/40;
+  }
+}

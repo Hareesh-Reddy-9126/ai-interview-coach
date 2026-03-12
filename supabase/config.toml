@@ -1,0 +1,16 @@
+project_id = "uotrhvgbjfdndvorngyw"
+
+[functions.interview-ai]
+verify_jwt = false
+
+[functions.compute-analytics]
+verify_jwt = false
+
+[functions.analyze-resume]
+verify_jwt = false
+
+[functions.generate-roadmap]
+verify_jwt = false
+
+[functions.evaluate-code]
+verify_jwt = false
