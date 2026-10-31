@@ -301,6 +301,7 @@ INTERVIEW QUESTION RULES:
       temperature: 0.3,
       maxTokens: 3000,
       timeoutMs: 45_000,
+      thinking: false,
     });
 
     const analysis = normalizeAnalysis(extractStructured(completion));

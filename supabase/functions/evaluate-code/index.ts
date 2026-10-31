@@ -338,6 +338,7 @@ Provide a comprehensive evaluation with test results, complexity analysis, and a
       temperature: action === "run" ? 0.1 : 0.3,
       maxTokens: action === "run" ? 2048 : 4096,
       timeoutMs: 45_000,
+      thinking: false,
     });
 
     const parsed = extractStructured<Record<string, unknown>>(completion);

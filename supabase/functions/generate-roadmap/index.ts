@@ -365,6 +365,7 @@ CRITICAL: Every task must be specific enough that the candidate knows exactly wh
         temperature: 0.5,
         maxTokens: 4096,
         timeoutMs: 40_000,
+        thinking: false,
       });
 
       roadmap = normalizeRoadmap(extractStructured(completion)) ?? FALLBACK_ROADMAP;

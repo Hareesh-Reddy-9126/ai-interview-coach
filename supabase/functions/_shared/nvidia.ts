@@ -165,10 +165,7 @@ function buildRequestBody(
 
   // Only send Nemotron-specific template kwargs when explicitly requested.
   if (options.thinking !== undefined) {
-    body.chat_template_kwargs = {
-      enable_thinking: options.thinking,
-      force_nonempty_content: true,
-    };
+    body.chat_template_kwargs = { enable_thinking: options.thinking };
   }
 
   return body;

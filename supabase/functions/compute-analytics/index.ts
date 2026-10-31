@@ -213,6 +213,7 @@ The average interview score across turns is ${averageScore}/100. Use this as a b
         temperature: 0.2,
         maxTokens: 1024,
         timeoutMs: 30_000,
+        thinking: false,
       });
 
       const parsed = extractStructured<Record<string, number>>(completion);

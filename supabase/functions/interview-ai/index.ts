@@ -72,14 +72,14 @@ const evaluationTool = {
       type: "object",
       properties: {
         score: {
-          type: ["number", "null"],
+          type: "number",
           description:
-            "Score from 0-100 for the candidate's answer. null only if this is the opening question with no answer to evaluate.",
+            "Score from 0-100 for the candidate's answer. Omit this property entirely for the opening question, when there is no answer to evaluate.",
         },
         feedback: {
-          type: ["string", "null"],
+          type: "string",
           description:
-            "Detailed evaluation feedback referencing company-specific expectations. null only for the opening question.",
+            "Detailed evaluation feedback referencing company-specific expectations. Omit this property entirely for the opening question.",
         },
         strengths: {
           type: "array",
@@ -99,7 +99,7 @@ const evaluationTool = {
             "The next interview question. Must be specific, relevant, and build on the conversation context.",
         },
       },
-      required: ["score", "feedback", "strengths", "improvements", "nextQuestion"],
+      required: ["strengths", "improvements", "nextQuestion"],
       additionalProperties: false,
     },
   },
@@ -179,7 +179,7 @@ function buildMessages(
     messages.push({
       role: "user",
       content:
-        "Please start the interview with your first question. Set score and feedback to null since there's no answer to evaluate yet.",
+        "Please start the interview with your first question. Omit score and feedback since there's no answer to evaluate yet.",
     });
   }
 
@@ -303,6 +303,7 @@ Deno.serve(async (req) => {
       temperature: 0.6,
       maxTokens: 2048,
       timeoutMs: 45_000,
+      thinking: false,
     });
 
     const parsed = normalizeEvaluation(extractStructured(completion));
