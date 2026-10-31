@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Mic, MicOff, Send, ArrowRight, RotateCcw, CheckCircle, Loader2, FileText, AlertTriangle, Clock, Zap, Keyboard, AudioLines } from "lucide-react";
+import { Mic, MicOff, Send, ArrowRight, RotateCcw, CheckCircle, Loader2, FileText, AlertTriangle, Clock, Zap, Keyboard, AudioLines, Target } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,6 +60,7 @@ const companies = ["Google", "Amazon", "Meta", "Microsoft", "Netflix", "Apple", 
 const roles = ["Frontend Engineer", "Backend Engineer", "Full Stack Engineer", "ML Engineer", "DevOps Engineer"];
 const difficulties = ["Easy", "Medium", "Hard"];
 const experiences = ["Junior (0-2 yrs)", "Mid (2-5 yrs)", "Senior (5+ yrs)"];
+const interviewFocuses = ["Behavioral", "System Design", "Leadership", "Coding"];
 
 interface Turn {
   question: string;
@@ -93,8 +94,17 @@ export default function Interview() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const isResumeMode = searchParams.get("mode") === "resume";
+  const focusParam = searchParams.get("focus") ?? "";
+  const companyParam = searchParams.get("company") ?? "";
+  const difficultyParam = searchParams.get("difficulty") ?? "";
+  const focus = interviewFocuses.includes(focusParam) ? focusParam : null;
   const [phase, setPhase] = useState<"setup" | "interview" | "report">("setup");
-  const [config, setConfig] = useState({ company: "", role: "", difficulty: "", experience: "" });
+  const [config, setConfig] = useState({
+    company: companies.includes(companyParam) ? companyParam : "",
+    role: "",
+    difficulty: difficulties.includes(difficultyParam) ? difficultyParam : "",
+    experience: "",
+  });
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -104,6 +114,7 @@ export default function Interview() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [inputMode, setInputMode] = useState<"typing" | "voice">("typing");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startedAtRef = useRef<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const speech = useSpeechRecognition();
 
@@ -126,28 +137,42 @@ export default function Interview() {
 
   useEffect(() => {
     if (phase === "interview") {
-      timerRef.current = setInterval(() => setElapsedTime(t => t + 1), 1000);
+      if (startedAtRef.current === null) startedAtRef.current = Date.now();
+      const tick = () => {
+        const started = startedAtRef.current;
+        if (started !== null) setElapsedTime(Math.floor((Date.now() - started) / 1000));
+      };
+      tick();
+      timerRef.current = setInterval(tick, 1000);
       return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    } else {
-      setElapsedTime(0);
-      if (timerRef.current) clearInterval(timerRef.current);
     }
+    // Keep the final duration visible on the report screen; only reset when
+    // starting a brand-new interview.
+    if (phase === "setup") {
+      startedAtRef.current = null;
+      setElapsedTime(0);
+    }
+    if (timerRef.current) clearInterval(timerRef.current);
   }, [phase]);
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
-  const callAI = async (conversation: Turn[]): Promise<InterviewAiResponse> =>
-    invokeFunction<InterviewAiResponse>("interview-ai", {
-      body: {
-        role: config.role,
-        company: config.company,
-        experience: config.experience,
-        difficulty: config.difficulty,
-        conversation,
-        resume_context: resumeContext,
-      },
-      fallbackMessage: "Failed to reach the AI interviewer. Please try again.",
-    });
+  const callAI = useCallback(
+    async (conversation: Turn[]): Promise<InterviewAiResponse> =>
+      invokeFunction<InterviewAiResponse>("interview-ai", {
+        body: {
+          role: config.role,
+          company: config.company,
+          experience: config.experience,
+          difficulty: config.difficulty,
+          ...(focus ? { focus } : {}),
+          conversation,
+          resume_context: resumeContext,
+        },
+        fallbackMessage: "Failed to reach the AI interviewer. Please try again.",
+      }),
+    [config, focus, resumeContext],
+  );
 
   const startInterview = async () => {
     setIsEvaluating(true);
@@ -214,7 +239,7 @@ export default function Interview() {
     } finally {
       setIsEvaluating(false);
     }
-  }, [currentAnswer, sessionId, turns, isEvaluating, config, resumeContext]);
+  }, [currentAnswer, sessionId, turns, isEvaluating, callAI]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitAnswer(); }
@@ -226,26 +251,33 @@ export default function Interview() {
   const [reportSkillScores, setReportSkillScores] = useState<Record<string, number> | null>(null);
 
   useEffect(() => {
-    if (phase === "report" && sessionId && user) {
-      // Fetch real AI-computed analytics after interview completes
-      supabase.from("user_analytics").select("*").eq("user_id", user.id).maybeSingle()
-        .then(({ data }) => {
-          if (data) {
-            setReportSkillScores({
-              communication_score: Number(data.communication_score) || avgScore,
-              technical_score: Number(data.technical_score) || avgScore,
-              system_design_score: Number(data.system_design_score) || avgScore,
-              problem_solving_score: Number(data.problem_solving_score) || avgScore,
-              confidence_score: Number(data.confidence_score) || avgScore,
-            });
-          } else {
-            // Derive from per-turn AI feedback if analytics not yet computed
-            const scores = deriveSkillScoresFromTurns(answeredTurns, avgScore);
-            setReportSkillScores(scores);
-          }
-        });
-    }
-  }, [phase, sessionId]);
+    if (phase !== "report" || !sessionId || !user) return;
+    const answered = turns.filter((turn) => turn.score != null);
+    const fallbackAvg = answered.length > 0
+      ? Math.round(answered.reduce((sum, turn) => sum + (turn.score || 0), 0) / answered.length)
+      : 0;
+    let cancelled = false;
+
+    // Fetch real AI-computed analytics after the interview completes.
+    supabase.from("user_analytics").select("*").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data) {
+          setReportSkillScores({
+            communication_score: Number(data.communication_score) || fallbackAvg,
+            technical_score: Number(data.technical_score) || fallbackAvg,
+            system_design_score: Number(data.system_design_score) || fallbackAvg,
+            problem_solving_score: Number(data.problem_solving_score) || fallbackAvg,
+            confidence_score: Number(data.confidence_score) || fallbackAvg,
+          });
+        } else {
+          // Derive from per-turn AI feedback if analytics not yet computed.
+          setReportSkillScores(deriveSkillScoresFromTurns(answered, fallbackAvg));
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [phase, sessionId, user, turns]);
 
   // ── Setup Phase ──
   if (phase === "setup") {
@@ -262,6 +294,16 @@ export default function Interview() {
             <div>
               <p className="text-sm font-semibold text-primary">Resume-Based Interview</p>
               <p className="text-xs text-muted-foreground">Personalized from your resume ({(resumeContext.skills || []).length} skills detected)</p>
+            </div>
+          </div>
+        )}
+
+        {focus && (
+          <div className="card-base p-4 border-accent/20 flex items-center gap-4">
+            <div className="p-2 rounded-lg bg-accent/10"><Target className="h-4 w-4 text-accent" /></div>
+            <div>
+              <p className="text-sm font-semibold text-accent">{focus} Focus</p>
+              <p className="text-xs text-muted-foreground">Questions will be tailored to this interview type.</p>
             </div>
           </div>
         )}

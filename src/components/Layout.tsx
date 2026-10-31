@@ -1,10 +1,10 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Mic, Target, FileText, BarChart3,
-  Map, CreditCard, Settings, History, Menu, LogOut, X, Code2,
-  Search, Bell, ChevronDown, Sparkles
+  Map, Gauge, Settings, History, Menu, LogOut, X, Code2,
+  Search, ChevronDown, Sparkles, ArrowRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -30,7 +30,7 @@ const navGroups = [
   {
     label: "Account",
     items: [
-      { to: "/billing", icon: CreditCard, label: "Billing" },
+      { to: "/usage", icon: Gauge, label: "Plan & Usage" },
       { to: "/settings", icon: Settings, label: "Settings" },
     ],
   },
@@ -44,6 +44,42 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  const searchResults = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return [];
+    return allNavItems
+      .filter((item) => item.label.toLowerCase().includes(query))
+      .slice(0, 6);
+  }, [search]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+      if (event.key === "Escape") setSearchOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const goToResult = (to: string) => {
+    navigate(to);
+    setSearch("");
+    setSearchOpen(false);
+    searchRef.current?.blur();
+  };
+
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (searchResults[0]) goToResult(searchResults[0].to);
+  };
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -97,8 +133,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
-            <span className="text-sm font-bold text-foreground tracking-tight">InterviewAI</span>
-            <p className="text-[10px] text-muted-foreground/60 leading-none">Pro Platform</p>
+            <span className="text-sm font-bold text-foreground tracking-tight">AI Interview Lab</span>
+            <p className="text-[10px] text-muted-foreground/60 leading-none">Interview Practice</p>
           </div>
         </div>
 
@@ -142,7 +178,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70">
                     <Sparkles className="h-4 w-4 text-primary-foreground" />
                   </div>
-                  <span className="text-sm font-bold text-foreground">InterviewAI</span>
+                  <span className="text-sm font-bold text-foreground">AI Interview Lab</span>
                 </div>
                 <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                   <X className="h-4 w-4" />
@@ -179,23 +215,44 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <h1 className="text-sm font-semibold text-foreground">{currentPage?.label || "Dashboard"}</h1>
           </div>
 
-          <div className="flex-1 max-w-md mx-auto md:mx-0 md:ml-8">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-muted-foreground transition-colors" />
-              <input
-                placeholder="Search anything..."
-                className="w-full bg-secondary/40 rounded-lg pl-9 pr-4 py-2 text-sm text-foreground border border-transparent focus:border-border focus:bg-secondary/80 focus:outline-none transition-all placeholder:text-muted-foreground/35"
-              />
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex text-[10px] font-medium text-muted-foreground/40 bg-secondary/60 px-1.5 py-0.5 rounded border border-border/50">⌘K</kbd>
-            </div>
-          </div>
+          <form onSubmit={submitSearch} className="group relative flex-1 max-w-md mx-auto md:mx-0 md:ml-8">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-muted-foreground transition-colors" />
+            <input
+              ref={searchRef}
+              value={search}
+              onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); }}
+              onFocus={() => setSearchOpen(true)}
+              onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
+              placeholder="Search pages..."
+              aria-label="Search pages"
+              className="w-full bg-secondary/40 rounded-lg pl-9 pr-4 py-2 text-sm text-foreground border border-transparent focus:border-border focus:bg-secondary/80 focus:outline-none transition-all placeholder:text-muted-foreground/35"
+            />
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex text-[10px] font-medium text-muted-foreground/40 bg-secondary/60 px-1.5 py-0.5 rounded border border-border/50">⌘K</kbd>
+
+            {searchOpen && search.trim() && (
+              <div className="absolute left-0 right-0 top-full mt-2 card-base p-1.5 shadow-2xl shadow-black/30 z-50">
+                {searchResults.length > 0 ? (
+                  searchResults.map((item) => (
+                    <button
+                      key={item.to}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => goToResult(item.to)}
+                      className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      <ArrowRight className="h-3.5 w-3.5 ml-auto opacity-40" />
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2.5 text-sm text-muted-foreground">No pages found.</p>
+                )}
+              </div>
+            )}
+          </form>
 
           <div className="flex items-center gap-1.5">
-            <button className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors relative">
-              <Bell className="h-[18px] w-[18px]" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-            </button>
-
             <div className="relative ml-1">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}

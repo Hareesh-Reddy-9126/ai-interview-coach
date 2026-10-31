@@ -118,11 +118,25 @@ The app runs at <http://localhost:8080>.
 
 ### 3. Edge functions (optional, for local backend work)
 
+Run the whole stack locally (Docker required):
+
+```sh
+npx supabase start
+npx supabase db reset          # apply migrations to the local database
+# Local function secrets live in supabase/functions/.env (git-ignored):
+#   NVIDIA_API_KEY=nvapi-...
+#   CORS_ALLOWED_ORIGINS=http://localhost:8080
+npx supabase functions serve
+```
+
+To target a cloud project instead:
+
 ```sh
 npx supabase login
 npx supabase link --project-ref <your-project-ref>
+npx supabase db push
 npx supabase secrets set NVIDIA_API_KEY=nvapi-...
-npx supabase functions serve --env-file .env
+npx supabase functions deploy
 ```
 
 ## Available scripts
@@ -157,7 +171,7 @@ npx supabase functions serve --env-file .env
 | `NVIDIA_MODEL` | no | Override the primary model |
 | `NVIDIA_FALLBACK_MODEL` | no | Override the fallback model |
 | `NVIDIA_BASE_URL` | no | Defaults to `https://integrate.api.nvidia.com/v1` |
-| `SITE_URL` | recommended | Comma-separated CORS allowlist; defaults to `*` |
+| `CORS_ALLOWED_ORIGINS` | recommended | Comma-separated browser origin allowlist; defaults to `*`. `SITE_URL` is honored as a fallback. |
 
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_ANON_KEY` are injected
 automatically by the Supabase runtime.
@@ -217,7 +231,7 @@ All functions:
 npx supabase login
 npx supabase link --project-ref <new-project-ref>
 npx supabase db push
-npx supabase secrets set NVIDIA_API_KEY=nvapi-... SITE_URL=https://your-app.vercel.app
+npx supabase secrets set NVIDIA_API_KEY=nvapi-... CORS_ALLOWED_ORIGINS=https://your-app.vercel.app
 npx supabase functions deploy
 ```
 
@@ -227,8 +241,8 @@ npx supabase functions deploy
 2. Framework preset: **Vite**. Build command: `npm run build`. Output: `dist`.
 3. Add `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and
    `VITE_SUPABASE_PROJECT_ID` as environment variables.
-4. Deploy. Set the same production URL as `SITE_URL` in Supabase secrets so CORS
-   is locked to your domain.
+4. Deploy. Set the same production URL as `CORS_ALLOWED_ORIGINS` in Supabase
+   secrets so CORS is locked to your domain.
 
 Add a SPA rewrite so client-side routes resolve: all paths → `/index.html`
 (`vercel.json` is included).

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 import { Target, TrendingUp, Award, RefreshCw, AlertTriangle, Sparkles } from "lucide-react";
@@ -25,13 +25,15 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    if (!user) return;
+  const userId = user?.id;
+
+  const fetchData = useCallback(async () => {
+    if (!userId) return;
     setLoading(true); setError(null);
     try {
       const [analyticsRes, sessionsRes] = await Promise.all([
-        supabase.from("user_analytics").select("*").eq("user_id", user.id).maybeSingle(),
-        supabase.from("interview_sessions").select("overall_score, created_at").eq("user_id", user.id).eq("status", "completed").not("overall_score", "is", null).order("created_at", { ascending: true }).limit(20),
+        supabase.from("user_analytics").select("*").eq("user_id", userId).maybeSingle(),
+        supabase.from("interview_sessions").select("overall_score, created_at").eq("user_id", userId).eq("status", "completed").not("overall_score", "is", null).order("created_at", { ascending: true }).limit(20),
       ]);
       if (analyticsRes.error) throw analyticsRes.error;
       if (sessionsRes.error) throw sessionsRes.error;
@@ -45,9 +47,9 @@ export default function Analytics() {
       }
       if (sessionsRes.data?.length) setTrendData(sessionsRes.data.map((s, i) => ({ label: `#${i + 1}`, score: s.overall_score! })));
     } catch { setError("Failed to load analytics."); } finally { setLoading(false); }
-  };
+  }, [userId]);
 
-  useEffect(() => { fetchData(); }, [user]);
+  useEffect(() => { void fetchData(); }, [fetchData]);
 
   const { avgScore, weakest, strongest, insights } = useMemo(() => {
     const avg = trendData.length > 0 ? Math.round(trendData.reduce((a, t) => a + t.score, 0) / trendData.length) : 0;

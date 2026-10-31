@@ -18,7 +18,7 @@ const ResumeAnalyzer = lazy(() => import("./pages/ResumeAnalyzer"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const LearningRoadmap = lazy(() => import("./pages/LearningRoadmap"));
 const InterviewHistory = lazy(() => import("./pages/InterviewHistory"));
-const Billing = lazy(() => import("./pages/Billing"));
+const Usage = lazy(() => import("./pages/Usage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -88,7 +88,7 @@ const AppRoutes = () => (
       <Route path="/analytics" element={<ProtectedRoute><Layout><Analytics /></Layout></ProtectedRoute>} />
       <Route path="/roadmap" element={<ProtectedRoute><Layout><LearningRoadmap /></Layout></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute><Layout><InterviewHistory /></Layout></ProtectedRoute>} />
-      <Route path="/billing" element={<ProtectedRoute><Layout><Billing /></Layout></ProtectedRoute>} />
+      <Route path="/usage" element={<ProtectedRoute><Layout><Usage /></Layout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

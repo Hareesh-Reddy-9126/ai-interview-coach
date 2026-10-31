@@ -1,7 +1,7 @@
 # Supabase project configuration.
-# Replace the placeholder below with your new project ref, or run:
-#   npx supabase link --project-ref <your-new-project-ref>
-project_id = "REPLACE_WITH_NEW_PROJECT_REF"
+# `npx supabase link --project-ref <ref>` replaces the project_id below with
+# your cloud project ref. For local development this is just a stack name.
+project_id = "ai-interview-lab"
 
 # All edge functions require a valid Supabase JWT. Function code additionally
 # verifies resource ownership before touching user data.

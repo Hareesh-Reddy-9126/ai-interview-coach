@@ -19,8 +19,11 @@ async function resolveErrorMessage(
         return body.error;
       }
     } catch {
-      // Body was not JSON — fall through.
+      // Body was not JSON — fall through to the caller's message.
     }
+    // The SDK's own message ("Edge Function returned a non-2xx status code")
+    // is too generic to show to users, so prefer the caller's fallback.
+    return fallback;
   }
 
   if (error instanceof Error && error.message) return error.message;

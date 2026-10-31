@@ -29,9 +29,16 @@ export default function AuthPage() {
       if (error) toast.error(error.message);
       else navigate("/");
     } else {
-      const { error } = await signUp(email, password, name);
-      if (error) toast.error(error.message);
-      else toast.success("Account created! Check your email to confirm.");
+      const { error, needsConfirmation } = await signUp(email, password, name);
+      if (error) {
+        toast.error(error.message);
+      } else if (needsConfirmation) {
+        toast.success("Account created! Confirm your email, then sign in.");
+        setIsLogin(true);
+        setPassword("");
+      } else {
+        navigate("/");
+      }
     }
     setLoading(false);
   };
@@ -55,8 +62,8 @@ export default function AuthPage() {
                 <Sparkles className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">InterviewAI</h1>
-                <p className="text-xs text-muted-foreground">Pro Interview Platform</p>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">AI Interview Lab</h1>
+                <p className="text-xs text-muted-foreground">AI Interview Practice</p>
               </div>
             </div>
             <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
@@ -81,7 +88,7 @@ export default function AuthPage() {
             ))}
           </div>
 
-          <p className="text-xs text-muted-foreground/50">Trusted by 10,000+ engineers preparing for FAANG interviews</p>
+          <p className="text-xs text-muted-foreground/50">Built for engineers preparing for top-tier technical interviews</p>
         </motion.div>
 
         {/* Right auth form */}
@@ -95,7 +102,7 @@ export default function AuthPage() {
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground tracking-tight">InterviewAI</span>
+            <span className="text-xl font-bold text-foreground tracking-tight">AI Interview Lab</span>
           </div>
 
           <div className="card-base p-7">
@@ -134,9 +141,12 @@ export default function AuthPage() {
                     <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                      <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-                        className="input-base pl-10" placeholder="••••••••" />
+                      <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8}
+                        className="input-base pl-10" placeholder="At least 8 characters" />
                     </div>
+                    {!isLogin && (
+                      <p className="text-[11px] text-muted-foreground mt-1.5">Use at least 8 characters.</p>
+                    )}
                   </div>
                   <button type="submit" disabled={loading}
                     className="w-full btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50 font-semibold">

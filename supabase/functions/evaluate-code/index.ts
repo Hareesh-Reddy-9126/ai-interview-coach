@@ -170,15 +170,24 @@ function normalizeTestResults(value: unknown): TestResult[] {
     .filter((item) => item && typeof item === "object")
     .map((item) => {
       const raw = item as Record<string, unknown>;
+      const expected =
+        typeof raw.expected === "string"
+          ? raw.expected
+          : String(raw.expected ?? "");
+      const passed = Boolean(raw.passed);
+      const reportedActual =
+        typeof raw.actual === "string" ? raw.actual : String(raw.actual ?? "");
+      // A passing test's actual output is by definition its expected output.
+      // Failing tests with no reported output still need a concrete value so the
+      // UI never renders an empty result cell.
+      const actual = reportedActual.trim() ||
+        (passed ? expected : "No output returned");
+
       return {
         input: typeof raw.input === "string" ? raw.input : String(raw.input ?? ""),
-        expected:
-          typeof raw.expected === "string"
-            ? raw.expected
-            : String(raw.expected ?? ""),
-        actual:
-          typeof raw.actual === "string" ? raw.actual : String(raw.actual ?? ""),
-        passed: Boolean(raw.passed),
+        expected,
+        actual,
+        passed,
       };
     });
 }
@@ -274,6 +283,7 @@ CRITICAL RULES:
 - Handle edge cases exactly as the code would (off-by-one errors, null checks, type coercion)
 - If the code has a bug, report what it ACTUALLY outputs, not what it should output
 - For each test case, show what the code produces when run with that specific input
+- EVERY test result MUST include a non-empty "actual" field. For a passing test, "actual" equals "expected". For a failing test, "actual" is the exact wrong output (or "undefined" / "error: <message>")
 - Be precise about return types: [0,1] is different from "0,1" or (0,1)`
         : `You are a senior software engineer evaluating a coding interview solution. Provide a thorough, expert-level evaluation.
 
@@ -291,7 +301,12 @@ SCORING GUIDELINES:
 FEEDBACK RULES:
 - Be specific: "Your hash map approach in line 3 is O(n) which is optimal" not "Good approach"
 - Reference actual code: Point to specific lines or logic
-- Always provide a complete, working optimal solution in suggestedAnswer`;
+- Always provide a complete, working optimal solution in suggestedAnswer
+
+TEST RESULT RULES:
+- EVERY test result MUST include a non-empty "actual" field, including tests that pass
+- For a passing test, "actual" equals "expected"; for a failing test, "actual" is the exact wrong output
+- Report one result per provided test case, in the same order`;
 
     const userPrompt =
       action === "run"

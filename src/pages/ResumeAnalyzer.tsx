@@ -23,25 +23,51 @@ export default function ResumeAnalyzer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLatestResume = useCallback(async () => {
-    if (!user) return;
-    try {
-      const { data, error: fetchErr } = await supabase.from("user_resumes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (fetchErr) throw fetchErr;
-      setResume(data);
-      if (data?.analysis_status === "analyzing") { setAnalyzing(true); retryAnalysis(data.id, data.file_url); }
-    } catch (e) { console.error("Failed to fetch resume:", e); } finally { setLoading(false); }
+  const loadResume = useCallback(async (): Promise<ResumeData | null> => {
+    if (!user) return null;
+    const { data, error: fetchErr } = await supabase.from("user_resumes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (fetchErr) throw fetchErr;
+    return data;
   }, [user]);
 
-  useEffect(() => { fetchLatestResume(); }, [fetchLatestResume]);
+  const refreshResume = useCallback(async () => {
+    try {
+      setResume(await loadResume());
+    } catch (e) {
+      console.error("Failed to fetch resume:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadResume]);
 
-  const retryAnalysis = async (resumeId: string, filePath: string) => {
+  const retryAnalysis = useCallback(async (resumeId: string, filePath: string) => {
     setError(null); setAnalyzing(true);
     try {
       await invokeFunction("analyze-resume", { body: { resume_id: resumeId, file_path: filePath }, fallbackMessage: "Analysis failed." });
-      await fetchLatestResume(); toast.success("Resume analyzed!");
+      await refreshResume(); toast.success("Resume analyzed!");
     } catch (e) { const message = getErrorMessage(e, "Analysis failed."); setError(message); toast.error(message); } finally { setAnalyzing(false); }
-  };
+  }, [refreshResume]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await loadResume();
+        if (cancelled) return;
+        setResume(data);
+        // Resume analysis was interrupted (tab closed / request lost) — retry once.
+        if (data?.analysis_status === "analyzing") {
+          setAnalyzing(true);
+          void retryAnalysis(data.id, data.file_url);
+        }
+      } catch (e) {
+        console.error("Failed to fetch resume:", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [loadResume, retryAnalysis]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file || !user) return; setError(null);
@@ -56,7 +82,7 @@ export default function ResumeAnalyzer() {
       if (insertErr) throw insertErr;
       setResume(rec); setUploading(false); setAnalyzing(true);
       await invokeFunction("analyze-resume", { body: { resume_id: rec.id, file_path: filePath }, fallbackMessage: "Upload failed." });
-      await fetchLatestResume(); toast.success("Resume analyzed!");
+      await refreshResume(); toast.success("Resume analyzed!");
     } catch (e) { const message = getErrorMessage(e, "Upload failed."); setError(message); toast.error(message); } finally { setUploading(false); setAnalyzing(false); }
   };
 

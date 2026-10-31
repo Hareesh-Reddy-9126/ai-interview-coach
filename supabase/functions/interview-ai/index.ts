@@ -26,6 +26,17 @@ const companyContext: Record<string, string> = {
   Startup: `You embody startup culture: speed, adaptability, and full-stack ownership. Test for ability to make pragmatic trade-offs (MVP vs. perfect solution), wear multiple hats, and operate with ambiguity. Ask about building systems from scratch, prioritizing features, and handling rapid pivots. Value scrappiness, resourcefulness, and bias toward action.`,
 };
 
+const focusGuidance: Record<string, string> = {
+  Behavioral:
+    "This is a behavioral interview. Ask only STAR-format behavioral questions about past experience (conflict, leadership, failure, ambiguity, impact). Do not ask coding or system design questions.",
+  "System Design":
+    "This is a system design interview. Ask the candidate to design a scalable real-world system. Probe requirements, capacity estimates, data model, APIs, scaling, caching, failure modes and trade-offs.",
+  Leadership:
+    "This is a leadership interview. Focus on people management, mentoring, hiring, performance conversations, cross-team influence and decision-making under ambiguity.",
+  Coding:
+    "This is a coding-focused interview. Ask algorithmic and data-structure questions and have the candidate describe their approach, complexity and edge cases in prose.",
+};
+
 const difficultyGuidance: Record<string, string> = {
   Easy: "Ask fundamental questions. Accept high-level answers. Be encouraging. Focus on core concepts and basic problem-solving. Score generously for clear communication even if technical depth is limited.",
   Medium:
@@ -50,6 +61,7 @@ interface InterviewRequest {
   company?: string;
   experience?: string;
   difficulty?: string;
+  focus?: string;
   conversation?: TurnInput[];
   resume_context?: ResumeContextInput;
 }
@@ -111,9 +123,14 @@ function buildSystemPrompt(
   experience: string,
   difficulty: string,
   resumeContext?: ResumeContextInput,
+  focus?: string,
 ): string {
   const resumeSection = resumeContext
     ? `\n\nCANDIDATE'S RESUME CONTEXT (use this to personalize questions):\n- Technical Skills: ${(resumeContext.skills ?? []).join(", ")}\n- Technologies: ${(resumeContext.technologies ?? []).join(", ")}\n- Key Projects: ${(resumeContext.projects ?? []).join("; ")}\n- Work Experience: ${(resumeContext.experience ?? []).join("; ")}\n\nIMPORTANT: Reference specific items from their resume. Ask about their actual projects and technologies. Probe into the depth of their experience with the tools they claim to know.`
+    : "";
+
+  const focusSection = focus && focusGuidance[focus]
+    ? `\n\nINTERVIEW FOCUS:\n${focusGuidance[focus]}`
     : "";
 
   const companySpecific =
@@ -123,7 +140,7 @@ function buildSystemPrompt(
   return `You are a senior staff engineer conducting a real ${difficulty}-level technical interview at ${company} for a ${role} position. The candidate is at ${experience} experience level.${resumeSection}
 
 COMPANY CULTURE & INTERVIEW STYLE:
-${companySpecific}
+${companySpecific}${focusSection}
 
 DIFFICULTY CALIBRATION:
 ${difficultyGuidance[difficulty] ?? difficultyGuidance.Medium}
@@ -286,6 +303,7 @@ Deno.serve(async (req) => {
       experience ?? "unknown",
       difficulty,
       body.resume_context,
+      typeof body.focus === "string" ? body.focus : undefined,
     );
 
     const messages = buildMessages(systemPrompt, conversation);

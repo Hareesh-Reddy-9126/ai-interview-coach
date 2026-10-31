@@ -61,7 +61,10 @@ const DEFAULT_ALLOWED_HEADERS = [
 ].join(", ");
 
 function allowedOrigins(): string[] {
-  const configured = Deno.env.get("SITE_URL") ?? "*";
+  const configured =
+    Deno.env.get("CORS_ALLOWED_ORIGINS") ??
+    Deno.env.get("SITE_URL") ??
+    "*";
   return configured
     .split(",")
     .map((origin) => origin.trim())
@@ -69,7 +72,7 @@ function allowedOrigins(): string[] {
 }
 
 /**
- * Build CORS headers for a request. In production set SITE_URL to a
+ * Build CORS headers for a request. In production set CORS_ALLOWED_ORIGINS to a
  * comma-separated allowlist (e.g. "https://app.example.com,https://example.com").
  */
 export function corsHeaders(req?: Request): Record<string, string> {
