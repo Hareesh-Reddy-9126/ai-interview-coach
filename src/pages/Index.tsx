@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import StatCard from "@/components/StatCard";
 import SkillRadarChart from "@/components/SkillRadarChart";
+import { type UserAnalytics } from "@/lib/utils";
 
 interface RecentInterview {
   id: string;
@@ -22,7 +23,7 @@ function StatSkeleton() {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
   const [recentInterviews, setRecentInterviews] = useState<RecentInterview[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -1,7 +1,7 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 
 interface Props {
-  analytics?: { communication_score?: number; technical_score?: number; system_design_score?: number; problem_solving_score?: number; confidence_score?: number; } | null;
+  analytics?: { communication_score?: number | null; technical_score?: number | null; system_design_score?: number | null; problem_solving_score?: number | null; confidence_score?: number | null; } | null;
 }
 
 export default function SkillRadarChart({ analytics }: Props) {

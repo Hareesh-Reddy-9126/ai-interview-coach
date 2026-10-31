@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Circle, BookOpen, RefreshCw, Loader2, Sparkles, Target, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/edge-functions";
+import { getErrorMessage } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -22,7 +24,7 @@ export default function LearningRoadmap() {
       const { data, error: err } = await supabase.from("learning_roadmaps").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (err) throw err;
       if (data) { setRoadmap(data.roadmap_json as unknown as RoadmapData); setCreatedAt(data.created_at); }
-    } catch (e: any) { console.error("Failed:", e); } finally { setLoading(false); }
+    } catch (e) { console.error("Failed to load roadmap:", e); } finally { setLoading(false); }
   }, [user]);
 
   useEffect(() => { fetchRoadmap(); }, [fetchRoadmap]);
@@ -30,10 +32,11 @@ export default function LearningRoadmap() {
   const generateRoadmap = async () => {
     setGenerating(true); setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-roadmap");
-      if (error) throw error; if (data?.error) throw new Error(data.error);
-      setRoadmap(data as RoadmapData); setCreatedAt(new Date().toISOString()); toast.success("Roadmap generated!");
-    } catch (e: any) { const msg = e.message || "Failed."; setError(msg); toast.error(msg); } finally { setGenerating(false); }
+      const data = await invokeFunction<RoadmapData>("generate-roadmap", {
+        fallbackMessage: "Roadmap generation failed.",
+      });
+      setRoadmap(data); setCreatedAt(new Date().toISOString()); toast.success("Roadmap generated!");
+    } catch (e) { const msg = getErrorMessage(e, "Roadmap generation failed."); setError(msg); toast.error(msg); } finally { setGenerating(false); }
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;

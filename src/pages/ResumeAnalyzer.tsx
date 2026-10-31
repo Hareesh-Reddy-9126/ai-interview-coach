@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Upload, FileText, Sparkles, Code2, Briefcase, GraduationCap, Loader2, Trash2, ArrowRight, AlertTriangle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/edge-functions";
+import { getErrorMessage } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -28,7 +30,7 @@ export default function ResumeAnalyzer() {
       if (fetchErr) throw fetchErr;
       setResume(data);
       if (data?.analysis_status === "analyzing") { setAnalyzing(true); retryAnalysis(data.id, data.file_url); }
-    } catch (e: any) { console.error("Failed to fetch resume:", e); } finally { setLoading(false); }
+    } catch (e) { console.error("Failed to fetch resume:", e); } finally { setLoading(false); }
   }, [user]);
 
   useEffect(() => { fetchLatestResume(); }, [fetchLatestResume]);
@@ -36,10 +38,9 @@ export default function ResumeAnalyzer() {
   const retryAnalysis = async (resumeId: string, filePath: string) => {
     setError(null); setAnalyzing(true);
     try {
-      const { data, error: err } = await supabase.functions.invoke("analyze-resume", { body: { resume_id: resumeId, file_path: filePath } });
-      if (err) throw err; if (data?.error) throw new Error(data.error);
+      await invokeFunction("analyze-resume", { body: { resume_id: resumeId, file_path: filePath }, fallbackMessage: "Analysis failed." });
       await fetchLatestResume(); toast.success("Resume analyzed!");
-    } catch (e: any) { setError(e.message || "Analysis failed."); toast.error(e.message || "Analysis failed."); } finally { setAnalyzing(false); }
+    } catch (e) { const message = getErrorMessage(e, "Analysis failed."); setError(message); toast.error(message); } finally { setAnalyzing(false); }
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,10 +55,9 @@ export default function ResumeAnalyzer() {
       const { data: rec, error: insertErr } = await supabase.from("user_resumes").insert({ user_id: user.id, file_url: filePath, analysis_status: "analyzing" }).select().single();
       if (insertErr) throw insertErr;
       setResume(rec); setUploading(false); setAnalyzing(true);
-      const { data, error: err } = await supabase.functions.invoke("analyze-resume", { body: { resume_id: rec.id, file_path: filePath } });
-      if (err) throw err; if (data?.error) throw new Error(data.error);
+      await invokeFunction("analyze-resume", { body: { resume_id: rec.id, file_path: filePath }, fallbackMessage: "Upload failed." });
       await fetchLatestResume(); toast.success("Resume analyzed!");
-    } catch (e: any) { setError(e.message || "Upload failed."); toast.error(e.message || "Upload failed."); } finally { setUploading(false); setAnalyzing(false); }
+    } catch (e) { const message = getErrorMessage(e, "Upload failed."); setError(message); toast.error(message); } finally { setUploading(false); setAnalyzing(false); }
   };
 
   const deleteResume = async () => {

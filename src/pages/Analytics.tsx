@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import SkillRadarChart from "@/components/SkillRadarChart";
 import StatCard from "@/components/StatCard";
+import { type UserAnalytics } from "@/lib/utils";
 
 interface SessionTrend { label: string; score: number; }
 interface SkillData { area: string; score: number; }
@@ -18,7 +19,7 @@ const BAR_COLORS = ["hsl(0 68% 55%)", "hsl(32 95% 60%)", "hsl(45 90% 55%)", "hsl
 
 export default function Analytics() {
   const { user } = useAuth();
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
   const [trendData, setTrendData] = useState<SessionTrend[]>([]);
   const [weaknessData, setWeaknessData] = useState<SkillData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +36,10 @@ export default function Analytics() {
       if (analyticsRes.error) throw analyticsRes.error;
       if (sessionsRes.error) throw sessionsRes.error;
       setAnalytics(analyticsRes.data);
-      if (analyticsRes.data) {
-        const skills: SkillData[] = Object.entries(SKILL_LABELS).map(([key, label]) => ({ area: label, score: Number(analyticsRes.data[key]) || 0 }));
+      const data = analyticsRes.data;
+      if (data) {
+        const record = data as unknown as Record<string, number | null>;
+        const skills: SkillData[] = Object.entries(SKILL_LABELS).map(([key, label]) => ({ area: label, score: Number(record[key]) || 0 }));
         skills.sort((a, b) => a.score - b.score);
         setWeaknessData(skills);
       }
@@ -71,14 +74,14 @@ export default function Analytics() {
     </div>
   );
 
-  const hasData = analytics?.interviews_completed > 0;
+  const hasData = (analytics?.interviews_completed ?? 0) > 0;
 
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground tracking-tight">Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-2">{hasData ? `${analytics.interviews_completed} interview${analytics.interviews_completed > 1 ? "s" : ""} completed` : "Complete interviews to see analytics"}</p>
+          <p className="text-sm text-muted-foreground mt-2">{hasData ? `${analytics?.interviews_completed ?? 0} interview${(analytics?.interviews_completed ?? 0) > 1 ? "s" : ""} completed` : "Complete interviews to see analytics"}</p>
         </div>
         {!loading && <button onClick={fetchData} className="p-2.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"><RefreshCw className="h-4 w-4" /></button>}
       </div>
@@ -96,7 +99,7 @@ export default function Analytics() {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard icon={Target} label="Interviews" value={analytics.interviews_completed} color="primary" />
+            <StatCard icon={Target} label="Interviews" value={analytics?.interviews_completed ?? 0} color="primary" />
             <StatCard icon={TrendingUp} label="Avg Score" value={`${avgScore}%`} color="info" />
             <StatCard icon={Award} label="Weakest" value={weakest?.area || "N/A"} subtitle={weakest ? `${weakest.score}/100` : undefined} color="warning" />
             <StatCard icon={Award} label="Strongest" value={strongest?.area || "N/A"} subtitle={strongest ? `${strongest.score}/100` : undefined} color="primary" />

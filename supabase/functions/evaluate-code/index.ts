@@ -1,99 +1,281 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  AiConfigError,
+  AiProviderError,
+  chatCompletion,
+  checkRateLimit,
+  createRequestLogger,
+  extractStructured,
+  getAuthenticatedUser,
+  jsonResponse,
+  optionsResponse,
+  recordRequest,
+} from "../_shared/nvidia.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+const RATE_LIMIT = 30;
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const MAX_CODE_CHARS = 20_000;
+
+interface TestCase {
+  input?: string;
+  expected?: string;
+}
+
+interface ProblemInput {
+  title?: string;
+  description?: string;
+  constraints?: string[];
+  testCases?: TestCase[];
+}
+
+interface EvaluateCodeRequest {
+  code?: string;
+  language?: string;
+  problem?: ProblemInput;
+  action?: string;
+}
+
+interface TestResult {
+  input: string;
+  expected: string;
+  actual: string;
+  passed: boolean;
+}
+
+interface Evaluation {
+  timeComplexity: string;
+  spaceComplexity: string;
+  correctness: number;
+  codeQuality: number;
+  feedback: string;
+  optimizations: string[];
+  suggestedAnswer: string;
+}
+
+const testResultSchema = {
+  type: "object",
+  properties: {
+    input: { type: "string" },
+    expected: { type: "string" },
+    actual: { type: "string", description: "The actual output the code produces" },
+    passed: { type: "boolean" },
+  },
+  required: ["input", "expected", "actual", "passed"],
+  additionalProperties: false,
 };
 
-const REQUEST_TIMEOUT_MS = 45000;
+const runTool = {
+  type: "function",
+  function: {
+    name: "report_test_results",
+    description: "Report the results of running code against test cases",
+    parameters: {
+      type: "object",
+      properties: {
+        testResults: {
+          type: "array",
+          items: testResultSchema,
+        },
+      },
+      required: ["testResults"],
+      additionalProperties: false,
+    },
+  },
+};
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+const evaluateTool = {
+  type: "function",
+  function: {
+    name: "evaluate_solution",
+    description: "Provide comprehensive evaluation of a coding solution",
+    parameters: {
+      type: "object",
+      properties: {
+        testResults: {
+          type: "array",
+          items: testResultSchema,
+        },
+        evaluation: {
+          type: "object",
+          properties: {
+            timeComplexity: {
+              type: "string",
+              description: "e.g. O(n), O(n log n)",
+            },
+            spaceComplexity: {
+              type: "string",
+              description: "e.g. O(1), O(n)",
+            },
+            correctness: { type: "number", description: "0-100 score" },
+            codeQuality: { type: "number", description: "0-100 score" },
+            feedback: {
+              type: "string",
+              description:
+                "Detailed paragraph evaluating the approach, correctness, edge cases, and style",
+            },
+            optimizations: {
+              type: "array",
+              items: { type: "string" },
+              description: "Specific actionable optimization suggestions",
+            },
+            suggestedAnswer: {
+              type: "string",
+              description:
+                "Complete optimal solution code in the same language",
+            },
+          },
+          required: [
+            "timeComplexity",
+            "spaceComplexity",
+            "correctness",
+            "codeQuality",
+            "feedback",
+            "optimizations",
+            "suggestedAnswer",
+          ],
+          additionalProperties: false,
+        },
+      },
+      required: ["testResults", "evaluation"],
+      additionalProperties: false,
+    },
+  },
+};
 
-  const requestId = crypto.randomUUID().slice(0, 8);
-  console.log(`[evaluate-code][${requestId}] Request received`);
+function buildTestCases(problem: ProblemInput): string {
+  return (problem.testCases ?? [])
+    .map(
+      (testCase, index) =>
+        `Test ${index + 1}: Input: ${testCase.input ?? ""}, Expected Output: ${
+          testCase.expected ?? ""
+        }`,
+    )
+    .join("\n");
+}
+
+function clampScore(value: unknown): number {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function normalizeTestResults(value: unknown): TestResult[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => item && typeof item === "object")
+    .map((item) => {
+      const raw = item as Record<string, unknown>;
+      return {
+        input: typeof raw.input === "string" ? raw.input : String(raw.input ?? ""),
+        expected:
+          typeof raw.expected === "string"
+            ? raw.expected
+            : String(raw.expected ?? ""),
+        actual:
+          typeof raw.actual === "string" ? raw.actual : String(raw.actual ?? ""),
+        passed: Boolean(raw.passed),
+      };
+    });
+}
+
+function normalizeEvaluation(value: unknown): Evaluation | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+
+  const suggestedAnswer =
+    typeof raw.suggestedAnswer === "string" ? raw.suggestedAnswer : "";
+
+  return {
+    timeComplexity:
+      typeof raw.timeComplexity === "string" ? raw.timeComplexity : "Unknown",
+    spaceComplexity:
+      typeof raw.spaceComplexity === "string" ? raw.spaceComplexity : "Unknown",
+    correctness: clampScore(raw.correctness),
+    codeQuality: clampScore(raw.codeQuality),
+    feedback: typeof raw.feedback === "string" ? raw.feedback : "",
+    optimizations: toStringArray(raw.optimizations),
+    suggestedAnswer,
+  };
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return optionsResponse(req);
+
+  const log = createRequestLogger("evaluate-code");
+  log.info("Request received");
 
   try {
-    const body = await req.json();
-    const { code, language, problem, action } = body;
+    const body = (await req.json()) as EvaluateCodeRequest;
+    const { code, language, problem } = body;
+    const action = body.action === "run" ? "run" : "evaluate";
 
     if (!code || !language || !problem) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse(
+        { error: "Missing required fields: code, language, problem" },
+        400,
+        req,
+      );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "AI service not configured." }), {
-        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (code.length > MAX_CODE_CHARS) {
+      return jsonResponse(
+        { error: `Code exceeds the ${MAX_CODE_CHARS} character limit.` },
+        413,
+        req,
+      );
     }
 
-    const testCasesStr = (problem.testCases || []).map((tc: any, i: number) =>
-      `Test ${i + 1}: Input: ${tc.input}, Expected Output: ${tc.expected}`
-    ).join("\n");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    let systemPrompt: string;
-    let userPrompt: string;
-    let tools: any[] | undefined;
-    let toolChoice: any | undefined;
+    const user = await getAuthenticatedUser(
+      supabaseUrl,
+      supabaseAnonKey,
+      req.headers.get("Authorization"),
+    );
+    if (!user) {
+      return jsonResponse({ error: "Unauthorized" }, 401, req);
+    }
 
-    if (action === "run") {
-      systemPrompt = `You are a precise code execution engine. Your job is to mentally execute the given code step-by-step for each test case and determine the exact output.
+    const { createClient } = await import(
+      "https://esm.sh/@supabase/supabase-js@2"
+    );
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    const allowed = await checkRateLimit(
+      adminClient,
+      user.id,
+      "evaluate-code",
+      RATE_LIMIT,
+      RATE_WINDOW_MS,
+    );
+    if (!allowed) {
+      return jsonResponse(
+        { error: "Rate limit exceeded. Max 30 code runs per hour." },
+        429,
+        req,
+      );
+    }
+
+    const testCasesStr = buildTestCases(problem);
+
+    const systemPrompt =
+      action === "run"
+        ? `You are a precise code execution engine. Your job is to mentally execute the given code step-by-step for each test case and determine the exact output.
 
 CRITICAL RULES:
 - Trace through EVERY line of code literally — do not guess or approximate
 - Handle edge cases exactly as the code would (off-by-one errors, null checks, type coercion)
 - If the code has a bug, report what it ACTUALLY outputs, not what it should output
 - For each test case, show what the code produces when run with that specific input
-- Be precise about return types: [0,1] is different from "0,1" or (0,1)`;
-
-      userPrompt = `Language: ${language}
-Problem: ${problem.title}
-
-Code to execute:
-\`\`\`${language}
-${code}
-\`\`\`
-
-Test Cases to run:
-${testCasesStr}
-
-Trace through the code for each test case. Determine the EXACT output.`;
-
-      tools = [{
-        type: "function",
-        function: {
-          name: "report_test_results",
-          description: "Report the results of running code against test cases",
-          parameters: {
-            type: "object",
-            properties: {
-              testResults: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    input: { type: "string" },
-                    expected: { type: "string" },
-                    actual: { type: "string", description: "The actual output the code produces" },
-                    passed: { type: "boolean" },
-                  },
-                  required: ["input", "expected", "actual", "passed"],
-                  additionalProperties: false,
-                },
-              },
-            },
-            required: ["testResults"],
-            additionalProperties: false,
-          },
-        },
-      }];
-      toolChoice = { type: "function", function: { name: "report_test_results" } };
-
-    } else {
-      systemPrompt = `You are a senior software engineer evaluating a coding interview solution. Provide a thorough, expert-level evaluation.
+- Be precise about return types: [0,1] is different from "0,1" or (0,1)`
+        : `You are a senior software engineer evaluating a coding interview solution. Provide a thorough, expert-level evaluation.
 
 EVALUATION CRITERIA:
 1. CORRECTNESS: Does the code handle all test cases, edge cases, and boundary conditions?
@@ -111,10 +293,24 @@ FEEDBACK RULES:
 - Reference actual code: Point to specific lines or logic
 - Always provide a complete, working optimal solution in suggestedAnswer`;
 
-      userPrompt = `Language: ${language}
-Problem: ${problem.title}
-Description: ${problem.description}
-Constraints: ${(problem.constraints || []).join(", ")}
+    const userPrompt =
+      action === "run"
+        ? `Language: ${language}
+Problem: ${problem.title ?? ""}
+
+Code to execute:
+\`\`\`${language}
+${code}
+\`\`\`
+
+Test Cases to run:
+${testCasesStr}
+
+Trace through the code for each test case. Determine the EXACT output.`
+        : `Language: ${language}
+Problem: ${problem.title ?? ""}
+Description: ${problem.description ?? ""}
+Constraints: ${(problem.constraints ?? []).join(", ")}
 
 Candidate's Solution:
 \`\`\`${language}
@@ -126,147 +322,83 @@ ${testCasesStr}
 
 Provide a comprehensive evaluation with test results, complexity analysis, and an optimal solution.`;
 
-      tools = [{
-        type: "function",
-        function: {
-          name: "evaluate_solution",
-          description: "Provide comprehensive evaluation of a coding solution",
-          parameters: {
-            type: "object",
-            properties: {
-              testResults: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    input: { type: "string" },
-                    expected: { type: "string" },
-                    actual: { type: "string" },
-                    passed: { type: "boolean" },
-                  },
-                  required: ["input", "expected", "actual", "passed"],
-                  additionalProperties: false,
-                },
-              },
-              evaluation: {
-                type: "object",
-                properties: {
-                  timeComplexity: { type: "string", description: "e.g. O(n), O(n log n)" },
-                  spaceComplexity: { type: "string", description: "e.g. O(1), O(n)" },
-                  correctness: { type: "number", description: "0-100 score" },
-                  codeQuality: { type: "number", description: "0-100 score" },
-                  feedback: { type: "string", description: "Detailed paragraph evaluating the approach, correctness, edge cases, and style" },
-                  optimizations: { type: "array", items: { type: "string" }, description: "Specific actionable optimization suggestions" },
-                  suggestedAnswer: { type: "string", description: "Complete optimal solution code in the same language" },
-                },
-                required: ["timeComplexity", "spaceComplexity", "correctness", "codeQuality", "feedback", "optimizations", "suggestedAnswer"],
-                additionalProperties: false,
-              },
-            },
-            required: ["testResults", "evaluation"],
-            additionalProperties: false,
-          },
-        },
-      }];
-      toolChoice = { type: "function", function: { name: "evaluate_solution" } };
-    }
+    await recordRequest(adminClient, user.id, "evaluate-code");
+    log.info(`Calling NVIDIA NIM, action: ${action}`);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const completion = await chatCompletion({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      tools: [action === "run" ? runTool : evaluateTool],
+      toolChoice:
+        action === "run"
+          ? { type: "function", function: { name: "report_test_results" } }
+          : { type: "function", function: { name: "evaluate_solution" } },
+      temperature: action === "run" ? 0.1 : 0.3,
+      maxTokens: action === "run" ? 2048 : 4096,
+      timeoutMs: 45_000,
+    });
 
-    console.log(`[evaluate-code][${requestId}] Calling AI, action: ${action}`);
-
-    let response;
-    try {
-      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          tools,
-          tool_choice: toolChoice,
-        }),
-        signal: controller.signal,
-      });
-    } catch (fetchErr) {
-      clearTimeout(timeout);
-      if (fetchErr instanceof DOMException && fetchErr.name === "AbortError") {
-        return new Response(JSON.stringify({ error: "Evaluation timed out. Please try again." }), {
-          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw fetchErr;
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[evaluate-code][${requestId}] AI error: ${response.status} ${errText}`);
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait and try again." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      return new Response(JSON.stringify({ error: "Code evaluation temporarily unavailable." }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const data = await response.json();
-
-    // Extract from tool call
-    let parsed;
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (toolCall?.function?.arguments) {
-      try {
-        parsed = JSON.parse(toolCall.function.arguments);
-      } catch {
-        console.warn(`[evaluate-code][${requestId}] Failed to parse tool call`);
-      }
-    }
-
-    // Fallback to content
-    if (!parsed) {
-      const content = data.choices?.[0]?.message?.content;
-      if (content) {
-        try {
-          const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-          parsed = JSON.parse(cleaned);
-        } catch {
-          console.warn(`[evaluate-code][${requestId}] Failed to parse content`);
-        }
-      }
-    }
+    const parsed = extractStructured<Record<string, unknown>>(completion);
 
     if (!parsed) {
-      return new Response(JSON.stringify({ error: "AI returned invalid response. Please try again." }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      log.warn("NVIDIA returned an unparseable payload");
+      return jsonResponse(
+        { error: "AI returned invalid response. Please try again." },
+        502,
+        req,
+      );
     }
 
-    // Clamp scores
-    if (parsed.evaluation) {
-      parsed.evaluation.correctness = Math.max(0, Math.min(100, Math.round(Number(parsed.evaluation.correctness) || 0)));
-      parsed.evaluation.codeQuality = Math.max(0, Math.min(100, Math.round(Number(parsed.evaluation.codeQuality) || 0)));
+    const testResults = normalizeTestResults(parsed.testResults);
+
+    if (action === "run") {
+      log.info(`Run completed, ${testResults.length} test case(s)`);
+      return jsonResponse({ testResults }, 200, req);
     }
 
-    console.log(`[evaluate-code][${requestId}] Success`);
+    const evaluation = normalizeEvaluation(parsed.evaluation);
+    if (!evaluation) {
+      log.warn("NVIDIA omitted the evaluation object");
+      return jsonResponse(
+        { error: "AI returned an incomplete evaluation. Please try again." },
+        502,
+        req,
+      );
+    }
 
-    return new Response(JSON.stringify(parsed), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (e) {
-    console.error(`[evaluate-code][${requestId}] Unhandled error:`, e);
-    return new Response(JSON.stringify({ error: "An unexpected error occurred." }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    log.info(
+      `Evaluation completed, correctness: ${evaluation.correctness}, quality: ${evaluation.codeQuality}`,
+    );
+
+    return jsonResponse({ testResults, evaluation }, 200, req);
+  } catch (error) {
+    if (error instanceof AiConfigError) {
+      log.error("NVIDIA_API_KEY is not configured");
+      return jsonResponse({ error: "AI service not configured." }, 503, req);
+    }
+
+    if (error instanceof AiProviderError) {
+      log.error(`AI provider error (${error.status}): ${error.message}`);
+      const status = error.status === 429 ? 429 : 502;
+      return jsonResponse(
+        {
+          error:
+            status === 429
+              ? "Rate limit exceeded. Please wait and try again."
+              : "Code evaluation temporarily unavailable.",
+        },
+        status,
+        req,
+      );
+    }
+
+    log.error("Unhandled error", error);
+    return jsonResponse(
+      { error: "An unexpected error occurred." },
+      500,
+      req,
+    );
   }
 });

@@ -1,4 +1,14 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
+import { Mic, MicOff, Send, ArrowRight, RotateCcw, CheckCircle, Loader2, FileText, AlertTriangle, Clock, Zap, Keyboard, AudioLines } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import SkillRadarChart from "@/components/SkillRadarChart";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
+import { invokeFunction } from "@/lib/edge-functions";
+import { getErrorMessage, type ResumeContext } from "@/lib/utils";
 
 function deriveSkillScoresFromTurns(turns: Turn[], avgScore: number): Record<string, number> {
   const skills: Record<string, number[]> = {
@@ -45,14 +55,6 @@ function deriveSkillScoresFromTurns(turns: Turn[], avgScore: number): Record<str
     confidence_score: avg(skills.confidence_score),
   };
 }
-import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Send, ArrowRight, RotateCcw, CheckCircle, Loader2, FileText, AlertTriangle, Clock, Zap, Keyboard, AudioLines } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import SkillRadarChart from "@/components/SkillRadarChart";
-import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 const companies = ["Google", "Amazon", "Meta", "Microsoft", "Netflix", "Apple", "Startup"];
 const roles = ["Frontend Engineer", "Backend Engineer", "Full Stack Engineer", "ML Engineer", "DevOps Engineer"];
@@ -66,6 +68,14 @@ interface Turn {
   feedback?: string | null;
   strengths?: string[];
   improvements?: string[];
+}
+
+interface InterviewAiResponse {
+  score: number | null;
+  feedback: string | null;
+  strengths: string[];
+  improvements: string[];
+  nextQuestion: string;
 }
 
 function TypingIndicator() {
@@ -89,7 +99,7 @@ export default function Interview() {
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [resumeContext, setResumeContext] = useState<any>(null);
+  const [resumeContext, setResumeContext] = useState<ResumeContext | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [inputMode, setInputMode] = useState<"typing" | "voice">("typing");
@@ -101,8 +111,10 @@ export default function Interview() {
     if (isResumeMode) {
       try {
         const ctx = sessionStorage.getItem("resume_context");
-        if (ctx) setResumeContext(JSON.parse(ctx));
-      } catch {}
+        if (ctx) setResumeContext(JSON.parse(ctx) as ResumeContext);
+      } catch {
+        // Corrupt or missing resume context — start without personalization.
+      }
     }
   }, [isResumeMode]);
 
@@ -124,14 +136,18 @@ export default function Interview() {
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
-  const callAI = async (conversation: Turn[]) => {
-    const { data, error } = await supabase.functions.invoke("interview-ai", {
-      body: { role: config.role, company: config.company, experience: config.experience, difficulty: config.difficulty, conversation, resume_context: resumeContext },
+  const callAI = async (conversation: Turn[]): Promise<InterviewAiResponse> =>
+    invokeFunction<InterviewAiResponse>("interview-ai", {
+      body: {
+        role: config.role,
+        company: config.company,
+        experience: config.experience,
+        difficulty: config.difficulty,
+        conversation,
+        resume_context: resumeContext,
+      },
+      fallbackMessage: "Failed to reach the AI interviewer. Please try again.",
     });
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
-    return data;
-  };
 
   const startInterview = async () => {
     setIsEvaluating(true);
@@ -148,9 +164,10 @@ export default function Interview() {
       await supabase.from("interview_turns").insert({ session_id: session.id, turn_number: 1, question: firstQuestion });
       setTurns([{ question: firstQuestion }]);
       setPhase("interview");
-    } catch (e: any) {
-      setAiError(e.message || "Failed to start interview");
-      toast.error(e.message || "Failed to start interview");
+    } catch (e) {
+      const message = getErrorMessage(e, "Failed to start interview");
+      setAiError(message);
+      toast.error(message);
     } finally {
       setIsEvaluating(false);
     }
@@ -184,12 +201,16 @@ export default function Interview() {
       if (answeredTurns.length >= 5) {
         const avgScore = Math.round(answeredTurns.reduce((a, t) => a + (t.score || 0), 0) / answeredTurns.length);
         await supabase.from("interview_sessions").update({ status: "completed", overall_score: avgScore }).eq("id", sessionId);
-        supabase.functions.invoke("compute-analytics", { body: { session_id: sessionId } }).catch(console.error);
+        void invokeFunction("compute-analytics", {
+          body: { session_id: sessionId },
+          fallbackMessage: "Analytics update failed.",
+        }).catch((analyticsError) => console.error("[compute-analytics]", analyticsError));
         setPhase("report");
       }
-    } catch (e: any) {
-      setAiError(e.message || "AI evaluation temporarily unavailable.");
-      toast.error(e.message || "AI evaluation failed.");
+    } catch (e) {
+      const message = getErrorMessage(e, "AI evaluation temporarily unavailable.");
+      setAiError(message);
+      toast.error(message);
     } finally {
       setIsEvaluating(false);
     }

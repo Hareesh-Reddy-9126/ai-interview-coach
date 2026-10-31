@@ -1,164 +1,246 @@
 # AI Interview Lab
 
-An AI-powered technical interview preparation platform built with React, TypeScript, and Lovable Cloud.
+An AI-powered technical interview preparation platform. Practice realistic mock
+interviews, solve coding challenges, analyze your resume, and follow a
+personalized learning roadmap — powered by **NVIDIA Nemotron** through NVIDIA
+NIM.
 
-## Overview
+## Features
 
-AI Interview Lab helps software engineers prepare for technical interviews through:
-
-- **AI Interview Simulator** – 5-turn mock interviews with real-time AI evaluation
-- **Resume Analyzer** – Upload PDFs for AI-powered skill extraction and personalized questions
-- **Performance Analytics** – Skill radar charts, score trends, and weakness heatmaps
-- **Learning Roadmap** – AI-generated 4-week improvement plans based on your performance
-- **Resume-Based Interviews** – Practice with questions derived from your actual resume
+- **AI Interview Simulator** — Multi-turn mock interviews with per-answer scoring,
+  company-specific interviewer personas, and STAR-style feedback.
+- **Coding Lab** — Solve interview problems in a Monaco editor with AI-judged test
+  cases, complexity analysis, and an optimal reference solution.
+- **Resume Analyzer** — Upload a PDF; the backend extracts real text (PDF.js via
+  `unpdf`) and NVIDIA generates structured skills plus tailored interview
+  questions.
+- **Performance Analytics** — AI-computed skill scores, radar charts, score
+  trends, and weakest/strongest area insights.
+- **Learning Roadmap** — 4-week, task-level improvement plan generated from your
+  actual performance data.
+- **Resume-based Interviews** — Interviews personalized from your uploaded
+  resume.
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────┐
-│                  React Frontend                   │
-│  (Vite + TypeScript + Tailwind + Framer Motion)  │
-└──────────────┬───────────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────────┐
-│              Lovable Cloud (Supabase)             │
-│                                                   │
-│  ┌─────────────┐  ┌───────────────────────────┐  │
-│  │  PostgreSQL  │  │     Edge Functions         │  │
-│  │  + RLS       │  │  • interview-ai            │  │
-│  │              │  │  • compute-analytics       │  │
-│  │              │  │  • analyze-resume          │  │
-│  │              │  │  • generate-roadmap        │  │
-│  └─────────────┘  └───────────────────────────┘  │
-│                                                   │
-│  ┌─────────────┐  ┌───────────────────────────┐  │
-│  │  Auth        │  │  Storage (resumes bucket) │  │
-│  └─────────────┘  └───────────────────────────┘  │
-└──────────────────────────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────────┐
-│        Lovable AI Gateway (Gemini 3 Flash)       │
-└──────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                       React frontend                        │
+│      Vite · TypeScript · Tailwind · Framer Motion           │
+│                    (deployed on Vercel)                     │
+└───────────────────────────┬────────────────────────────────┘
+                            │ HTTPS (JWT in Authorization header)
+                            ▼
+┌────────────────────────────────────────────────────────────┐
+│                     Supabase project                        │
+│                                                            │
+│  PostgreSQL + RLS     Edge Functions (Deno)                │
+│  · profiles           · interview-ai                       │
+│  · interview_sessions · compute-analytics                  │
+│  · interview_turns    · analyze-resume                     │
+│  · user_analytics     · generate-roadmap                   │
+│  · user_resumes       · evaluate-code                      │
+│  · learning_roadmaps                                       │
+│  · rate_limits                                             │
+│                                                            │
+│  Auth (email/password)   Storage (private `resumes` bucket)│
+└───────────────────────────┬────────────────────────────────┘
+                            │ OpenAI-compatible Chat Completions
+                            ▼
+┌────────────────────────────────────────────────────────────┐
+│                   NVIDIA NIM (integrate.api.nvidia.com)     │
+│  Primary:  nvidia/nemotron-3.5-super-vl-120b-a12b           │
+│  Fallback: nvidia/nemotron-3-ultra-550b-a55b                │
+└────────────────────────────────────────────────────────────┘
 ```
 
-## Database Tables
+## Tech stack
 
-| Table | Description |
+| Layer | Technology |
 |---|---|
-| `profiles` | User profile data (name, target role, experience) |
-| `interview_sessions` | Interview session metadata (company, role, score) |
-| `interview_turns` | Individual Q&A turns with AI feedback and scores |
-| `user_analytics` | Aggregated skill scores and streak tracking |
-| `user_resumes` | Uploaded resume data with extracted skills/questions |
-| `learning_roadmaps` | AI-generated 4-week improvement plans |
+| Frontend | React 18, TypeScript (strict), Vite 5, Tailwind CSS, shadcn/ui |
+| Charts | Recharts |
+| Backend | Supabase (PostgreSQL, Auth, Storage, Edge Functions) |
+| AI | NVIDIA NIM — Nemotron 3.5 Super VL, fallback Nemotron 3 Ultra |
+| PDF parsing | `unpdf` (serverless PDF.js) |
+| Tests | Vitest + Testing Library |
+| Deployment | Vercel (frontend) + Supabase Cloud (backend) |
 
-All tables have Row-Level Security (RLS) policies ensuring users can only access their own data.
+## Repository layout
 
-## Edge Functions
+```
+src/                       React application
+  lib/edge-functions.ts    Typed edge-function client with real error messages
+  integrations/supabase/   Supabase client + generated DB types
+supabase/
+  config.toml              Function JWT settings
+  migrations/              SQL schema, RLS, storage, indexes, hardening
+  functions/
+    _shared/nvidia.ts      Shared NVIDIA client, CORS, auth, rate limits, logging
+    interview-ai/
+    compute-analytics/
+    analyze-resume/
+    generate-roadmap/
+    evaluate-code/
+```
 
-| Function | Purpose |
-|---|---|
-| `interview-ai` | Conducts AI interviews, evaluates answers, generates follow-ups |
-| `compute-analytics` | Calculates skill scores from interview feedback keywords |
-| `analyze-resume` | Extracts text from PDFs, uses AI to identify skills and generate questions |
-| `generate-roadmap` | Creates personalized 4-week learning plans based on analytics |
+## Local development
 
-All functions include structured logging with request IDs, timeout protection (30-45s), rate limit handling, graceful fallbacks, and user-friendly error messages.
+### Prerequisites
 
-## Security
+- Node.js 20+
+- npm 10+
+- A Supabase project (or the Supabase CLI for a local stack)
+- An NVIDIA API key from [build.nvidia.com](https://build.nvidia.com)
 
-- **Authentication**: Email/password auth with email verification
-- **RLS**: All tables enforce user-scoped access via `auth.uid() = user_id`
-- **Storage**: Resume files scoped to `{user_id}/` paths with RLS policies
-- **No anonymous signups**: Users must register with email confirmation
-
-## Tech Stack
-
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Framer Motion
-- **UI**: shadcn/ui, Recharts
-- **Backend**: Lovable Cloud (PostgreSQL, Edge Functions, Auth, Storage)
-- **AI**: Google Gemini 3 Flash via Lovable AI Gateway
-
-## Development
-
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Run development server: `npm run dev`
-
-## Deployment
-
-Deploys automatically through Lovable. Edge functions deploy on save.
-
-## Project info
-
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### 1. Configure environment
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+cp .env.example .env
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Fill in `.env`:
 
-# Step 3: Install the necessary dependencies.
-npm i
+```dotenv
+VITE_SUPABASE_PROJECT_ID="your-project-ref"
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-anon-key"
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 2. Install and run
+
+```sh
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app runs at <http://localhost:8080>.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 3. Edge functions (optional, for local backend work)
 
-**Use GitHub Codespaces**
+```sh
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npx supabase secrets set NVIDIA_API_KEY=nvapi-...
+npx supabase functions serve --env-file .env
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Available scripts
 
-## What technologies are used for this project?
+| Script | Description |
+|---|---|
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Type-check and build for production |
+| `npm run preview` | Preview the production build |
+| `npm run lint` | Run ESLint |
+| `npm run typecheck` | Run `tsc` without emitting |
+| `npm test` | Run the Vitest suite once |
+| `npm run test:coverage` | Run tests with coverage |
+| `npm run db:push` | Push migrations to the linked Supabase project |
+| `npm run functions:deploy` | Deploy all edge functions |
 
-This project is built with:
+## Environment variables
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Frontend (public — baked into the bundle)
 
-## How can I deploy this project?
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_SUPABASE_URL` | yes | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | yes | Supabase anon/publishable key |
+| `VITE_SUPABASE_PROJECT_ID` | recommended | Project ref, used by tooling |
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Edge functions (server-side secrets)
 
-## Can I connect a custom domain to my Lovable project?
+| Variable | Required | Description |
+|---|---|---|
+| `NVIDIA_API_KEY` | yes | NVIDIA NIM API key (`nvapi-...`) |
+| `NVIDIA_MODEL` | no | Override the primary model |
+| `NVIDIA_FALLBACK_MODEL` | no | Override the fallback model |
+| `NVIDIA_BASE_URL` | no | Defaults to `https://integrate.api.nvidia.com/v1` |
+| `SITE_URL` | recommended | Comma-separated CORS allowlist; defaults to `*` |
 
-Yes, you can!
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_ANON_KEY` are injected
+automatically by the Supabase runtime.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Database
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+| Table | Description |
+|---|---|
+| `profiles` | User profile (name, target role/company, experience) |
+| `interview_sessions` | Session metadata and overall score |
+| `interview_turns` | Per-question answer, score, feedback, strengths/improvements |
+| `user_analytics` | Aggregated skill scores, interview count, streak |
+| `user_resumes` | Resume metadata, extracted text, parsed sections, questions |
+| `learning_roadmaps` | Generated 4-week plan (JSONB) |
+| `rate_limits` | Per-user request windows for AI endpoints (service-role only) |
+
+Every table has Row-Level Security enabled and user-scoped policies. Resume files
+live in a **private** `resumes` bucket under `{user_id}/...` paths.
+
+## Edge functions
+
+| Function | Auth | Rate limit | Notes |
+|---|---|---|---|
+| `interview-ai` | JWT | 20 / hour | Company personas, tool-call structured output |
+| `compute-analytics` | JWT | — | Verifies session ownership; heuristic fallback |
+| `analyze-resume` | JWT | 5 / day | Ownership + path checks, real PDF extraction |
+| `generate-roadmap` | JWT | 5 / day | In-place update, deterministic fallback plan |
+| `evaluate-code` | JWT | 30 / hour | Run + evaluate modes, score clamping |
+
+All functions:
+
+- Require a valid Supabase JWT (`verify_jwt = true`) and re-verify the caller.
+- Enforce resource ownership before reading or writing user data.
+- Use the shared NVIDIA client with retries, a 45s timeout, and automatic model
+  fallback.
+- Emit structured logs with a per-request ID.
+- Return user-safe error messages and correct HTTP status codes.
+
+## Security model
+
+- **Authentication** — Email/password with confirmation; all AI endpoints require
+  a signed-in user.
+- **Authorization** — RLS on every table plus explicit ownership checks in
+  functions (defense in depth against IDOR).
+- **Storage** — Private bucket; object paths must start with the caller's user ID.
+- **Secrets** — `NVIDIA_API_KEY` and the service-role key live only in Supabase
+  secrets. `.env` is git-ignored.
+- **Rate limiting** — Per-user, per-endpoint windows recorded in `rate_limits`.
+- **Input limits** — Code payloads capped at 20k characters; resumes at 10 MB and
+  12k extracted characters.
+
+## Deployment
+
+### Backend (Supabase)
+
+```sh
+npx supabase login
+npx supabase link --project-ref <new-project-ref>
+npx supabase db push
+npx supabase secrets set NVIDIA_API_KEY=nvapi-... SITE_URL=https://your-app.vercel.app
+npx supabase functions deploy
+```
+
+### Frontend (Vercel)
+
+1. Import the GitHub repository into Vercel.
+2. Framework preset: **Vite**. Build command: `npm run build`. Output: `dist`.
+3. Add `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, and
+   `VITE_SUPABASE_PROJECT_ID` as environment variables.
+4. Deploy. Set the same production URL as `SITE_URL` in Supabase secrets so CORS
+   is locked to your domain.
+
+Add a SPA rewrite so client-side routes resolve: all paths → `/index.html`
+(`vercel.json` is included).
+
+## Health checks
+
+- `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build` should all
+  pass in CI.
+- Supabase Dashboard → **Edge Functions → Logs** for per-request logs and AI
+  provider errors.
+- Supabase Dashboard → **Database → Query Performance** to inspect slow queries.
+
+## License
+
+Proprietary — all rights reserved.

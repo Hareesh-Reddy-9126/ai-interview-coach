@@ -2,8 +2,8 @@ import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Play, Send, RotateCcw, CheckCircle, XCircle, Loader2, Code2, ChevronRight, Clock, Zap, AlertTriangle } from "lucide-react";
 import Editor from "@monaco-editor/react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { invokeFunction } from "@/lib/edge-functions";
+import { getErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
 
 const languages = [
@@ -31,7 +31,6 @@ interface TestResult { input: string; expected: string; actual: string; passed: 
 interface AIEvaluation { timeComplexity: string; spaceComplexity: string; correctness: number; codeQuality: number; feedback: string; optimizations: string[]; suggestedAnswer: string; }
 
 export default function CodingInterview() {
-  const { user } = useAuth();
   const [phase, setPhase] = useState<"select" | "coding" | "results">("select");
   const [selectedProblem, setSelectedProblem] = useState<CodingProblem | null>(null);
   const [selectedLang, setSelectedLang] = useState(languages[0]);
@@ -56,10 +55,12 @@ export default function CodingInterview() {
     if (!selectedProblem || isRunning) return;
     setIsRunning(true); setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("evaluate-code", { body: { code, language: selectedLang.id, problem: { title: selectedProblem.title, description: selectedProblem.description, testCases: selectedProblem.testCases }, action: "run" } });
-      if (fnError) throw fnError; if (data?.error) throw new Error(data.error);
+      const data = await invokeFunction<{ testResults?: TestResult[] }>("evaluate-code", {
+        body: { code, language: selectedLang.id, problem: { title: selectedProblem.title, description: selectedProblem.description, testCases: selectedProblem.testCases }, action: "run" },
+        fallbackMessage: "Failed to run code.",
+      });
       setTestResults(data.testResults || []);
-    } catch (e: any) { setError(e.message || "Failed to run code."); toast.error("Code execution failed."); } finally { setIsRunning(false); }
+    } catch (e) { const message = getErrorMessage(e, "Failed to run code."); setError(message); toast.error("Code execution failed."); } finally { setIsRunning(false); }
   }, [code, selectedLang, selectedProblem, isRunning]);
 
   const submitSolution = useCallback(async () => {
@@ -67,11 +68,13 @@ export default function CodingInterview() {
     setIsEvaluating(true); setError(null);
     try {
       if (testResults.length === 0) await runCode();
-      const { data, error: fnError } = await supabase.functions.invoke("evaluate-code", { body: { code, language: selectedLang.id, problem: { title: selectedProblem.title, description: selectedProblem.description, testCases: selectedProblem.testCases, constraints: selectedProblem.constraints }, action: "evaluate" } });
-      if (fnError) throw fnError; if (data?.error) throw new Error(data.error);
+      const data = await invokeFunction<{ evaluation: AIEvaluation; testResults?: TestResult[] }>("evaluate-code", {
+        body: { code, language: selectedLang.id, problem: { title: selectedProblem.title, description: selectedProblem.description, testCases: selectedProblem.testCases, constraints: selectedProblem.constraints }, action: "evaluate" },
+        fallbackMessage: "AI evaluation failed.",
+      });
       setAIEvaluation(data.evaluation); if (data.testResults) setTestResults(data.testResults);
       if (timerRef) clearInterval(timerRef); setPhase("results");
-    } catch (e: any) { setError(e.message || "AI evaluation failed."); toast.error("Evaluation failed."); } finally { setIsEvaluating(false); }
+    } catch (e) { const message = getErrorMessage(e, "AI evaluation failed."); setError(message); toast.error("Evaluation failed."); } finally { setIsEvaluating(false); }
   }, [code, selectedLang, selectedProblem, isEvaluating, testResults, timerRef, runCode]);
 
   const difficultyColor = (d: string) => d === "Easy" ? "text-primary" : d === "Medium" ? "text-warning" : "text-destructive";
