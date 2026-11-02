@@ -25,6 +25,7 @@ import SkillRadarChart from "@/components/SkillRadarChart";
 import { Metric } from "@/components/ui/metric";
 import { EmptyState } from "@/components/ui/empty-state";
 import { type UserAnalytics } from "@/lib/utils";
+import { pickStrongestAndWeakest } from "@/lib/skills";
 
 interface SessionTrend {
   label: string;
@@ -119,8 +120,7 @@ export default function Analytics() {
       trendData.length > 0
         ? Math.round(trendData.reduce((a, t) => a + t.score, 0) / trendData.length)
         : 0;
-    const w = weaknessData[0] || null;
-    const s = weaknessData[weaknessData.length - 1] || null;
+    const { strongest: s, weakest: w } = pickStrongestAndWeakest(weaknessData, (skill) => skill.area);
     const ins: string[] = [];
     if (w && w.score < 60) ins.push(`Focus on ${w.area} — it's your weakest at ${w.score}/100.`);
     if (s && s.score > 70) ins.push(`${s.area} is your strongest skill at ${s.score}/100.`);

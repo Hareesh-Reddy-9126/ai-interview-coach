@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { type UserAnalytics } from "@/lib/utils";
+import { pickStrongestAndWeakest, SKILLS } from "@/lib/skills";
 import { Metric, ScoreRing, Sparkline } from "@/components/ui/metric";
 import { EmptyState } from "@/components/ui/empty-state";
 import SkillRadarChart from "@/components/SkillRadarChart";
@@ -28,14 +29,6 @@ interface RecentInterview {
   created_at: string;
   status: string;
 }
-
-const SKILLS = [
-  { key: "communication_score", label: "Communication" },
-  { key: "technical_score", label: "Technical" },
-  { key: "system_design_score", label: "System Design" },
-  { key: "problem_solving_score", label: "Problem Solving" },
-  { key: "confidence_score", label: "Confidence" },
-] as const;
 
 const PRACTICE_PATHS = [
   {
@@ -129,11 +122,10 @@ export default function Dashboard() {
       score: Number(analytics?.[skill.key]) || 0,
     })).sort((a, b) => b.score - a.score);
 
-    const strongest = completed > 0 ? skills[0] : null;
-    const weakest = completed > 0 ? skills[skills.length - 1] : null;
+    const { strongest, weakest } = pickStrongestAndWeakest(skills, (skill) => skill.label);
     const trend = [...scored].reverse().map((session) => session.overall_score as number);
 
-    return { completed, average, skills, strongest, weakest, trend };
+    return { completed, average, skills, strongest: completed > 0 ? strongest : null, weakest: completed > 0 ? weakest : null, trend };
   }, [analytics, recentInterviews]);
 
   const firstName =

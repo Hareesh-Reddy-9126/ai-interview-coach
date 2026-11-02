@@ -27,6 +27,7 @@ import SkillRadarChart from "@/components/SkillRadarChart";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { invokeFunction } from "@/lib/edge-functions";
 import { cn, getErrorMessage, type ResumeContext, type UserAnalytics } from "@/lib/utils";
+import { pickStrongestAndWeakest } from "@/lib/skills";
 import { ScoreRing } from "@/components/ui/metric";
 
 function deriveSkillScoresFromTurns(turns: Turn[], avgScore: number): Record<string, number> {
@@ -624,8 +625,7 @@ export default function Interview() {
           { label: "Confidence", score: reportSkillScores.confidence_score ?? 0 },
         ].map((row) => ({ ...row, score: Math.min(100, Math.max(0, Math.round(row.score))) }))
       : [];
-    const strongest = skillRows.length ? [...skillRows].sort((a, b) => b.score - a.score)[0] : null;
-    const weakest = skillRows.length ? [...skillRows].sort((a, b) => a.score - b.score)[0] : null;
+    const { strongest, weakest } = pickStrongestAndWeakest(skillRows, (row) => row.label);
     const verdict =
       avgScore >= 85
         ? "Interview-ready. Keep the reps sharp and work on consistency under pressure."

@@ -1,5 +1,6 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 import { Radar as RadarIcon } from "lucide-react";
+import { pickStrongestAndWeakest } from "@/lib/skills";
 
 interface Props {
   analytics?: {
@@ -20,7 +21,7 @@ export default function SkillRadarChart({ analytics }: Props) {
     { skill: "Confidence", score: Number(analytics?.confidence_score) || 0 },
   ];
   const hasData = data.some((entry) => entry.score > 0);
-  const lowest = hasData ? [...data].sort((a, b) => a.score - b.score)[0] : null;
+  const { weakest: lowest } = pickStrongestAndWeakest(data, (entry) => entry.skill);
 
   return (
     <div className="card-base flex h-full flex-col">
