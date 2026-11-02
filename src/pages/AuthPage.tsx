@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Mail, Lock, User, ArrowRight, Loader2, Brain, Code2, Shield, BarChart3 } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Logo } from "@/components/ui/logo";
+import { ScoreRing } from "@/components/ui/metric";
 
-const features = [
-  { icon: Brain, label: "AI Mock Interviews", desc: "Practice with realistic AI interviewers from top companies" },
-  { icon: Code2, label: "Coding Challenges", desc: "LeetCode-style problems with real-time AI evaluation" },
-  { icon: Shield, label: "Company-Specific Prep", desc: "Tailored prep for Google, Amazon, Meta & 50+ companies" },
-  { icon: BarChart3, label: "Performance Analytics", desc: "Track progress with detailed skill breakdowns" },
+const sampleSkills = [
+  { label: "Technical depth", score: 86 },
+  { label: "Communication", score: 74 },
+  { label: "System design", score: 68 },
 ];
 
 export default function AuthPage() {
@@ -17,6 +18,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ export default function AuthPage() {
       if (error) {
         toast.error(error.message);
       } else if (needsConfirmation) {
-        toast.success("Account created! Confirm your email, then sign in.");
+        toast.success("Account created. Confirm your email, then sign in.");
         setIsLogin(true);
         setPassword("");
       } else {
@@ -43,128 +45,246 @@ export default function AuthPage() {
     setLoading(false);
   };
 
+  const switchMode = () => {
+    setIsLogin((value) => !value);
+    setPassword("");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-5 relative overflow-hidden">
-      <div className="fixed inset-0 bg-mesh pointer-events-none" />
-      <div className="fixed inset-0 bg-grid pointer-events-none opacity-20" />
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <div className="pointer-events-none fixed inset-0 bg-mesh opacity-80" aria-hidden="true" />
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border-strong to-transparent"
+        aria-hidden="true"
+      />
 
-      <div className="w-full max-w-5xl relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        {/* Left branding */}
-        <motion.div
-          initial={{ opacity: 0, x: -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="hidden lg:block space-y-10"
-        >
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-xl shadow-primary/20">
-                <Sparkles className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">AI Interview Lab</h1>
-                <p className="text-xs text-muted-foreground">AI Interview Practice</p>
-              </div>
+      <div className="relative z-10 grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        {/* Brand / product proof */}
+        <div className="hidden flex-col justify-between border-r border-border/60 px-10 py-10 lg:flex xl:px-14 xl:py-12">
+          <div className="flex items-center justify-between">
+            <Logo />
+            <span className="tag-muted">Early access</span>
+          </div>
+
+          <div className="my-12 max-w-[460px]">
+            <div className="mb-5 flex items-center gap-2">
+              <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+              <span className="section-label">AI interview practice</span>
             </div>
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
-              Ace your next tech interview with <span className="text-foreground font-semibold">AI-powered practice</span> and personalized coaching.
+            <h1 className="text-display-xl text-foreground">
+              Interviews are a skill.
+              <br />
+              <span className="text-muted-foreground">Practice them properly.</span>
+            </h1>
+            <p className="mt-5 max-w-[400px] text-[13.5px] leading-6 text-muted-foreground">
+              Run realistic mock interviews, get scored on five dimensions, and follow a plan
+              that adapts to the gaps in your answers — not a generic question bank.
             </p>
-          </div>
 
-          <div className="space-y-3">
-            {features.map((feature, i) => (
-              <motion.div key={feature.label}
-                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.1 }}
-                className="flex items-start gap-4 p-4 rounded-xl bg-card/40 border border-border/40 hover:border-border/80 transition-colors"
-              >
-                <div className="p-2 rounded-lg bg-primary/10 shrink-0 mt-0.5">
-                  <feature.icon className="h-4 w-4 text-primary" />
+            {/* Sample session report */}
+            <div className="card-base mt-9 max-w-[420px] overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                  <span className="text-[11px] font-medium text-foreground">Session report</span>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{feature.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{feature.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <p className="text-xs text-muted-foreground/50">Built for engineers preparing for top-tier technical interviews</p>
-        </motion.div>
-
-        {/* Right auth form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="w-full max-w-[380px] mx-auto lg:mx-0 lg:ml-auto"
-        >
-          <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground tracking-tight">AI Interview Lab</span>
-          </div>
-
-          <div className="card-base p-7">
-            <AnimatePresence mode="wait">
-              <motion.div key={isLogin ? "login" : "signup"}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.15 }}
-              >
-                <h2 className="text-xl font-bold text-foreground text-center mb-1 tracking-tight">
-                  {isLogin ? "Welcome back" : "Get started"}
-                </h2>
-                <p className="text-sm text-muted-foreground text-center mb-6">
-                  {isLogin ? "Sign in to your account" : "Create your free account"}
-                </p>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {!isLogin && (
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Full Name</label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} required={!isLogin}
-                          className="input-base pl-10" placeholder="Your name" />
+                <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/50">
+                  18 min · Senior
+                </span>
+              </div>
+              <div className="flex items-center gap-5 p-4">
+                <ScoreRing value={82} size={92} stroke={6} label="Overall" />
+                <div className="min-w-0 flex-1 space-y-2.5">
+                  {sampleSkills.map((skill) => (
+                    <div key={skill.label}>
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-[10.5px] text-secondary-foreground">{skill.label}</span>
+                        <span className="tabular text-[10px] text-muted-foreground/70">{skill.score}</span>
+                      </div>
+                      <div className="h-[3px] overflow-hidden rounded-full bg-surface-3">
+                        <div
+                          className="h-full rounded-full bg-primary/80"
+                          style={{ width: `${skill.score}%` }}
+                        />
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-border/60 bg-surface-2/40 px-4 py-2.5">
+                <p className="text-[10.5px] leading-4 text-muted-foreground">
+                  <span className="font-medium text-foreground">Coaching note: </span>
+                  Quantify the outcome in your design answer before discussing trade-offs.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[10.5px] text-muted-foreground/50">
+            <span>Powered by NVIDIA Nemotron</span>
+            <span className="h-[3px] w-[3px] rounded-full bg-border-strong" aria-hidden="true" />
+            <span>Private by default</span>
+            <span className="h-[3px] w-[3px] rounded-full bg-border-strong" aria-hidden="true" />
+            <span>No credit card required</span>
+          </div>
+        </div>
+
+        {/* Auth form */}
+        <div className="flex items-center justify-center px-5 py-10 sm:px-8">
+          <div className="w-full max-w-[400px]">
+            <div className="mb-9 flex items-center justify-between lg:hidden">
+              <Logo />
+              <span className="tag-muted">Early access</span>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="mb-6">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+                  <span className="section-label">{isLogin ? "Welcome back" : "Create account"}</span>
+                </div>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={isLogin ? "login-heading" : "signup-heading"}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.14 }}
+                  >
+                    <h2 className="text-display-md text-foreground">
+                      {isLogin ? "Sign in to your lab" : "Start your first session"}
+                    </h2>
+                    <p className="mt-2 text-[13px] leading-5 text-muted-foreground">
+                      {isLogin
+                        ? "Pick up where you left off — your history and scores are saved."
+                        : "Free to start. Your first interview takes about twenty minutes."}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <AnimatePresence initial={false}>
+                  {!isLogin && (
+                    <motion.div
+                      key="name-field"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <label htmlFor="name" className="label-base">
+                        Full name
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required={!isLogin}
+                        autoComplete="name"
+                        className="input-base"
+                        placeholder="Hareesh Reddy"
+                      />
+                    </motion.div>
                   )}
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                        className="input-base pl-10" placeholder="you@example.com" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
-                      <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8}
-                        className="input-base pl-10" placeholder="At least 8 characters" />
-                    </div>
+                </AnimatePresence>
+
+                <div>
+                  <label htmlFor="email" className="label-base">
+                    Work email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    className="input-base"
+                    placeholder="you@company.com"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-baseline justify-between">
+                    <label htmlFor="password" className="label-base">
+                      Password
+                    </label>
                     {!isLogin && (
-                      <p className="text-[11px] text-muted-foreground mt-1.5">Use at least 8 characters.</p>
+                      <span className="mb-1.5 text-[10.5px] text-muted-foreground/50">
+                        8 characters minimum
+                      </span>
                     )}
                   </div>
-                  <button type="submit" disabled={loading}
-                    className="w-full btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-50 font-semibold">
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isLogin ? "Sign In" : "Create Account"}
-                    {!loading && <ArrowRight className="h-4 w-4" />}
-                  </button>
-                </form>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      autoComplete={isLogin ? "current-password" : "new-password"}
+                      className="input-base pr-11"
+                      placeholder={isLogin ? "Your password" : "Create a strong password"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                </div>
 
-                <p className="text-center text-sm text-muted-foreground mt-6">
-                  {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-                  <button onClick={() => setIsLogin(!isLogin)} className="text-primary hover:underline font-semibold">
-                    {isLogin ? "Sign up" : "Sign in"}
-                  </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary btn-lg mt-1 w-full gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {isLogin ? "Signing in…" : "Creating account…"}
+                    </>
+                  ) : (
+                    <>
+                      {isLogin ? "Sign in" : "Create account"}
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-5">
+                <p className="text-[12px] text-muted-foreground">
+                  {isLogin ? "New to Interview Lab?" : "Already have an account?"}
                 </p>
-              </motion.div>
-            </AnimatePresence>
+                <button
+                  type="button"
+                  onClick={switchMode}
+                  className="text-[12px] font-medium text-foreground underline decoration-border-strong decoration-1 underline-offset-4 transition-colors hover:text-primary hover:decoration-primary/50"
+                >
+                  {isLogin ? "Create an account" : "Sign in instead"}
+                </button>
+              </div>
+
+              <p className="mt-8 text-[10.5px] leading-4 text-muted-foreground/45">
+                By continuing you agree to fair-use limits on AI requests. Your resume and
+                interview data stay private to your account.
+              </p>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -19,15 +19,21 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Space Grotesk", "Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "Fira Code", "monospace"],
+        display: ["Inter Tight", "Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "SFMono-Regular", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
+        "border-strong": "hsl(var(--border-strong))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        surface: {
+          DEFAULT: "hsl(var(--surface-2))",
+          2: "hsl(var(--surface-2))",
+          3: "hsl(var(--surface-3))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -100,13 +106,12 @@ export default {
         "2xl": "var(--radius-xl)",
       },
       boxShadow: {
-        "premium-sm": "0 1px 2px hsl(var(--background) / 0.4), 0 0 0 1px hsl(var(--border) / 0.3)",
-        premium: "0 4px 16px -4px hsl(var(--background) / 0.5), 0 0 0 1px hsl(var(--border) / 0.3)",
-        "premium-lg": "0 12px 40px -8px hsl(var(--background) / 0.6), 0 0 0 1px hsl(var(--border) / 0.3)",
-        "premium-xl": "0 24px 64px -12px hsl(var(--background) / 0.7), 0 0 0 1px hsl(var(--border) / 0.2)",
-        "glow-primary": "0 0 32px hsl(var(--primary) / 0.2), 0 0 0 1px hsl(var(--primary) / 0.1)",
-        "glow-accent": "0 0 32px hsl(var(--accent) / 0.2), 0 0 0 1px hsl(var(--accent) / 0.1)",
-        "glow-destructive": "0 0 32px hsl(var(--destructive) / 0.2), 0 0 0 1px hsl(var(--destructive) / 0.1)",
+        "premium-sm": "0 1px 2px hsl(var(--shadow-color) / 0.4)",
+        premium: "0 8px 24px -16px hsl(var(--shadow-color) / 0.9)",
+        "premium-lg": "0 24px 48px -24px hsl(var(--shadow-color) / 0.95)",
+        "premium-xl": "0 40px 80px -32px hsl(var(--shadow-color) / 1)",
+        "glow-primary": "0 0 24px hsl(var(--primary) / 0.18)",
+        "inset-top": "inset 0 1px 0 0 hsl(0 0% 100% / 0.05)",
       },
       keyframes: {
         "accordion-down": {
@@ -117,92 +122,36 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "pulse-glow": {
-          "0%, 100%": { opacity: "0.4" },
-          "50%": { opacity: "1" },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
         },
-        "shimmer": {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
-          "0%": { opacity: "0", transform: "translateY(10px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
         "scale-in": {
-          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "0%": { opacity: "0", transform: "scale(0.97)" },
           "100%": { opacity: "1", transform: "scale(1)" },
-        },
-        "slide-up": {
-          "0%": { opacity: "0", transform: "translateY(20px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        "slide-in-right": {
-          "0%": { opacity: "0", transform: "translateX(16px)" },
-          "100%": { opacity: "1", transform: "translateX(0)" },
-        },
-        "fade-in-up": {
-          "0%": { opacity: "0", transform: "translateY(12px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        "fade-in-down": {
-          "0%": { opacity: "0", transform: "translateY(-12px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        "rotate-slow": {
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(360deg)" },
-        },
-        "float": {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-4px)" },
-        },
-        "glow-pulse": {
-          "0%, 100%": { boxShadow: "0 0 20px hsl(var(--primary) / 0.15)" },
-          "50%": { boxShadow: "0 0 40px hsl(var(--primary) / 0.35), 0 0 80px hsl(var(--primary) / 0.15)" },
-        },
-        "progress-fill": {
-          from: { width: "0%" },
-        },
-        "loading-dot": {
-          "0%, 80%, 100%": { opacity: "0.3", transform: "scale(1)" },
-          "40%": { opacity: "1", transform: "scale(1.2)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
-        "shimmer": "shimmer 2s linear infinite",
-        "fade-in": "fade-in 0.4s ease-out",
-        "scale-in": "scale-in 0.3s ease-out",
-        "slide-up": "slide-up 0.5s ease-out",
-        "slide-in-right": "slide-in-right 0.4s ease-out",
-        "fade-in-up": "fade-in-up 0.5s ease-out forwards",
-        "fade-in-down": "fade-in-down 0.4s ease-out forwards",
-        "rotate-slow": "rotate-slow 20s linear infinite",
-        "float": "float 3s ease-in-out infinite",
-        "glow-pulse": "glow-pulse 2.5s ease-in-out infinite",
-        "progress-fill": "progress-fill 0.8s ease-out forwards",
-        "loading-dot": "loading-dot 1.4s ease-in-out infinite",
-      },
-      transitionDuration: {
-        "200": "200ms",
-        "300": "300ms",
-        "400": "400ms",
-        "500": "500ms",
+        shimmer: "shimmer 2s linear infinite",
+        "fade-up": "fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "fade-in": "fade-in 0.3s ease-out both",
+        "scale-in": "scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both",
       },
       transitionTimingFunction: {
-        "ease-out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "ease-spring": "cubic-bezier(0.34, 1.56, 0.64, 1)",
-      },
-      spacing: {
-        "18": "4.5rem",
-        "88": "22rem",
-        "128": "32rem",
+        "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
       screens: {
-        "xs": "480px",
+        xs: "480px",
         "3xl": "1600px",
       },
     },

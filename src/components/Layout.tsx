@@ -1,254 +1,239 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  LayoutDashboard, Mic, Target, FileText, BarChart3,
-  Map, Gauge, Settings, History, Menu, LogOut, X, Code2,
-  Search, ChevronDown, Sparkles, ArrowRight, Bell
+  ChevronDown,
+  ChevronRight,
+  Gauge,
+  LogOut,
+  Menu,
+  Plus,
+  Search,
+  Settings,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { findNavItem, navGroups } from "@/lib/navigation";
+import { Logo } from "@/components/ui/logo";
+import { CommandPalette } from "@/components/ui/command-palette";
+import { cn } from "@/lib/utils";
 
-const navGroups = [
-  {
-    label: "Main",
-    items: [
-      { to: "/", icon: LayoutDashboard, label: "Dashboard", description: "Overview & quick actions" },
-      { to: "/interview", icon: Mic, label: "Interview", description: "AI-powered mock interviews" },
-      { to: "/coding", icon: Code2, label: "Coding Lab", description: "Algorithms & system design" },
-      { to: "/practice", icon: Target, label: "Practice", description: "Focused skill building" },
-    ],
-  },
-  {
-    label: "Tools",
-    items: [
-      { to: "/resume", icon: FileText, label: "Resume", description: "AI analysis & questions" },
-      { to: "/analytics", icon: BarChart3, label: "Analytics", description: "Performance insights" },
-      { to: "/roadmap", icon: Map, label: "Roadmap", description: "Personalized learning plan" },
-      { to: "/history", icon: History, label: "History", description: "Past sessions & progress" },
-    ],
-  },
-  {
-    label: "Account",
-    items: [
-      { to: "/usage", icon: Gauge, label: "Plan & Usage", description: "Limits & fair use" },
-      { to: "/settings", icon: Settings, label: "Settings", description: "Preferences & account" },
-    ],
-  },
-];
+function useWorkspaceSummary(userId?: string) {
+  const [summary, setSummary] = useState<{ interviews: number; streak: number } | null>(null);
 
-const allNavItems = navGroups.flatMap(g => g.items);
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    supabase
+      .from("user_analytics")
+      .select("interviews_completed, current_streak")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setSummary({
+          interviews: Number(data?.interviews_completed) || 0,
+          streak: Number(data?.current_streak) || 0,
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
-function SearchResultsDropdown({
-  searchOpen,
-  search,
-  searchResults,
-  onSelect,
-  onClose
-}: {
-  searchOpen: boolean;
-  search: string;
-  searchResults: typeof allNavItems;
-  onSelect: (to: string) => void;
-  onClose: () => void;
-}) {
-  if (!searchOpen || !search.trim()) return null;
+  return summary;
+}
 
+function NavItemRow({ item, onNavigate }: { item: (typeof navGroups)[number]["items"][number]; onNavigate?: () => void }) {
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: -6, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -6, scale: 0.98 }}
-        transition={{ duration: 0.15 }}
-        className="absolute left-0 right-0 top-full mt-2 z-50"
-      >
-        <div className="card-base shadow-2xl shadow-black/30 overflow-hidden border-border/50">
-          {searchResults.length > 0 ? (
-            searchResults.map((item) => (
-              <button
-                key={item.to}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => { onSelect(item.to); onClose(); }}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-none border-t border-border/40 first:border-0 text-sm text-left text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
-              >
-                <span className="h-5 w-5 flex-shrink-0 flex items-center justify-center">
-                  <item.icon className="h-4 w-4" />
-                </span>
-                <div className="flex-1 text-left">
-                  <span className="block font-medium truncate">{item.label}</span>
-                  <span className="text-[10px] text-muted-foreground/50 truncate block">{item.description}</span>
-                </div>
-                <ArrowRight className="h-4 w-4 ml-auto opacity-40" />
-              </button>
-            ))
-          ) : (
-            <div className="px-4 py-6 text-center">
-              <Search className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
-              <p className="text-sm text-muted-foreground">No pages found for "{search}"</p>
-            </div>
+    <NavLink
+      to={item.to}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        cn(
+          "group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[12.5px] font-medium transition-colors duration-150",
+          isActive
+            ? "bg-[hsl(var(--sidebar-accent))] text-foreground"
+            : "text-sidebar-foreground hover:bg-[hsl(var(--sidebar-accent))]/60 hover:text-foreground",
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <motion.span
+              layoutId="sidebar-active-rail"
+              className="absolute -left-px top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-full bg-primary"
+              transition={{ type: "spring", stiffness: 420, damping: 34 }}
+            />
           )}
-        </div>
-      </motion.div>
-    </AnimatePresence>
+          <item.icon
+            className={cn(
+              "h-[15px] w-[15px] shrink-0 transition-colors",
+              isActive ? "text-primary" : "text-muted-foreground/55 group-hover:text-foreground/80",
+            )}
+            strokeWidth={1.9}
+          />
+          <span className="flex-1 truncate">{item.label}</span>
+          {isActive && <span className="h-1 w-1 rounded-full bg-primary/60" />}
+        </>
+      )}
+    </NavLink>
   );
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const location = useLocation();
-  const { signOut, user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const summary = useWorkspaceSummary(user?.id);
 
-  const searchResults = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return [];
-    return allNavItems
-      .filter((item) => item.label.toLowerCase().includes(query) || item.description.toLowerCase().includes(query))
-      .slice(0, 6);
-  }, [search]);
+  const currentPage = useMemo(() => findNavItem(location.pathname), [location.pathname]);
+
+  const userName = user?.user_metadata?.name || user?.email?.split("@")[0] || "User";
+  const userInitial = (user?.user_metadata?.name?.[0] || user?.email?.[0] || "U").toUpperCase();
+  const firstName = userName.split(" ")[0];
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+  }, [location.pathname]);
+
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        searchRef.current?.focus();
+        setPaletteOpen((open) => !open);
       }
       if (event.key === "Escape") {
-        setSearchOpen(false);
-        setNotificationsOpen(false);
         setProfileOpen(false);
+        setMobileOpen(false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const goToResult = (to: string) => {
-    navigate(to);
-    setSearch("");
-    setSearchOpen(false);
-    searchRef.current?.blur();
-  };
-
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    setMobileOpen(false);
-    setProfileOpen(false);
-    setNotificationsOpen(false);
-  }, [location.pathname]);
-
-  const currentPage = allNavItems.find(n => n.to === location.pathname);
-
-  const renderNav = useCallback(() => (
-    <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6" role="navigation" aria-label="Main navigation">
+  const nav = (onNavigate?: () => void) => (
+    <nav className="flex-1 overflow-y-auto px-3 pb-4 pt-3 scrollbar-none" aria-label="Primary">
       {navGroups.map((group) => (
-        <div key={group.label}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60 px-2 mb-2">{group.label}</p>
-          <div className="space-y-1">
-            {group.items.map((item) => {
-              const active = location.pathname === item.to;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) => cn(
-                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  )}
-                  aria-current={active ? "page" : undefined}
-                >
-                  <span
-                    className={cn(
-                      "h-5 w-5 shrink-0 flex items-center justify-center transition-all duration-200",
-                      active ? "text-primary" : "text-muted-foreground/60 group-hover:text-foreground"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4" />
-                  </span>
-                  <div className="flex-1 min-w-0 text-left">
-                    <span className="block truncate">{item.label}</span>
-                    <span className="text-[10px] text-muted-foreground/50 truncate block mt-0.5">{item.description}</span>
-                  </div>
-                  {active && (
-                    <motion.span
-                      layoutId="nav-indicator"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-primary"
-                    />
-                  )}
-                </NavLink>
-              );
-            })}
+        <div key={group.label} className="mb-5 last:mb-0">
+          <p className="mb-1.5 px-2.5 text-[9.5px] font-medium uppercase tracking-[0.15em] text-muted-foreground/40">
+            {group.label}
+          </p>
+          <div className="space-y-0.5">
+            {group.items.map((item) => (
+              <NavItemRow key={item.to} item={item} onNavigate={onNavigate} />
+            ))}
           </div>
         </div>
       ))}
     </nav>
-  ), [location.pathname]);
+  );
 
-  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
-  const userInitial = (user?.user_metadata?.name?.[0] || user?.email?.[0] || 'U').toUpperCase();
+  const sidebarFooter = (
+    <div className="space-y-3 border-t border-sidebar-border px-3 py-3">
+      <div className="rounded-[10px] border border-sidebar-border bg-[hsl(var(--sidebar-accent))]/50 p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[9.5px] font-medium uppercase tracking-[0.13em] text-muted-foreground/50">
+            Your cycle
+          </span>
+          <Link
+            to="/analytics"
+            className="text-[10px] font-medium text-muted-foreground/60 transition-colors hover:text-primary"
+          >
+            Details
+          </Link>
+        </div>
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          <div>
+            <p className="font-display text-[16px] font-semibold leading-none text-foreground tabular">
+              {summary ? summary.interviews : "—"}
+            </p>
+            <p className="mt-1 text-[9.5px] text-muted-foreground/50">Interviews</p>
+          </div>
+          <div>
+            <p className="font-display text-[16px] font-semibold leading-none text-foreground tabular">
+              {summary ? `${summary.streak}d` : "—"}
+            </p>
+            <p className="mt-1 text-[9.5px] text-muted-foreground/50">Streak</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2.5 px-1.5 py-1">
+        <Link
+          to="/settings"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-[11px] font-semibold text-foreground transition-colors hover:border-border-strong"
+          aria-label="Open settings"
+        >
+          {userInitial}
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11.5px] font-medium leading-tight text-foreground">{userName}</p>
+          <p className="truncate text-[10px] leading-tight text-muted-foreground/50">{user?.email}</p>
+        </div>
+        <button
+          type="button"
+          onClick={signOut}
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:bg-surface-3 hover:text-foreground"
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <p className="px-1.5 text-[9px] tracking-[0.02em] text-muted-foreground/30">
+        Powered by NVIDIA NIM · Nemotron
+      </p>
+    </div>
+  );
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      {/* Background mesh */}
-      <div className="fixed inset-0 pointer-events-none bg-mesh opacity-30 md:hidden" />
+    <div className="grain min-h-screen bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-xs focus:font-medium focus:text-primary-foreground"
+      >
+        Skip to content
+      </a>
+
+      <div className="pointer-events-none fixed inset-0 bg-mesh opacity-70" aria-hidden="true" />
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-64 flex-col border-r border-border/50 bg-sidebar/80 backdrop-blur-xl">
-        <div className="flex h-16 items-center gap-3 px-4 border-b border-border/50">
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-accent shadow-lg shadow-primary/30"
-          >
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-          </motion.div>
-          <div className="min-w-0">
-            <span className="text-sm font-bold text-foreground tracking-tight">AI Interview Lab</span>
-            <p className="text-[10px] text-muted-foreground/60 leading-none">Interview Practice</p>
-          </div>
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-xl md:flex">
+        <div className="flex h-[58px] shrink-0 items-center px-4">
+          <Link to="/" className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Logo />
+          </Link>
         </div>
 
-        {renderNav()}
-
-        {/* User section */}
-        <div className="border-t border-border/50 p-3">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary/50 transition-colors">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-xs font-bold text-foreground ring-1 ring-border/50">
+        <div className="mx-3 mb-1 flex items-center justify-between rounded-lg border border-sidebar-border bg-[hsl(var(--sidebar-accent))]/35 px-2.5 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-[5px] bg-primary/[0.12] text-[9px] font-bold text-primary">
               {userInitial}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-foreground truncate">{userName}</p>
-              <p className="text-[10px] text-muted-foreground/70 truncate">{user?.email}</p>
-            </div>
+            </span>
+            <span className="truncate text-[11px] font-medium text-sidebar-foreground">
+              {firstName}&apos;s workspace
+            </span>
           </div>
-          <button
-            onClick={signOut}
-            className="mt-2 flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-all"
-          >
-            <LogOut className="h-4 w-4 shrink-0" />
-            <span>Sign Out</span>
-          </button>
+          <span className="rounded-[4px] border border-primary/20 bg-primary/10 px-1.5 py-[1px] text-[8.5px] font-semibold uppercase tracking-[0.08em] text-primary">
+            Full
+          </span>
         </div>
+
+        {nav()}
+        {sidebarFooter}
       </aside>
 
-      {/* Mobile overlay sidebar */}
+      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -257,206 +242,174 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden"
             />
             <motion.aside
-              initial={{ x: -280 }}
+              initial={{ x: -300 }}
               animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="fixed inset-y-0 left-0 z-50 w-68 flex flex-col bg-sidebar/95 backdrop-blur-xl border-r border-border/50 md:hidden"
+              exit={{ x: -300 }}
+              transition={{ type: "spring", damping: 32, stiffness: 380 }}
+              className="fixed inset-y-0 left-0 z-50 flex w-[272px] flex-col border-r border-sidebar-border bg-sidebar md:hidden"
             >
-              <div className="flex h-16 items-center justify-between px-4 border-b border-border/50">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary to-accent">
-                    <Sparkles className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <span className="text-sm font-bold text-foreground">AI Interview Lab</span>
-                </div>
+              <div className="flex h-[58px] items-center justify-between px-4">
+                <Link to="/" onClick={() => setMobileOpen(false)}>
+                  <Logo />
+                </Link>
                 <button
+                  type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  className="btn-icon"
                   aria-label="Close menu"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              {renderNav()}
-              <div className="border-t border-border/50 p-3">
-                {user && (
-                  <div className="px-3 py-2 mb-2">
-                    <p className="text-xs font-semibold text-foreground truncate">{userName}</p>
-                    <p className="text-[10px] text-muted-foreground/70 truncate">{user.email}</p>
-                  </div>
-                )}
-                <button
-                  onClick={signOut}
-                  className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-all"
-                >
-                  <LogOut className="h-4 w-4 shrink-0" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
+              {nav(() => setMobileOpen(false))}
+              {sidebarFooter}
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col" style={{ marginLeft: isDesktop ? 256 : 0 }}>
-        {/* Topbar */}
-        <header className="sticky top-0 z-30 flex items-center h-16 px-4 md:px-6 border-b border-border/50 glass-strong gap-4">
+      <div className="relative min-h-screen md:pl-[248px]">
+        <header className="sticky top-0 z-30 flex h-[58px] items-center gap-3 border-b border-border/70 bg-background/75 px-4 backdrop-blur-xl md:px-7">
           <button
+            type="button"
             onClick={() => setMobileOpen(true)}
-            className="md:hidden p-2 -ml-1 text-muted-foreground hover:text-foreground rounded-lg hover:bg-secondary transition-colors"
+            className="btn-icon -ml-1.5 md:hidden"
             aria-label="Open menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-[18px] w-[18px]" />
           </button>
 
-          <div className="hidden md:flex items-center gap-3 ml-2">
-            <motion.span
-              key={currentPage?.label}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-sm font-semibold text-foreground"
-            >
-              {currentPage?.label || "Dashboard"}
-            </motion.span>
+          <div className="hidden min-w-0 items-center gap-1.5 text-[12px] md:flex">
+            <span className="text-muted-foreground/45">Workspace</span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground/30" />
+            <span className="truncate font-medium text-foreground">
+              {currentPage?.label ?? "Page"}
+            </span>
           </div>
 
-          {/* Search */}
-          <form onSubmit={(e) => { e.preventDefault(); if (searchResults[0]) goToResult(searchResults[0].to); }} className="group relative flex-1 max-w-md mx-auto md:mx-0 md:ml-6">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors" />
-            <input
-              ref={searchRef}
-              value={search}
-              onChange={(event) => { setSearch(event.target.value); setSearchOpen(true); }}
-              onFocus={() => setSearchOpen(true)}
-              onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
-              placeholder="Search pages, features... (⌘K)"
-              aria-label="Search pages"
-              className="w-full bg-secondary/40 rounded-xl pl-11 pr-4 py-2.5 text-sm text-foreground border border-transparent focus:border-primary/30 focus:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-primary/15 transition-all placeholder:text-muted-foreground/35"
-            />
-            <kbd className="absolute right-3.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex text-[10px] font-medium text-muted-foreground/40 bg-secondary/60 px-2 py-0.5 rounded border border-border/50">⌘K</kbd>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={openPalette}
+              className="group hidden h-8 w-[228px] items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-2.5 text-left transition-colors hover:border-border-strong hover:bg-surface-2 sm:flex"
+              aria-label="Open command palette"
+            >
+              <Search className="h-3.5 w-3.5 text-muted-foreground/50" />
+              <span className="flex-1 text-[11.5px] text-muted-foreground/50">Search or jump to…</span>
+              <kbd className="rounded border border-border bg-card px-1.5 py-0.5 text-[9.5px] font-medium text-muted-foreground/50">
+                ⌘K
+              </kbd>
+            </button>
 
-            <SearchResultsDropdown
-              searchOpen={searchOpen}
-              search={search}
-              searchResults={searchResults}
-              onSelect={goToResult}
-              onClose={() => { setSearchOpen(false); setSearch(""); }}
-            />
-          </form>
+            <button
+              type="button"
+              onClick={openPalette}
+              className="btn-icon sm:hidden"
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
 
-          {/* Right side actions */}
-          <div className="flex items-center gap-1.5 ml-auto">
-            {/* Notifications */}
+            <Link to="/interview" className="btn-primary btn-sm hidden gap-1.5 xs:inline-flex">
+              <Plus className="h-3.5 w-3.5" />
+              New session
+            </Link>
+
+            <div className="mx-1 hidden h-5 w-px bg-border sm:block" aria-hidden="true" />
+
             <div className="relative">
               <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary animate-pulse-glow" />
-              </button>
-              <AnimatePresence>
-                {notificationsOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                    transition={{ duration: 0.12 }}
-                    className="absolute right-0 top-full mt-2 w-72 card-base p-1 shadow-2xl shadow-black/30 z-50"
-                  >
-                    <div className="px-4 py-3 border-b border-border">
-                      <h4 className="text-sm font-semibold text-foreground">Notifications</h4>
-                    </div>
-                    <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
-                      <p className="text-sm text-muted-foreground text-center py-4">No new notifications</p>
-                    </div>
-                    <button
-                      onClick={() => setNotificationsOpen(false)}
-                      className="w-full px-4 py-2 text-sm text-primary hover:bg-primary/5 rounded-t-xl border-t border-border"
-                    >
-                      View all
-                    </button>
-                  </motion.div>
+                type="button"
+                onClick={() => setProfileOpen((open) => !open)}
+                className={cn(
+                  "flex h-8 items-center gap-2 rounded-lg border border-transparent pl-1 pr-2 transition-colors hover:border-border hover:bg-surface-2",
+                  profileOpen && "border-border bg-surface-2",
                 )}
-              </AnimatePresence>
-            </div>
-
-            {/* Profile dropdown */}
-            <div className="relative ml-1">
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-secondary transition-colors"
-                aria-label="User menu"
+                aria-label="Account menu"
+                aria-expanded={profileOpen}
               >
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/25 to-accent/25 flex items-center justify-center text-xs font-bold text-foreground ring-1 ring-border/50">
+                <span className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-surface-3 text-[10px] font-semibold text-foreground ring-1 ring-border">
                   {userInitial}
-                </div>
-                <span className="text-sm text-foreground font-medium hidden sm:block max-w-[120px] truncate">
-                  {userName.split(' ')[0]}
                 </span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                <span className="hidden max-w-[110px] truncate text-[11.5px] font-medium text-foreground sm:block">
+                  {firstName}
+                </span>
+                <ChevronDown className="h-3 w-3 text-muted-foreground/50" />
               </button>
 
               <AnimatePresence>
                 {profileOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                    transition={{ duration: 0.12 }}
-                    className="absolute right-0 top-full mt-2 w-56 card-base p-1.5 shadow-2xl shadow-black/30 z-50"
-                  >
-                    <div className="px-3 py-3 border-b border-border mb-1">
-                      <p className="text-sm font-semibold text-foreground truncate">{userName}</p>
-                      <p className="text-xs text-muted-foreground/70 truncate">{user?.email}</p>
-                    </div>
-                    <NavLink
-                      to="/settings"
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
                       onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      aria-hidden="true"
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: -4, scale: 0.985 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -4, scale: 0.985 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-border-strong bg-popover p-1.5 shadow-premium-xl"
                     >
-                      <Settings className="h-4 w-4" /> Settings
-                    </NavLink>
-                    <NavLink
-                      to="/usage"
-                      onClick={() => setProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                    >
-                      <Gauge className="h-4 w-4" /> Plan & Usage
-                    </NavLink>
-                    <button
-                      onClick={signOut}
-                      className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-colors"
-                    >
-                      <LogOut className="h-4 w-4" /> Sign Out
-                    </button>
-                  </motion.div>
+                      <div className="border-b border-border px-2.5 pb-2.5 pt-1.5">
+                        <p className="truncate text-[12.5px] font-medium text-foreground">{userName}</p>
+                        <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">{user?.email}</p>
+                      </div>
+                      <div className="pt-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileOpen(false);
+                            navigate("/settings");
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+                        >
+                          <Settings className="h-3.5 w-3.5" /> Settings
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileOpen(false);
+                            navigate("/usage");
+                          }}
+                          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+                        >
+                          <Gauge className="h-3.5 w-3.5" /> Plan &amp; usage
+                        </button>
+                        <div className="my-1 h-px bg-border" />
+                        <button
+                          type="button"
+                          onClick={signOut}
+                          className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[12px] text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <LogOut className="h-3.5 w-3.5" /> Sign out
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
             </div>
           </div>
         </header>
 
-        {/* Main workspace */}
-        <main className="flex-1 relative">
-          <div className="fixed inset-0 pointer-events-none bg-mesh opacity-40" style={{ marginLeft: isDesktop ? 256 : 0 }} />
+        <main id="main-content" className="relative mx-auto w-full max-w-[1240px] px-4 py-7 md:px-8 md:py-9">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 7 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="relative p-5 md:p-8 lg:p-10 max-w-[1400px] mx-auto"
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
           >
             {children}
           </motion.div>
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
   );
 }

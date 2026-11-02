@@ -8,6 +8,7 @@ import Layout from "@/components/Layout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo";
 
 // Lazy load pages
 const Index = lazy(() => import("./pages/Index"));
@@ -40,11 +41,11 @@ const queryClient = new QueryClient({
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center space-y-3">
-        <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+      <LogoMark size={32} className="animate-pulse-soft" />
+      <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground/40">
+        Loading workspace
+      </p>
     </div>
   );
 }
@@ -52,12 +53,11 @@ function PageLoader() {
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-3">
-        <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center mx-auto">
-          <Loader2 className="h-5 w-5 animate-spin text-primary-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground">Loading your workspace...</p>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-background">
+      <LogoMark size={34} className="animate-pulse-soft" />
+      <div className="flex items-center gap-2 text-[11px] text-muted-foreground/50">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Restoring your session
       </div>
     </div>
   );
@@ -68,8 +68,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <LogoMark size={32} className="animate-pulse-soft" />
     </div>
   );
   if (user) return <Navigate to="/" replace />;

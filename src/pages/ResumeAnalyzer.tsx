@@ -1,31 +1,99 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, FileText, Sparkles, Code2, Briefcase, GraduationCap, Loader2, Trash2, ArrowRight, AlertTriangle, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Briefcase,
+  Code2,
+  FileText,
+  GraduationCap,
+  Layers,
+  Loader2,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/lib/edge-functions";
-import { getErrorMessage } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 interface ResumeData {
-  id: string; file_url: string; extracted_text: string | null; skills: string[] | null; technologies: string[] | null;
-  projects: string[] | null; experience: string[] | null; education: string[] | null; interview_questions: string[] | null;
-  analysis_status: string; created_at: string;
+  id: string;
+  file_url: string;
+  extracted_text: string | null;
+  skills: string[] | null;
+  technologies: string[] | null;
+  projects: string[] | null;
+  experience: string[] | null;
+  education: string[] | null;
+  interview_questions: string[] | null;
+  analysis_status: string;
+  created_at: string;
+}
+
+function StatusTag({ status, analyzing }: { status: string; analyzing: boolean }) {
+  if (analyzing || status === "analyzing") return <span className="tag-warning">Analyzing</span>;
+  if (status === "failed") return <span className="tag-destructive">Failed</span>;
+  if (status === "completed") return <span className="tag-success">Analyzed</span>;
+  return <span className="tag-muted capitalize">{status}</span>;
+}
+
+function DetailCard({
+  icon: Icon,
+  title,
+  count,
+  children,
+}: {
+  icon: typeof Code2;
+  title: string;
+  count?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="card-base flex flex-col">
+      <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Icon className="h-3.5 w-3.5 text-muted-foreground/60" strokeWidth={1.8} />
+          <h2 className="text-[13px] font-semibold tracking-[-0.01em] text-foreground">{title}</h2>
+        </div>
+        {typeof count === "number" && (
+          <span className="tabular text-[10.5px] text-muted-foreground/40">{count}</span>
+        )}
+      </div>
+      <div className="flex-1 p-4">{children}</div>
+    </section>
+  );
+}
+
+function EmptyLine({ label }: { label: string }) {
+  return <p className="text-[11.5px] text-muted-foreground/50">No {label} detected.</p>;
 }
 
 export default function ResumeAnalyzer() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [resume, setResume] = useState<ResumeData | null>(null);
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const loadResume = useCallback(async (): Promise<ResumeData | null> => {
     if (!user) return null;
-    const { data, error: fetchErr } = await supabase.from("user_resumes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const { data, error: fetchErr } = await supabase
+      .from("user_resumes")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
     if (fetchErr) throw fetchErr;
     return data;
   }, [user]);
@@ -40,13 +108,27 @@ export default function ResumeAnalyzer() {
     }
   }, [loadResume]);
 
-  const retryAnalysis = useCallback(async (resumeId: string, filePath: string) => {
-    setError(null); setAnalyzing(true);
-    try {
-      await invokeFunction("analyze-resume", { body: { resume_id: resumeId, file_path: filePath }, fallbackMessage: "Analysis failed." });
-      await refreshResume(); toast.success("Resume analyzed!");
-    } catch (e) { const message = getErrorMessage(e, "Analysis failed."); setError(message); toast.error(message); } finally { setAnalyzing(false); }
-  }, [refreshResume]);
+  const retryAnalysis = useCallback(
+    async (resumeId: string, filePath: string) => {
+      setError(null);
+      setAnalyzing(true);
+      try {
+        await invokeFunction("analyze-resume", {
+          body: { resume_id: resumeId, file_path: filePath },
+          fallbackMessage: "Analysis failed.",
+        });
+        await refreshResume();
+        toast.success("Resume analyzed.");
+      } catch (e) {
+        const message = getErrorMessage(e, "Analysis failed.");
+        setError(message);
+        toast.error(message);
+      } finally {
+        setAnalyzing(false);
+      }
+    },
+    [refreshResume],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -66,127 +148,461 @@ export default function ResumeAnalyzer() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [loadResume, retryAnalysis]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file || !user) return; setError(null);
-    if (file.type !== "application/pdf") { toast.error("PDF only"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
-    setUploading(true);
-    try {
-      const filePath = `${user.id}/${Date.now()}_${file.name}`;
-      const { error: uploadErr } = await supabase.storage.from("resumes").upload(filePath, file);
-      if (uploadErr) throw uploadErr;
-      const { data: rec, error: insertErr } = await supabase.from("user_resumes").insert({ user_id: user.id, file_url: filePath, analysis_status: "analyzing" }).select().single();
-      if (insertErr) throw insertErr;
-      setResume(rec); setUploading(false); setAnalyzing(true);
-      await invokeFunction("analyze-resume", { body: { resume_id: rec.id, file_path: filePath }, fallbackMessage: "Upload failed." });
-      await refreshResume(); toast.success("Resume analyzed!");
-    } catch (e) { const message = getErrorMessage(e, "Upload failed."); setError(message); toast.error(message); } finally { setUploading(false); setAnalyzing(false); }
+  const processFile = useCallback(
+    async (file: File) => {
+      if (!user) return;
+      setError(null);
+      if (file.type !== "application/pdf") {
+        toast.error("PDF files only.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Maximum file size is 5MB.");
+        return;
+      }
+      setUploading(true);
+      try {
+        const filePath = `${user.id}/${Date.now()}_${file.name}`;
+        const { error: uploadErr } = await supabase.storage.from("resumes").upload(filePath, file);
+        if (uploadErr) throw uploadErr;
+        const { data: rec, error: insertErr } = await supabase
+          .from("user_resumes")
+          .insert({ user_id: user.id, file_url: filePath, analysis_status: "analyzing" })
+          .select()
+          .single();
+        if (insertErr) throw insertErr;
+        setResume(rec);
+        setUploading(false);
+        setAnalyzing(true);
+        await invokeFunction("analyze-resume", {
+          body: { resume_id: rec.id, file_path: filePath },
+          fallbackMessage: "Upload failed.",
+        });
+        await refreshResume();
+        toast.success("Resume analyzed.");
+      } catch (e) {
+        const message = getErrorMessage(e, "Upload failed.");
+        setError(message);
+        toast.error(message);
+      } finally {
+        setUploading(false);
+        setAnalyzing(false);
+      }
+    },
+    [user, refreshResume],
+  );
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) void processFile(file);
+    e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) void processFile(file);
   };
 
   const deleteResume = async () => {
     if (!resume || !user) return;
-    try { await supabase.storage.from("resumes").remove([resume.file_url]); await supabase.from("user_resumes").delete().eq("id", resume.id); setResume(null); setError(null); toast.success("Deleted"); } catch { toast.error("Failed"); }
+    try {
+      await supabase.storage.from("resumes").remove([resume.file_url]);
+      await supabase.from("user_resumes").delete().eq("id", resume.id);
+      setResume(null);
+      setError(null);
+      toast.success("Resume deleted.");
+    } catch {
+      toast.error("Could not delete the resume.");
+    }
   };
 
   const startResumeInterview = () => {
     if (!resume) return;
-    sessionStorage.setItem("resume_context", JSON.stringify({ skills: resume.skills, technologies: resume.technologies, projects: resume.projects, experience: resume.experience }));
+    sessionStorage.setItem(
+      "resume_context",
+      JSON.stringify({
+        skills: resume.skills,
+        technologies: resume.technologies,
+        projects: resume.projects,
+        experience: resume.experience,
+      }),
+    );
     navigate("/interview?mode=resume");
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[50vh]"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/40" />
+      </div>
+    );
+  }
 
   const isAnalyzed = resume?.analysis_status === "completed";
   const isFailed = resume?.analysis_status === "failed";
+  const fileName = resume?.file_url.split("/").pop() ?? "";
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">Resume Analyzer</h1>
-        <p className="text-sm text-muted-foreground mt-2">Upload your resume for AI-powered interview preparation</p>
+    <div className="mx-auto max-w-[1040px]">
+      <div className="mb-6 flex flex-col gap-4 border-b border-border/60 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+            <span className="section-label">Resume intelligence</span>
+          </div>
+          <h1 className="text-display-lg text-foreground">Your resume, decoded.</h1>
+          <p className="mt-2.5 max-w-xl text-[13.5px] leading-6 text-muted-foreground">
+            Extract skills, technologies and experience, then generate interview questions
+            grounded in what you've actually shipped.
+          </p>
+        </div>
+        {resume && (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="btn-secondary btn-sm w-fit gap-1.5"
+            disabled={uploading || analyzing}
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Replace resume
+          </button>
+        )}
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        onChange={handleUpload}
+        className="hidden"
+        disabled={uploading}
+      />
+
       {error && (
-        <div className="card-base p-4 border-destructive/20 flex items-center gap-4">
-          <AlertTriangle className="h-5 w-5 text-destructive shrink-0" /><p className="text-sm text-destructive flex-1">{error}</p>
-          {resume && <button onClick={() => retryAnalysis(resume.id, resume.file_url)} className="text-sm text-destructive font-semibold hover:underline">Retry</button>}
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/[0.06] px-4 py-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <p className="flex-1 text-[12.5px] leading-5 text-destructive">{error}</p>
+          {resume && (
+            <button
+              type="button"
+              onClick={() => retryAnalysis(resume.id, resume.file_url)}
+              className="shrink-0 text-[12px] font-medium text-destructive underline underline-offset-4 hover:no-underline"
+            >
+              Retry
+            </button>
+          )}
         </div>
       )}
 
       {!resume ? (
-        <label className="card-interactive p-14 text-center cursor-pointer block border-dashed border-2">
-          <input type="file" accept=".pdf" onChange={handleUpload} className="hidden" disabled={uploading} />
-          {uploading ? <Loader2 className="h-10 w-10 text-primary mx-auto mb-4 animate-spin" /> : <Upload className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />}
-          <p className="text-base font-semibold text-foreground">{uploading ? "Uploading..." : "Drop your resume here"}</p>
-          <p className="text-sm text-muted-foreground mt-1">or click to browse · PDF only · Max 5MB</p>
-        </label>
-      ) : (
-        <div className="space-y-5">
-          <div className="card-base p-5 flex items-center gap-4">
-            <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-primary" />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <section
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragActive(true);
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={handleDrop}
+            className={cn(
+              "card-base flex min-h-[340px] flex-col items-center justify-center px-6 py-12 text-center transition-colors",
+              dragActive && "border-primary/45 bg-primary/[0.03]",
+            )}
+          >
+            <div className="relative mb-5">
+              <div className="absolute inset-0 rounded-xl bg-primary/15 blur-xl" aria-hidden="true" />
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted-foreground shadow-inset-top">
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : (
+                  <Upload className="h-4 w-4" strokeWidth={1.8} />
+                )}
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{resume.file_url.split("/").pop()}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {new Date(resume.created_at).toLocaleDateString()} ·
-                <span className={isAnalyzed ? " text-primary font-medium" : isFailed ? " text-destructive font-medium" : " text-warning font-medium"}> {analyzing ? "Analyzing..." : resume.analysis_status}</span>
+            <h2 className="font-display text-[17px] font-semibold tracking-[-0.02em] text-foreground">
+              {uploading ? "Uploading your resume…" : dragActive ? "Drop to upload" : "Upload your resume"}
+            </h2>
+            <p className="mt-1.5 max-w-xs text-[12px] leading-5 text-muted-foreground">
+              PDF only, up to 5MB. Analysis takes roughly 20–30 seconds.
+            </p>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="btn-primary btn-sm mt-5 gap-1.5"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Choose PDF
+            </button>
+            <p className="mt-4 text-[10.5px] text-muted-foreground/40">
+              or drag and drop it here
+            </p>
+          </section>
+
+          <aside className="card-base overflow-hidden">
+            <div className="border-b border-border/60 px-4 py-3">
+              <h2 className="text-headline text-foreground">What happens next</h2>
+            </div>
+            <ol className="divide-y divide-border/60">
+              {[
+                {
+                  title: "Parse the document",
+                  description: "Text is extracted and structured into skills, technologies and roles.",
+                },
+                {
+                  title: "Map your experience",
+                  description: "Projects and roles become the raw material for tailored questions.",
+                },
+                {
+                  title: "Generate your question set",
+                  description: "Practice questions target what you claim to know — and what you don't.",
+                },
+              ].map((step, index) => (
+                <li key={step.title} className="flex gap-3 px-4 py-3.5">
+                  <span className="mt-0.5 font-mono text-[9.5px] text-primary/60">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="text-[12px] font-medium text-foreground">{step.title}</p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground/65">
+                      {step.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <div className="flex items-start gap-2 border-t border-border/60 bg-surface-2/35 px-4 py-3">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/60" />
+              <p className="text-[10.5px] leading-4 text-muted-foreground/60">
+                Stored in a private bucket. Only your account can read it, and you can delete it
+                at any time.
               </p>
             </div>
-            <div className="flex gap-2">
-              {isFailed && <button onClick={() => retryAnalysis(resume.id, resume.file_url)} className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-2 font-semibold"><RefreshCw className="h-4 w-4" /> Retry</button>}
-              {isAnalyzed && <button onClick={startResumeInterview} className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-2 font-semibold">Interview <ArrowRight className="h-4 w-4" /></button>}
-              <button onClick={deleteResume} className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-colors"><Trash2 className="h-4 w-4" /></button>
+          </aside>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* File row */}
+          <div className="card-base flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-surface-2 text-primary">
+                <FileText className="h-4 w-4" strokeWidth={1.8} />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[12.5px] font-medium text-foreground">{fileName}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <StatusTag status={resume.analysis_status} analyzing={analyzing} />
+                  <span className="text-[10.5px] text-muted-foreground/50">
+                    Uploaded{" "}
+                    {new Date(resume.created_at).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {isFailed && (
+                <button
+                  type="button"
+                  onClick={() => retryAnalysis(resume.id, resume.file_url)}
+                  className="btn-secondary btn-sm gap-1.5"
+                  disabled={analyzing}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Retry
+                </button>
+              )}
+              {isAnalyzed && (
+                <button
+                  type="button"
+                  onClick={startResumeInterview}
+                  className="btn-primary btn-sm gap-1.5"
+                >
+                  Practice with AI
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="btn-icon"
+                aria-label="Upload a different resume"
+                title="Upload a different resume"
+                disabled={uploading}
+              >
+                <Upload className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={deleteResume}
+                className="btn-icon hover:text-destructive"
+                aria-label="Delete resume"
+                title="Delete resume"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
 
-          {analyzing && (
-            <div className="card-base p-8 text-center">
-              <Loader2 className="h-8 w-8 text-primary mx-auto mb-4 animate-spin" />
-              <p className="text-base font-semibold text-foreground">Analyzing with AI...</p>
-              <p className="text-sm text-muted-foreground mt-1">This may take up to 30 seconds</p>
+          {(analyzing || resume.analysis_status === "analyzing") && (
+            <div className="card-base flex flex-col items-center justify-center px-6 py-16 text-center">
+              <div className="relative mb-5">
+                <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" aria-hidden="true" />
+                <Loader2 className="relative h-7 w-7 animate-spin text-primary" />
+              </div>
+              <h2 className="font-display text-[17px] font-semibold tracking-[-0.02em] text-foreground">
+                Reading your resume
+              </h2>
+              <p className="mt-1.5 max-w-sm text-[12px] leading-5 text-muted-foreground">
+                Extracting structure, skills and experience. This usually takes under 30 seconds.
+              </p>
+              <div className="mt-5 flex items-center gap-2">
+                {["Parsing", "Structuring", "Writing questions"].map((label, index) => (
+                  <span
+                    key={label}
+                    className={cn(
+                      "rounded-md border px-2 py-1 text-[10px]",
+                      index === 0
+                        ? "border-primary/25 bg-primary/[0.07] text-primary"
+                        : "border-border/60 bg-surface-2/40 text-muted-foreground/45",
+                    )}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
           {isAnalyzed && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { icon: Code2, label: "Skills", data: resume.skills, tagClass: "tag-primary" },
-                  { icon: Code2, label: "Technologies", data: resume.technologies, tagClass: "tag-accent" },
-                ].map(({ icon: Icon, label, data, tagClass }) => (
-                  <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card-base p-5">
-                    <div className="flex items-center gap-2.5 mb-4"><Icon className="h-4 w-4 text-primary" /><h3 className="text-sm font-bold text-foreground">{label}</h3></div>
-                    <div className="flex flex-wrap gap-2">{(data || []).map((s, i) => <span key={i} className={`${tagClass} text-[11px]`}>{s}</span>)}{(!data?.length) && <p className="text-sm text-muted-foreground">None detected</p>}</div>
-                  </motion.div>
-                ))}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-4"
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <DetailCard icon={Code2} title="Skills" count={(resume.skills || []).length}>
+                  {(resume.skills || []).length ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {(resume.skills || []).map((skill, index) => (
+                        <span key={index} className="tag-primary">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyLine label="skills" />
+                  )}
+                </DetailCard>
+
+                <DetailCard
+                  icon={Layers}
+                  title="Technologies"
+                  count={(resume.technologies || []).length}
+                >
+                  {(resume.technologies || []).length ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {(resume.technologies || []).map((technology, index) => (
+                        <span key={index} className="tag-accent">
+                          {technology}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyLine label="technologies" />
+                  )}
+                </DetailCard>
+
+                <DetailCard
+                  icon={Briefcase}
+                  title="Experience"
+                  count={(resume.experience || []).length}
+                >
+                  {(resume.experience || []).length ? (
+                    <ul className="space-y-2.5">
+                      {(resume.experience || []).map((item, index) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-2.5 text-[12px] leading-5 text-secondary-foreground"
+                        >
+                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-primary/70" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <EmptyLine label="experience" />
+                  )}
+                </DetailCard>
+
+                <DetailCard
+                  icon={GraduationCap}
+                  title="Education"
+                  count={(resume.education || []).length}
+                >
+                  {(resume.education || []).length ? (
+                    <ul className="space-y-2.5">
+                      {(resume.education || []).map((item, index) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-2.5 text-[12px] leading-5 text-secondary-foreground"
+                        >
+                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-info/70" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <EmptyLine label="education" />
+                  )}
+                </DetailCard>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  { icon: Briefcase, label: "Experience", data: resume.experience, dot: "bg-info" },
-                  { icon: GraduationCap, label: "Education", data: resume.education, dot: "bg-warning" },
-                ].map(({ icon: Icon, label, data, dot }) => (
-                  <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card-base p-5">
-                    <div className="flex items-center gap-2.5 mb-4"><Icon className="h-4 w-4 text-muted-foreground" /><h3 className="text-sm font-bold text-foreground">{label}</h3></div>
-                    <ul className="space-y-2">{(data || []).map((s, i) => <li key={i} className="text-sm text-muted-foreground flex items-start gap-2.5"><span className={`h-2 w-2 rounded-full ${dot} mt-1.5 shrink-0`} />{s}</li>)}{(!data?.length) && <p className="text-sm text-muted-foreground">None detected</p>}</ul>
-                  </motion.div>
-                ))}
-              </div>
+
               {resume.interview_questions?.length ? (
-                <div className="card-base p-5">
-                  <div className="flex items-center gap-2.5 mb-4"><Sparkles className="h-4 w-4 text-primary" /><h3 className="text-sm font-bold text-foreground">AI Interview Questions</h3></div>
-                  <div className="space-y-2">{resume.interview_questions.map((q, i) => <div key={i} className="p-4 rounded-xl bg-secondary/50 text-sm text-foreground"><span className="text-primary font-bold">Q{i + 1}:</span> {q}</div>)}</div>
-                  <button onClick={startResumeInterview} className="mt-5 w-full btn-primary py-3 flex items-center justify-center gap-2 font-semibold">Practice with AI <ArrowRight className="h-4 w-4" /></button>
-                </div>
+                <section className="card-base overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <h2 className="text-headline text-foreground">Questions built from your resume</h2>
+                    </div>
+                    <span className="tag-muted">{resume.interview_questions.length} questions</span>
+                  </div>
+                  <ol className="divide-y divide-border/60">
+                    {resume.interview_questions.map((question, index) => (
+                      <li key={index} className="flex gap-3.5 px-5 py-3.5">
+                        <span className="mt-0.5 font-mono text-[10px] text-primary/50">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <p className="text-[12.5px] leading-5 text-secondary-foreground">{question}</p>
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="flex flex-col gap-3 border-t border-border/60 bg-surface-2/35 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[11px] text-muted-foreground/60">
+                      Questions use your projects and technologies as context.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={startResumeInterview}
+                      className="btn-primary btn-sm w-fit gap-1.5"
+                    >
+                      Start resume interview
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </section>
               ) : null}
-              <label className="card-interactive p-4 text-center cursor-pointer block border-dashed border-2">
-                <input type="file" accept=".pdf" onChange={handleUpload} className="hidden" />
-                <p className="text-sm text-muted-foreground font-medium">Upload a different resume</p>
-              </label>
-            </>
+            </motion.div>
           )}
         </div>
       )}

@@ -33,19 +33,24 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="card-base p-8 text-center space-y-4 max-w-md">
-            <AlertTriangle className="h-8 w-8 text-destructive mx-auto" />
-            <h2 className="text-lg font-semibold text-foreground">Something went wrong</h2>
-            <p className="text-sm text-muted-foreground">
+        <div className="flex min-h-[50vh] items-center justify-center px-5">
+          <div className="card-base w-full max-w-md p-7 text-center">
+            <span className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-destructive/25 bg-destructive/[0.07] text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+            </span>
+            <p className="section-label">Unexpected error</p>
+            <h2 className="mt-2.5 font-display text-[19px] font-semibold tracking-[-0.02em] text-foreground">
+              Something went wrong
+            </h2>
+            <p className="mt-2 text-[12px] leading-5 text-muted-foreground">
               {this.state.error?.message || "An unexpected error occurred."}
             </p>
-            <div className="flex gap-3 justify-center">
-              <button onClick={this.handleReset} className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-2">
-                <RefreshCw className="h-4 w-4" /> Try Again
+            <div className="mt-5 flex justify-center gap-2">
+              <button onClick={this.handleReset} className="btn-primary btn-sm gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" /> Try again
               </button>
-              <button onClick={() => window.location.reload()} className="btn-secondary px-4 py-2 text-sm">
-                Reload Page
+              <button onClick={() => window.location.reload()} className="btn-secondary btn-sm">
+                Reload page
               </button>
             </div>
           </div>

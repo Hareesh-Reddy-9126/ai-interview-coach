@@ -1,70 +1,296 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { User, Mail, Briefcase, Building2, Save, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  Building2,
+  CalendarDays,
+  Gauge,
+  Loader2,
+  LogOut,
+  Mail,
+  Save,
+  User,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+const EMPTY_PROFILE = { name: "", experience: "", target_role: "", target_company: "" };
+
 export default function SettingsPage() {
-  const { user } = useAuth();
-  const [profile, setProfile] = useState({ name: "", experience: "", target_role: "", target_company: "" });
+  const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [initial, setInitial] = useState(EMPTY_PROFILE);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("*").eq("user_id", user.id).single()
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle()
       .then(({ data }) => {
-        if (data) setProfile({ name: data.name || "", experience: data.experience || "", target_role: data.target_role || "", target_company: data.target_company || "" });
+        if (cancelled) return;
+        if (data) {
+          const next = {
+            name: data.name || "",
+            experience: data.experience || "",
+            target_role: data.target_role || "",
+            target_company: data.target_company || "",
+          };
+          setProfile(next);
+          setInitial(next);
+        }
         setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
+
+  const dirty = useMemo(() => JSON.stringify(profile) !== JSON.stringify(initial), [profile, initial]);
 
   const save = async () => {
     if (!user) return;
     setSaving(true);
     const { error } = await supabase.from("profiles").update(profile).eq("user_id", user.id);
-    if (error) toast.error(error.message); else toast.success("Profile saved!");
+    if (error) {
+      toast.error(error.message);
+    } else {
+      setInitial(profile);
+      toast.success("Profile saved.");
+    }
     setSaving(false);
   };
 
-  if (loading) return (
-    <div className="max-w-lg mx-auto space-y-6">
-      <div><div className="skeleton h-7 w-24 mb-2" /><div className="skeleton h-4 w-36" /></div>
-      <div className="card-base p-6 space-y-5">{Array.from({ length: 4 }).map((_, i) => <div key={i}><div className="skeleton h-3 w-16 mb-2" /><div className="skeleton h-10 w-full rounded-lg" /></div>)}</div>
-    </div>
-  );
+  const userName = profile.name || user?.email?.split("@")[0] || "User";
+  const initialLetter = (userName[0] || "U").toUpperCase();
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[900px]">
+        <div className="mb-6 border-b border-border/60 pb-6">
+          <div className="skeleton mb-3 h-2.5 w-16" />
+          <div className="skeleton mb-2 h-8 w-40" />
+          <div className="skeleton h-3 w-64" />
+        </div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className="card-base space-y-5 p-5">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index}>
+                <div className="skeleton mb-2 h-2.5 w-20" />
+                <div className="skeleton h-10 w-full rounded-md" />
+              </div>
+            ))}
+          </div>
+          <div className="card-base h-64" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-lg mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-2">Manage your profile and preferences</p>
+    <div className="mx-auto max-w-[900px]">
+      <div className="mb-6 border-b border-border/60 pb-6">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+          <span className="section-label">Account</span>
+        </div>
+        <h1 className="text-display-lg text-foreground">Settings</h1>
+        <p className="mt-2.5 max-w-xl text-[13.5px] leading-6 text-muted-foreground">
+          Your profile is used to calibrate interview questions and keep analytics relevant to
+          the role you're actually targeting.
+        </p>
       </div>
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card-base p-6 space-y-5">
-        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.12em]">Profile Information</h3>
-
-        {[
-          { icon: User, label: "Full Name", key: "name" as const, placeholder: "Your name" },
-          { icon: Briefcase, label: "Target Role", key: "target_role" as const, placeholder: "e.g. Senior Frontend Engineer" },
-          { icon: Building2, label: "Target Company", key: "target_company" as const, placeholder: "e.g. Google" },
-        ].map(({ icon: Icon, label, key, placeholder }) => (
-          <div key={key}>
-            <label className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-2"><Icon className="h-3.5 w-3.5" /> {label}</label>
-            <input value={profile[key]} onChange={e => setProfile(p => ({ ...p, [key]: e.target.value }))} placeholder={placeholder} className="input-base" />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="card-base overflow-hidden"
+          aria-label="Profile information"
+        >
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+            <div className="flex items-center gap-2">
+              <User className="h-3.5 w-3.5 text-muted-foreground/60" strokeWidth={1.8} />
+              <h2 className="text-headline text-foreground">Profile</h2>
+            </div>
+            <span className="text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground/40">
+              {dirty ? "Unsaved changes" : "Up to date"}
+            </span>
           </div>
-        ))}
 
-        <div>
-          <label className="text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Email</label>
-          <input value={user?.email || ""} disabled className="input-base opacity-40 cursor-not-allowed" />
-        </div>
+          <div className="space-y-4 p-5">
+            <div>
+              <label htmlFor="settings-name" className="label-base">
+                Full name
+              </label>
+              <input
+                id="settings-name"
+                value={profile.name}
+                onChange={(e) => setProfile((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Your name"
+                autoComplete="name"
+                className="input-base"
+              />
+            </div>
 
-        <button onClick={save} disabled={saving} className="btn-primary px-5 py-2.5 inline-flex items-center gap-2 disabled:opacity-50 font-semibold">
-          {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : <><Save className="h-4 w-4" /> Save Changes</>}
-        </button>
-      </motion.div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="settings-role" className="label-base">
+                  <Briefcase className="h-3 w-3" /> Target role
+                </label>
+                <input
+                  id="settings-role"
+                  value={profile.target_role}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, target_role: e.target.value }))}
+                  placeholder="Senior Frontend Engineer"
+                  className="input-base"
+                />
+              </div>
+              <div>
+                <label htmlFor="settings-company" className="label-base">
+                  <Building2 className="h-3 w-3" /> Target company
+                </label>
+                <input
+                  id="settings-company"
+                  value={profile.target_company}
+                  onChange={(e) =>
+                    setProfile((prev) => ({ ...prev, target_company: e.target.value }))
+                  }
+                  placeholder="Google"
+                  className="input-base"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="settings-experience" className="label-base">
+                Experience
+              </label>
+              <input
+                id="settings-experience"
+                value={profile.experience}
+                onChange={(e) => setProfile((prev) => ({ ...prev, experience: e.target.value }))}
+                placeholder="e.g. 4 years, backend platform teams"
+                className="input-base"
+              />
+              <p className="helper-text">
+                A sentence is enough — it's passed to the interviewer as context.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="settings-email" className="label-base">
+                <Mail className="h-3 w-3" /> Email
+              </label>
+              <input
+                id="settings-email"
+                value={user?.email || ""}
+                disabled
+                className="input-base cursor-not-allowed opacity-50"
+              />
+              <p className="helper-text">Email changes are managed through your sign-in provider.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-border/60 bg-surface-2/35 px-5 py-3">
+            <p className="text-[10.5px] text-muted-foreground/50">
+              Used only inside your account.
+            </p>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving || !dirty}
+              className="btn-primary btn-sm gap-1.5"
+            >
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </motion.section>
+
+        <aside className="space-y-4">
+          <section className="card-base overflow-hidden" aria-label="Account summary">
+            <div className="border-b border-border/60 px-5 py-3.5">
+              <h2 className="text-headline text-foreground">Account</h2>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-3 text-[14px] font-semibold text-foreground ring-1 ring-border">
+                  {initialLetter}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[12.5px] font-medium text-foreground">{userName}</p>
+                  <p className="truncate text-[10.5px] text-muted-foreground/55">{user?.email}</p>
+                </div>
+              </div>
+
+              <dl className="mt-4 space-y-2.5 border-t border-border/60 pt-4">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-[11px] text-muted-foreground/60">Plan</dt>
+                  <dd>
+                    <span className="tag-success">Full access</span>
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-[11px] text-muted-foreground/60">Member since</dt>
+                  <dd className="inline-flex items-center gap-1.5 text-[11px] text-secondary-foreground">
+                    <CalendarDays className="h-3 w-3 text-muted-foreground/40" />
+                    {user?.created_at
+                      ? new Date(user.created_at).toLocaleDateString(undefined, {
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+            <div className="border-t border-border/60 p-3">
+              <button
+                type="button"
+                onClick={signOut}
+                className="btn-secondary btn-sm w-full justify-start gap-2 text-muted-foreground hover:text-destructive"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Sign out
+              </button>
+            </div>
+          </section>
+
+          <section className="card-base overflow-hidden">
+            <div className="border-b border-border/60 px-5 py-3.5">
+              <h2 className="text-headline text-foreground">Quick links</h2>
+            </div>
+            <div className="divide-y divide-border/60">
+              {[
+                { to: "/usage", icon: Gauge, label: "Plan & usage", hint: "Fair-use limits" },
+                { to: "/history", icon: CalendarDays, label: "Session history", hint: "Past interviews" },
+              ].map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-2/40"
+                >
+                  <link.icon className="h-3.5 w-3.5 text-muted-foreground/50" />
+                  <span className="flex-1">
+                    <span className="block text-[12px] font-medium text-foreground">{link.label}</span>
+                    <span className="block text-[10.5px] text-muted-foreground/50">{link.hint}</span>
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground/25 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground/60" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }

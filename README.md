@@ -54,6 +54,26 @@ NIM.
 └────────────────────────────────────────────────────────────┘
 ```
 
+## Live deployment
+
+- **App:** <https://ai-interview-coach-47.vercel.app>
+- **Frontend:** Vercel, production target, SPA rewrite via `vercel.json`
+- **Backend:** Supabase project `lmgoygfimadhbbqwvizl` (PostgreSQL, Auth, Storage, Edge Functions)
+- **AI:** NVIDIA NIM, primary `nvidia/nemotron-3.5-super-vl-120b-a12b`, fallback `nvidia/nemotron-3-ultra-550b-a55b`
+
+Operational visibility lives in Vercel → Deployments → Functions/Runtime Logs and
+Supabase → Edge Functions → Logs. Every AI request emits a structured log line
+with a request ID, the selected model, latency, and the fallback path when used.
+
+## Design system
+
+The interface uses a restrained enterprise theme defined in `src/index.css`:
+warm near-black surfaces, a single emerald accent, Inter Tight for display type,
+Inter for body copy, and JetBrains Mono for code and numeric data. Reusable
+surface, button, form, and tag classes live in Tailwind's `@layer components` so
+utility classes can override them predictably. New UI should compose those
+classes instead of introducing ad-hoc colors, radii, or shadows.
+
 ## Tech stack
 
 | Layer | Technology |
