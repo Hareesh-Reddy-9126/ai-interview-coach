@@ -294,7 +294,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    whitespace: nowrap;
+    white-space: nowrap;
     padding: 0 20px;
     height: 40px;
     font-family: 'JetBrains Mono', monospace;
@@ -324,7 +324,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    whitespace: nowrap;
+    white-space: nowrap;
     padding: 0 20px;
     height: 40px;
     font-family: 'JetBrains Mono', monospace;
