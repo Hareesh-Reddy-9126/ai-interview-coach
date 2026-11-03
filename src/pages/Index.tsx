@@ -139,8 +139,8 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col gap-7 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="h-1 w-1 rounded bg-primary" aria-hidden="true" />
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-7 bg-accent" aria-hidden="true" />
             <time className="mono-label" dateTime={new Date().toISOString().split("T")[0]}>
               {new Date().toLocaleDateString(undefined, {
                 weekday: "long",
@@ -177,7 +177,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="card-base relative overflow-hidden"
+          className="border border-border bg-transparent"
           aria-label="Interview readiness"
         >
           <div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -209,10 +209,10 @@ export default function Dashboard() {
                       {skill.score > 0 ? skill.score : "—"}
                     </span>
                   </div>
-                  <div className="h-[4px] overflow-hidden rounded-full bg-surface-3">
+                  <div className="h-px bg-border">
                     <div
-                      className="h-full rounded-full bg-primary/85 transition-[width] duration-900 ease-out-expo"
-                      style={{ width: `${Math.max(skill.score, skill.score > 0 ? 4 : 0)}%` }}
+                      className="h-px bg-primary/80 transition-[width] duration-900 ease-out-expo"
+                      style={{ width: `${Math.max(skill.score, skill.score > 0 ? 2 : 0)}%` }}
                     />
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border bg-surface-2/30 px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
             <p className="mono-label">
               {hasHistory
                 ? `Strongest area: ${derived.strongest?.label ?? "—"}`
@@ -299,10 +299,10 @@ export default function Dashboard() {
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px border-y border-border bg-border lg:grid-cols-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="card-base p-6">
+            <div key={index} className="bg-background px-5 py-5 sm:px-6">
               <div className="skeleton mb-5 h-2.5 w-20" />
               <div className="skeleton mb-5 h-7 w-16" />
               <div className="skeleton h-2.5 w-28" />
@@ -311,12 +311,14 @@ export default function Dashboard() {
         ) : (
           <>
             <Metric
+              variant="bare"
               label="Interviews"
               value={derived.completed}
               hint="Completed sessions"
               icon={Mic}
             />
             <Metric
+              variant="bare"
               label="Average score"
               value={derived.average ? `${derived.average}%` : "—"}
               hint="Last 8 sessions"
@@ -324,12 +326,14 @@ export default function Dashboard() {
               icon={TrendingUp}
             />
             <Metric
+              variant="bare"
               label="Focus area"
               value={focusSkill ? focusSkill.label : "—"}
               hint={focusSkill ? `${focusSkill.score}/100 currently` : "No scored session yet"}
               icon={Target}
             />
             <Metric
+              variant="bare"
               label="Streak"
               value={`${analytics?.current_streak || 0}d`}
               hint="Consecutive practice days"
@@ -347,12 +351,14 @@ export default function Dashboard() {
           transition={{ duration: 0.45, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         >
           {loading ? (
-            <div className="card-base h-[360px] p-6">
+            <div className="h-[360px] border border-border p-6">
               <div className="skeleton mb-3 h-3.5 w-28" />
               <div className="skeleton h-[290px] w-full" />
             </div>
           ) : (
-            <SkillRadarChart analytics={analytics} />
+            <div className="border border-border px-4 pb-2 pt-4">
+              <SkillRadarChart analytics={analytics} variant="plain" />
+            </div>
           )}
         </motion.div>
 
@@ -360,7 +366,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.14, ease: [0.16, 1, 0.3, 1] }}
-          className="card-base flex flex-col"
+          className="flex flex-col border border-border"
           aria-label="Recent sessions"
         >
           <div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -378,7 +384,7 @@ export default function Dashboard() {
               <div className="divide-y divide-border">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <div key={index} className="flex items-center gap-4 px-6 py-4">
-                    <div className="skeleton h-10 w-10 rounded" />
+                    <div className="skeleton h-10 w-10" />
                     <div className="flex-1 space-y-2.5">
                       <div className="skeleton h-3.5 w-36" />
                       <div className="skeleton h-2.5 w-24" />
@@ -416,15 +422,15 @@ export default function Dashboard() {
                         <span className="block truncate text-[13px] font-medium text-foreground">
                           {session.role}
                         </span>
-                        <span className="mt-0.5 block truncate mono-label text-[hsl(158_5%_38%)]">
+                        <span className="mt-0.5 block truncate mono-label text-muted-foreground/55">
                           {session.company} · {session.difficulty} · {formatDate(session.created_at)}
                         </span>
                       </span>
                       {session.overall_score ? (
                         <span className="flex shrink-0 items-center gap-3">
-                          <span className="hidden h-1.5 w-18 overflow-hidden rounded-full bg-surface-3 sm:block">
+                          <span className="hidden h-px w-16 overflow-hidden bg-border sm:block">
                             <span
-                              className="block h-full rounded-full bg-primary/80"
+                              className="block h-px bg-primary/70"
                               style={{ width: `${session.overall_score}%` }}
                             />
                           </span>
@@ -449,38 +455,44 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-        className="card-base"
         aria-label="Practice paths"
+        className="border-t border-border pt-6"
       >
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex items-baseline gap-4">
+            <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">Index</span>
             <h2 className="text-headline text-foreground">Practice paths</h2>
-            <p className="mt-1 mono-label text-muted-foreground">
-              Structured ways to close the gap between where you are and the offer.
-            </p>
           </div>
-          <Link to="/practice" className="btn-ghost btn-sm hidden sm:inline-flex">
+          <Link to="/practice" className="link-editorial">
             Explore all
+            <ArrowRight className="h-3 w-3" strokeWidth={1.8} />
           </Link>
         </div>
-        <div className="grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4">
-          {PRACTICE_PATHS.map((path) => (
+        <div className="mt-5 grid grid-cols-1 gap-px border-y border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+          {PRACTICE_PATHS.map((path, index) => (
             <Link
               key={path.to}
               to={path.to}
-              className="group relative flex items-start gap-4 px-6 py-5 transition-colors hover:bg-surface-2/40 sm:border-l sm:border-border sm:first:border-l-0 lg:py-6"
+              className="group flex flex-col bg-background px-5 py-5 transition-colors hover:bg-surface-2/40 lg:px-6"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border/60 bg-surface-2 text-muted-foreground/60 transition-colors group-hover:border-primary/30 group-hover:text-primary">
-                <path.icon className="h-4 w-4" strokeWidth={1.8} />
+              <span className="flex items-center justify-between">
+                <span className="font-mono text-[8px] tracking-[0.12em] text-accent">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <path.icon
+                  className="h-4 w-4 text-muted-foreground/35 transition-colors group-hover:text-primary"
+                  strokeWidth={1.7}
+                />
               </span>
-              <span className="min-w-0">
-                <span className="flex items-center gap-1.5 text-[13px] font-medium text-foreground">
-                  {path.label}
-                  <ArrowRight className="h-3 w-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-60" strokeWidth={1.8} />
-                </span>
-                <span className="mt-1 block text-[12px] leading-[1.6] text-muted-foreground">
-                  {path.description}
-                </span>
+              <span className="mt-5 font-display text-[20px] leading-none tracking-[-0.025em] text-foreground">
+                {path.label}
+              </span>
+              <span className="mt-2 flex-1 text-[11.5px] leading-[1.6] text-muted-foreground">
+                {path.description}
+              </span>
+              <span className="mt-5 inline-flex items-center gap-1.5 font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/50 transition-colors group-hover:text-foreground">
+                Begin
+                <ArrowRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.8} />
               </span>
             </Link>
           ))}

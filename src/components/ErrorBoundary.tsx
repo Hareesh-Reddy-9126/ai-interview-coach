@@ -34,18 +34,18 @@ export default class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
       return (
         <div className="flex min-h-[50vh] items-center justify-center px-5">
-          <div className="card-base w-full max-w-md p-7 text-center">
-            <span className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-destructive/25 bg-destructive/[0.07] text-destructive">
+          <div className="w-full max-w-md border border-border bg-card/50 p-8 text-center">
+            <span className="mx-auto mb-5 flex h-10 w-10 items-center justify-center border border-destructive/30 bg-destructive/[0.06] text-destructive">
               <AlertTriangle className="h-4 w-4" />
             </span>
             <p className="section-label">Unexpected error</p>
-            <h2 className="mt-2.5 font-display text-[19px] font-semibold tracking-[-0.02em] text-foreground">
+            <h2 className="mt-3 font-display text-[24px] font-light leading-[1.1] tracking-[-0.03em] text-foreground">
               Something went wrong
             </h2>
-            <p className="mt-2 text-[12px] leading-5 text-muted-foreground">
+            <p className="mt-3 text-[12px] leading-[1.7] text-muted-foreground">
               {this.state.error?.message || "An unexpected error occurred."}
             </p>
-            <div className="mt-5 flex justify-center gap-2">
+            <div className="mt-6 flex justify-center gap-2">
               <button onClick={this.handleReset} className="btn-primary btn-sm gap-1.5">
                 <RefreshCw className="h-3.5 w-3.5" /> Try again
               </button>

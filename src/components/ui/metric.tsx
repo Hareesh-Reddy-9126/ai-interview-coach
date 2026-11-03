@@ -111,6 +111,7 @@ interface MetricProps {
   icon?: LucideIcon;
   sparkPositive?: boolean;
   className?: string;
+  variant?: "card" | "bare";
 }
 
 export function Metric({
@@ -123,9 +124,18 @@ export function Metric({
   icon: Icon,
   sparkPositive = true,
   className,
+  variant = "card",
 }: MetricProps) {
   return (
-    <div className={cn("card-base group p-6 transition-colors hover:border-border-strong", className)}>
+    <div
+      className={cn(
+        "group",
+        variant === "card"
+          ? "card-base p-6 transition-colors hover:border-border-strong"
+          : "bg-background px-5 py-5 sm:px-6",
+        className,
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="mono-label">{label}</p>

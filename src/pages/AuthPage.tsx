@@ -51,57 +51,61 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="pointer-events-none fixed inset-0 bg-grid opacity-60" aria-hidden="true" />
-      <div
-        className="pointer-events-none fixed inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border-strong to-transparent"
-        aria-hidden="true"
-      />
-
-      <div className="relative z-10 grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        {/* Brand / product proof */}
-        <div className="hidden flex-col justify-between border-r border-border px-10 py-12 lg:flex xl:px-14 xl:py-16">
-          <div className="flex items-center justify-between">
+    <div className="grain min-h-screen bg-background">
+      <div className="grid min-h-screen lg:grid-cols-[minmax(0,1.42fr)_minmax(430px,1fr)]">
+        {/* ── Brand cover ─────────────────────────────────── */}
+        <div className="relative hidden flex-col justify-between overflow-hidden px-12 py-11 lg:flex xl:px-16 xl:py-14">
+          <div className="pointer-events-none absolute inset-0 bg-grid opacity-70" aria-hidden="true" />
+          <div className="relative flex items-center justify-between">
             <Logo />
-            <span className="tag-muted">Early access</span>
+            <span className="mono-label text-muted-foreground/55">Private practice · Est. 2026</span>
           </div>
 
-          <div className="my-16 max-w-[480px]">
-            <div className="mb-6 flex items-center gap-2.5">
-              <span className="h-1 w-1 rounded bg-primary" aria-hidden="true" />
-              <span className="section-label">AI interview practice</span>
+          <div className="relative my-14 max-w-[600px]">
+            <div className="mb-7 flex items-center gap-3">
+              <span className="h-px w-8 bg-accent" aria-hidden="true" />
+              <span className="section-label text-accent">The interview atelier</span>
             </div>
-            <h1 className="text-display-xl text-foreground">
-              Interviews are a skill.
+
+            <h1 className="font-display text-[clamp(3.4rem,5.2vw,5.4rem)] font-light leading-[0.9] tracking-[-0.05em] text-foreground">
+              Interviews are
               <br />
-              <span className="font-normal text-muted-foreground">Practice them properly.</span>
+              a skill.
+              <br />
+              <em className="font-light text-muted-foreground">Practice them</em>
+              <br />
+              <em className="font-light text-muted-foreground">properly.</em>
             </h1>
-            <p className="mt-6 max-w-[420px] text-body text-muted-foreground">
-              Run realistic mock interviews, get scored on five dimensions, and follow a plan
-              that adapts to the gaps in your answers — not a generic question bank.
+
+            <p className="mt-8 max-w-[430px] text-[14.5px] leading-[1.75] text-muted-foreground">
+              A private room for serious preparation. Adaptive mock interviews, a five-dimension
+              scorecard, and a plan built from your actual answers — not a question bank.
             </p>
 
-            {/* Sample session report */}
-            <div className="card-base mt-12 max-w-[440px] overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+            {/* Specimen dossier */}
+            <div className="mt-11 max-w-[470px] border border-border-strong/70 bg-card/70">
+              <div className="flex items-center justify-between border-b border-border px-5 py-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="h-1.5 w-1.5 rounded bg-primary" aria-hidden="true" />
-                  <span className="mono-label">Session report</span>
+                  <span className="h-1 w-1 bg-accent" aria-hidden="true" />
+                  <span className="mono-label text-foreground/80">Specimen · session dossier</span>
                 </div>
-                <span className="mono-label">18 min · Senior</span>
+                <span className="mono-label">No. 018 · 22 min</span>
               </div>
-              <div className="flex items-center gap-6 p-5">
-                <ScoreRing value={82} size={104} stroke={6} label="Overall" />
-                <div className="min-w-0 flex-1 space-y-3">
+
+              <div className="flex items-center gap-7 px-5 py-5">
+                <ScoreRing value={82} size={112} stroke={5} label="Overall" />
+                <div className="min-w-0 flex-1 space-y-3.5">
                   {sampleSkills.map((skill) => (
                     <div key={skill.label}>
-                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3">
                         <span className="text-[12px] text-secondary-foreground">{skill.label}</span>
-                        <span className="tabular text-[11px] text-muted-foreground/70">{skill.score}</span>
+                        <span className="font-display text-[15px] leading-none tabular text-foreground">
+                          {skill.score}
+                        </span>
                       </div>
-                      <div className="h-[3px] overflow-hidden rounded-full bg-surface-3">
+                      <div className="h-px bg-border">
                         <div
-                          className="h-full rounded-full bg-primary/80"
+                          className="h-px bg-foreground/70"
                           style={{ width: `${skill.score}%` }}
                         />
                       </div>
@@ -109,56 +113,87 @@ export default function AuthPage() {
                   ))}
                 </div>
               </div>
-              <div className="border-t border-border bg-surface-2/30 px-5 py-3.5">
-                <p className="text-[11.5px] leading-5 text-muted-foreground">
-                  <span className="font-medium text-foreground">Coaching note: </span>
+
+              <div className="border-t border-border px-5 py-3.5">
+                <p className="text-[12px] leading-[1.65] text-muted-foreground">
+                  <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
+                    Examiner&apos;s note&nbsp;&nbsp;
+                  </span>
                   Quantify the outcome in your design answer before discussing trade-offs.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-2.5 mono-label text-muted-foreground/50">
-            <span>Powered by NVIDIA Nemotron</span>
-            <span className="h-[3px] w-[3px] rounded-full bg-border-strong" aria-hidden="true" />
-            <span>Private by default</span>
-            <span className="h-[3px] w-[3px] rounded-full bg-border-strong" aria-hidden="true" />
-            <span>No credit card required</span>
+          <div className="relative flex flex-wrap items-center gap-x-8 gap-y-2.5">
+            <span className="mono-label text-muted-foreground/50">NVIDIA Nemotron</span>
+            <span className="h-[3px] w-[3px] bg-border-strong" aria-hidden="true" />
+            <span className="mono-label text-muted-foreground/50">Private by default</span>
+            <span className="h-[3px] w-[3px] bg-border-strong" aria-hidden="true" />
+            <span className="mono-label text-muted-foreground/50">No card required</span>
           </div>
         </div>
 
-        {/* Auth form */}
-        <div className="flex items-center justify-center px-6 py-12 sm:px-10">
-          <div className="w-full max-w-[420px]">
-            <div className="mb-12 flex items-center justify-between lg:hidden">
-              <Logo />
-              <span className="tag-muted">Early access</span>
-            </div>
+        {/* ── Member access ────────────────────────────────── */}
+        <div className="relative flex min-h-screen flex-col bg-sidebar px-6 py-9 sm:px-10 lg:px-12 xl:px-14">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.35]"
+            style={{
+              backgroundImage:
+                "linear-gradient(hsl(42 34% 92% / 0.045) 1px, transparent 1px), linear-gradient(90deg, hsl(42 34% 92% / 0.045) 1px, transparent 1px)",
+              backgroundSize: "64px 64px",
+            }}
+            aria-hidden="true"
+          />
 
+          <div className="relative flex items-center justify-between">
+            <Logo tone="inverse" />
+            <span className="font-mono text-[8px] uppercase tracking-[0.2em] text-sidebar-primary">
+              Member access
+            </span>
+          </div>
+
+          <div className="relative flex flex-1 items-center justify-center py-12">
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-[390px]"
             >
-              <div className="mb-10">
-                <div className="mb-4 flex items-center gap-2.5">
-                  <span className="h-1 w-1 rounded bg-primary" aria-hidden="true" />
-                  <span className="section-label">{isLogin ? "Welcome back" : "Create account"}</span>
+              <div className="mb-9">
+                <div className="mb-5 flex items-center gap-3">
+                  <span className="h-px w-7 bg-sidebar-primary/70" aria-hidden="true" />
+                  <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-sidebar-primary">
+                    {isLogin ? "Welcome back" : "New member"}
+                  </span>
                 </div>
+
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
-                    key={isLogin ? "login-heading" : "signup-heading"}
+                    key={isLogin ? "login" : "signup"}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: 0.16 }}
                   >
-                    <h2 className="text-display-md text-foreground">
-                      {isLogin ? "Sign in to your atelier" : "Start your first session"}
+                    <h2 className="font-display text-[clamp(2.3rem,3vw,3rem)] font-light leading-[0.98] tracking-[-0.04em] text-[hsl(var(--sidebar-accent-foreground))]">
+                      {isLogin ? (
+                        <>
+                          Sign in to
+                          <br />
+                          your atelier.
+                        </>
+                      ) : (
+                        <>
+                          Begin your
+                          <br />
+                          first session.
+                        </>
+                      )}
                     </h2>
-                    <p className="mt-3 text-body text-muted-foreground">
+                    <p className="mt-4 max-w-[330px] text-[13px] leading-[1.7] text-sidebar-foreground/70">
                       {isLogin
-                        ? "Pick up where you left off — your history and scores are saved."
+                        ? "Your history, scores and plans are exactly where you left them."
                         : "Free to start. Your first interview takes about twenty minutes."}
                     </p>
                   </motion.div>
@@ -176,7 +211,7 @@ export default function AuthPage() {
                       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                       className="overflow-hidden"
                     >
-                      <label htmlFor="name" className="label-base">
+                      <label htmlFor="name" className="auth-label">
                         Full name
                       </label>
                       <input
@@ -186,7 +221,7 @@ export default function AuthPage() {
                         onChange={(e) => setName(e.target.value)}
                         required={!isLogin}
                         autoComplete="name"
-                        className="input-base"
+                        className="auth-input"
                         placeholder="Hareesh Reddy"
                       />
                     </motion.div>
@@ -194,8 +229,8 @@ export default function AuthPage() {
                 </AnimatePresence>
 
                 <div>
-                  <label htmlFor="email" className="label-base">
-                    Work email
+                  <label htmlFor="email" className="auth-label">
+                    Email
                   </label>
                   <input
                     id="email"
@@ -204,18 +239,18 @@ export default function AuthPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
-                    className="input-base"
+                    className="auth-input"
                     placeholder="you@company.com"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-baseline justify-between">
-                    <label htmlFor="password" className="label-base">
+                    <label htmlFor="password" className="auth-label">
                       Password
                     </label>
                     {!isLogin && (
-                      <span className="mb-2 font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground/50">
+                      <span className="mb-2 font-mono text-[7.5px] uppercase tracking-[0.14em] text-sidebar-foreground/40">
                         8 characters minimum
                       </span>
                     )}
@@ -229,13 +264,13 @@ export default function AuthPage() {
                       required
                       minLength={8}
                       autoComplete={isLogin ? "current-password" : "new-password"}
-                      className="input-base pr-12"
+                      className="auth-input pr-12"
                       placeholder={isLogin ? "Your password" : "Create a strong password"}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((value) => !value)}
-                      className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground/50 transition-colors hover:text-foreground"
+                      className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-sidebar-foreground/45 transition-colors hover:text-[hsl(var(--sidebar-accent-foreground))]"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       tabIndex={-1}
                     >
@@ -247,7 +282,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary btn-lg mt-2 w-full gap-2"
+                  className="btn-invert btn-lg mt-3 w-full gap-2"
                 >
                   {loading ? (
                     <>
@@ -256,31 +291,41 @@ export default function AuthPage() {
                     </>
                   ) : (
                     <>
-                      {isLogin ? "Sign in" : "Create account"}
+                      {isLogin ? "Enter the atelier" : "Create account"}
                       <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
                     </>
                   )}
                 </button>
               </form>
 
-              <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
-                <p className="text-[12px] text-muted-foreground">
-                  {isLogin ? "New to Interview Lab?" : "Already have an account?"}
+              <div className="mt-9 flex items-center justify-between border-t border-sidebar-border pt-5">
+                <p className="text-[11.5px] text-sidebar-foreground/55">
+                  {isLogin ? "New to Interview Lab?" : "Already a member?"}
                 </p>
                 <button
                   type="button"
                   onClick={switchMode}
-                  className="link-editorial"
+                  className="font-mono text-[8.5px] font-medium uppercase tracking-[0.15em] text-sidebar-primary underline decoration-sidebar-primary/40 underline-offset-4 transition-colors hover:text-[hsl(var(--sidebar-accent-foreground))]"
                 >
                   {isLogin ? "Create an account" : "Sign in instead"}
                 </button>
               </div>
 
-              <p className="mt-10 mono-label text-muted-foreground/45">
-                By continuing you agree to fair-use limits on AI requests. Your resume and
-                interview data stay private to your account.
+              <p className="mt-8 font-mono text-[7.5px] uppercase leading-[1.9] tracking-[0.14em] text-sidebar-foreground/30">
+                By continuing you agree to fair-use limits on AI requests.
+                <br />
+                Your resume and interview data stay private to your account.
               </p>
             </motion.div>
+          </div>
+
+          <div className="relative flex items-center justify-between border-t border-sidebar-border/70 pt-5">
+            <span className="font-mono text-[7.5px] uppercase tracking-[0.16em] text-sidebar-foreground/30">
+              NVIDIA Nemotron · Private by default
+            </span>
+            <span className="font-mono text-[7.5px] uppercase tracking-[0.16em] text-sidebar-foreground/30">
+              © 2026
+            </span>
           </div>
         </div>
       </div>

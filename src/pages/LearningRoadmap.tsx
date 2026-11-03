@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   AlertTriangle,
   BookOpen,
-  CheckSquare,
+  Check,
   Loader2,
   Map,
   RefreshCw,
@@ -32,30 +32,29 @@ interface RoadmapData {
 
 function GeneratingState() {
   return (
-    <div className="space-y-4" aria-busy="true" aria-live="polite">
-      <div className="card-base flex items-center gap-4 p-4">
-        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-        <div>
-          <p className="text-[12.5px] font-medium text-foreground">Building your four-week plan</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground/60">
-            Reading your analytics, choosing a priority skill, then sequencing the work.
-          </p>
-        </div>
+    <div aria-busy="true" aria-live="polite">
+      <div className="flex items-center gap-3 border-y border-border py-4">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+        <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-muted-foreground">
+          Building your four-week plan
+        </p>
       </div>
-      {[1, 2, 3, 4].map((week) => (
-        <div key={week} className="card-base p-5">
-          <div className="flex items-center gap-3">
-            <div className="skeleton h-5 w-14 rounded" />
-            <div className="skeleton h-3 w-24" />
+      <div className="divide-y divide-border border-b border-border">
+        {[1, 2, 3, 4].map((week) => (
+          <div key={week} className="grid grid-cols-[52px_minmax(0,1fr)] gap-5 py-6 sm:grid-cols-[84px_minmax(0,1fr)] sm:gap-8">
+            <div className="skeleton h-8 w-8" />
+            <div>
+              <div className="skeleton mb-3 h-2.5 w-24" />
+              <div className="skeleton h-4 w-2/3" />
+              <div className="mt-4 space-y-2">
+                <div className="skeleton h-2.5 w-full" />
+                <div className="skeleton h-2.5 w-5/6" />
+                <div className="skeleton h-2.5 w-4/6" />
+              </div>
+            </div>
           </div>
-          <div className="skeleton mt-4 h-3.5 w-2/3" />
-          <div className="mt-3 space-y-2">
-            <div className="skeleton h-2.5 w-full" />
-            <div className="skeleton h-2.5 w-5/6" />
-            <div className="skeleton h-2.5 w-4/6" />
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -128,21 +127,25 @@ export default function LearningRoadmap() {
       disabled={generating}
       className={`btn-${variant} btn-sm gap-1.5`}
     >
-      {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+      {generating ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <RefreshCw className="h-3.5 w-3.5" />
+      )}
       {generating ? "Generating…" : label}
     </button>
   );
 
   return (
     <div className="mx-auto max-w-[1040px]">
-      <div className="mb-6 flex flex-col gap-4 border-b border-border/60 pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-9 flex flex-col gap-6 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
-            <span className="section-label">Learning plan</span>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-7 bg-accent" aria-hidden="true" />
+            <span className="section-label">Learning plan · Four weeks</span>
           </div>
           <h1 className="text-display-lg text-foreground">Your four-week plan.</h1>
-          <p className="mt-2.5 max-w-xl text-[13.5px] leading-6 text-muted-foreground">
+          <p className="mt-4 max-w-xl text-[14px] leading-[1.7] text-muted-foreground">
             {roadmap
               ? "Sequenced around your weakest dimension, with tasks and reading you can finish in a week."
               : "Generate a plan sequenced around your weakest dimension — not a generic syllabus."}
@@ -156,13 +159,13 @@ export default function LearningRoadmap() {
       </div>
 
       {error && !generating && (
-        <div className="mb-4 flex items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/[0.06] px-4 py-3">
+        <div className="mb-5 flex items-start gap-3 border border-destructive/30 bg-destructive/[0.05] px-4 py-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <p className="flex-1 text-[12.5px] leading-5 text-destructive">{error}</p>
           <button
             type="button"
             onClick={generateRoadmap}
-            className="shrink-0 text-[12px] font-medium text-destructive underline underline-offset-4 hover:no-underline"
+            className="shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-destructive underline underline-offset-4 hover:no-underline"
           >
             Retry
           </button>
@@ -172,39 +175,58 @@ export default function LearningRoadmap() {
       {generating && <GeneratingState />}
 
       {!roadmap && !generating && !error && (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <section className="card-base flex flex-col items-center justify-center px-6 py-16 text-center">
-            <div className="relative mb-5">
-              <div className="absolute inset-0 rounded-xl bg-primary/15 blur-xl" aria-hidden="true" />
-              <div className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted-foreground shadow-inset-top">
-                <Map className="h-4 w-4" strokeWidth={1.8} />
-              </div>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-14">
+          <section className="relative flex min-h-[340px] flex-col justify-between border border-dashed border-border-strong bg-card/40 p-8 sm:p-10">
+            <span
+              className="pointer-events-none absolute inset-4 border border-border/40"
+              aria-hidden="true"
+            />
+            <div className="relative flex items-start justify-between">
+              <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
+                No plan on file
+              </span>
+              <span className="font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/40">
+                Four weeks
+              </span>
             </div>
-            <h2 className="font-display text-[17px] font-semibold tracking-[-0.02em] text-foreground">
-              No roadmap yet
-            </h2>
-            <p className="mt-1.5 max-w-sm text-[12px] leading-5 text-muted-foreground">
-              We use your interview analytics to pick one priority skill, then lay out four weeks
-              of focused practice around it.
-            </p>
-            <button
-              type="button"
-              onClick={generateRoadmap}
-              className="btn-primary btn-sm mt-5 gap-1.5"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Generate my roadmap
-            </button>
-            <p className="mt-4 text-[10.5px] text-muted-foreground/40">
-              Takes about 20–30 seconds · replaces any previous plan
+
+            <div className="relative py-10">
+              <span className="flex h-12 w-12 items-center justify-center border border-border-strong bg-background text-muted-foreground">
+                <Map className="h-4 w-4" strokeWidth={1.7} />
+              </span>
+              <h2 className="mt-6 font-display text-[28px] font-light leading-[1.05] tracking-[-0.035em] text-foreground">
+                A plan built from
+                <br />
+                your own answers.
+              </h2>
+              <p className="mt-3 max-w-sm text-[12.5px] leading-[1.7] text-muted-foreground">
+                We use your interview analytics to pick one priority skill, then lay out four weeks
+                of focused practice around it.
+              </p>
+              <button
+                type="button"
+                onClick={generateRoadmap}
+                className="btn-primary btn-sm mt-6 gap-1.5"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Generate my roadmap
+              </button>
+              <p className="mt-4 font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/40">
+                Takes about 20–30 seconds · replaces any previous plan
+              </p>
+            </div>
+
+            <p className="relative border-t border-border pt-4 font-mono text-[7.5px] uppercase leading-[1.9] tracking-[0.12em] text-muted-foreground/40">
+              Priority skill selected from five scored dimensions
             </p>
           </section>
 
-          <aside className="card-base overflow-hidden">
-            <div className="border-b border-border/60 px-4 py-3">
-              <h2 className="text-headline text-foreground">How it's built</h2>
+          <aside>
+            <div className="flex items-baseline justify-between border-b border-border pb-3">
+              <h2 className="text-headline text-foreground">How it&apos;s built</h2>
+              <span className="mono-label">Three steps</span>
             </div>
-            <ol className="divide-y divide-border/60">
+            <ol className="divide-y divide-border border-b border-border">
               {[
                 {
                   title: "Read the analytics",
@@ -219,22 +241,24 @@ export default function LearningRoadmap() {
                   description: "Each week pairs a concept with concrete practice and resources.",
                 },
               ].map((step, index) => (
-                <li key={step.title} className="flex gap-3 px-4 py-3.5">
-                  <span className="mt-0.5 font-mono text-[9.5px] text-primary/60">
+                <li key={step.title} className="flex gap-4 py-5">
+                  <span className="font-display text-[22px] font-light leading-none tracking-[-0.03em] tabular text-border-strong/60">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <p className="text-[12px] font-medium text-foreground">{step.title}</p>
-                    <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground/65">
+                    <p className="font-display text-[17px] leading-none tracking-[-0.02em] text-foreground">
+                      {step.title}
+                    </p>
+                    <p className="mt-2 text-[11.5px] leading-[1.7] text-muted-foreground/75">
                       {step.description}
                     </p>
                   </div>
                 </li>
               ))}
             </ol>
-            <div className="flex items-start gap-2 border-t border-border/60 bg-surface-2/35 px-4 py-3">
-              <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/60" />
-              <p className="text-[10.5px] leading-4 text-muted-foreground/60">
+            <div className="mt-4 flex items-start gap-2.5">
+              <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/55" />
+              <p className="text-[10.5px] leading-[1.7] text-muted-foreground/50">
                 Regenerating replaces the previous plan for your account.
               </p>
             </div>
@@ -243,156 +267,172 @@ export default function LearningRoadmap() {
       )}
 
       {roadmap && !generating && (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_248px]">
-          <div className="min-w-0 space-y-4">
-            <div className="card-base p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_248px] lg:gap-12">
+          <div className="min-w-0">
+            <div className="border-y border-border py-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
                     Strategy
-                  </p>
+                  </span>
+                  <h2 className="font-display text-[22px] font-light leading-none tracking-[-0.025em] text-foreground">
+                    {roadmap.priority_skill}
+                  </h2>
                 </div>
-                <span className="tag-primary">{roadmap.priority_skill}</span>
+                <p className="font-mono text-[7.5px] uppercase tracking-[0.13em] text-muted-foreground/45">
+                  {roadmap.weeks.length} weeks
+                  {createdAt &&
+                    ` · ${new Date(createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}`}
+                </p>
               </div>
-              <p className="mt-3 text-[13px] leading-6 text-secondary-foreground">{roadmap.summary}</p>
-              <p className="mt-3 text-[10.5px] text-muted-foreground/45">
-                {roadmap.weeks.length} weeks
-                {createdAt &&
-                  ` · Generated ${new Date(createdAt).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}`}
+              <p className="mt-4 max-w-2xl text-[13.5px] leading-[1.8] text-secondary-foreground">
+                {roadmap.summary}
               </p>
             </div>
 
-            <ol className="relative space-y-3 before:absolute before:bottom-6 before:left-[15px] before:top-6 before:w-px before:bg-border/70">
+            <ol className="divide-y divide-border border-b border-border">
               {roadmap.weeks.map((week, index) => (
                 <motion.li
                   key={week.week}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="relative pl-10"
+                  className="grid grid-cols-[52px_minmax(0,1fr)] gap-5 py-7 sm:grid-cols-[84px_minmax(0,1fr)] sm:gap-8"
                 >
-                  <span className="absolute left-0 top-4 flex h-[31px] w-[31px] items-center justify-center rounded-full border border-border bg-card font-mono text-[9.5px] font-medium text-muted-foreground">
-                    {String(week.week).padStart(2, "0")}
-                  </span>
-                  <article className="card-base overflow-hidden">
-                    <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border/60 px-5 py-3.5">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-                            Week {week.week}
-                          </span>
-                          <span className="h-[3px] w-[3px] rounded-full bg-border-strong" />
-                          <span className="text-[10.5px] text-primary">{week.focus_skill}</span>
-                        </div>
-                        <h2 className="mt-1 font-display text-[15px] font-semibold tracking-[-0.02em] text-foreground">
-                          {week.title}
-                        </h2>
-                      </div>
+                  <div>
+                    <span className="font-display text-[40px] font-light leading-[0.7] tracking-[-0.05em] tabular text-border-strong/55">
+                      {String(week.week).padStart(2, "0")}
+                    </span>
+                    <span className="mt-2 block font-mono text-[7px] uppercase tracking-[0.14em] text-muted-foreground/35">
+                      Week
+                    </span>
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <h2 className="font-display text-[24px] font-light leading-[1.1] tracking-[-0.03em] text-foreground">
+                        {week.title}
+                      </h2>
+                      <span className="font-mono text-[7.5px] uppercase tracking-[0.14em] text-accent">
+                        {week.focus_skill}
+                      </span>
                     </div>
-                    <div className="space-y-4 p-5">
-                      <p className="text-[12.5px] leading-5 text-muted-foreground">{week.description}</p>
-                      <div className="grid gap-5 sm:grid-cols-2">
+                    <p className="mt-3 max-w-2xl text-[12.5px] leading-[1.75] text-muted-foreground">
+                      {week.description}
+                    </p>
+
+                    <div className="mt-5 grid gap-6 sm:grid-cols-2">
+                      <div>
+                        <p className="mono-label mb-2.5">Tasks</p>
+                        <ul className="space-y-2">
+                          {week.tasks.map((task, taskIndex) => (
+                            <li key={taskIndex} className="flex items-start gap-2.5">
+                              <Check
+                                className="mt-0.5 h-3 w-3 shrink-0 text-primary/55"
+                                strokeWidth={2.2}
+                              />
+                              <span className="text-[11.5px] leading-[1.65] text-secondary-foreground">
+                                {task}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      {week.resources?.length > 0 && (
                         <div>
-                          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/45">
-                            Tasks
-                          </p>
+                          <p className="mono-label mb-2.5">Resources</p>
                           <ul className="space-y-2">
-                            {week.tasks.map((task, taskIndex) => (
-                              <li key={taskIndex} className="flex items-start gap-2">
-                                <CheckSquare
-                                  className="mt-0.5 h-3 w-3 shrink-0 text-primary/45"
+                            {week.resources.map((resource, resourceIndex) => (
+                              <li key={resourceIndex} className="flex items-start gap-2.5">
+                                <BookOpen
+                                  className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/35"
                                   strokeWidth={1.8}
                                 />
-                                <span className="text-[11.5px] leading-4 text-secondary-foreground">
-                                  {task}
+                                <span className="text-[11.5px] leading-[1.65] text-muted-foreground">
+                                  {resource}
                                 </span>
                               </li>
                             ))}
                           </ul>
                         </div>
-                        {week.resources?.length > 0 && (
-                          <div>
-                            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/45">
-                              Resources
-                            </p>
-                            <ul className="space-y-2">
-                              {week.resources.map((resource, resourceIndex) => (
-                                <li key={resourceIndex} className="flex items-start gap-2">
-                                  <BookOpen
-                                    className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/35"
-                                    strokeWidth={1.8}
-                                  />
-                                  <span className="text-[11.5px] leading-4 text-muted-foreground">
-                                    {resource}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  </article>
+                  </div>
                 </motion.li>
               ))}
             </ol>
 
-            <div className="flex flex-col gap-3 rounded-lg border border-border/50 bg-surface-2/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-[11px] text-muted-foreground/60">
-                Plans refresh from your latest analytics when regenerated.
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-mono text-[7.5px] uppercase tracking-[0.13em] text-muted-foreground/40">
+                Plans refresh from your latest analytics
               </p>
               {generateButton("Regenerate plan", "secondary")}
             </div>
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-[78px] space-y-3">
-              <div className="card-base p-4">
-                <p className="section-label">Plan at a glance</p>
-                <p className="mt-3 font-display text-[19px] font-semibold leading-tight tracking-[-0.025em] text-foreground">
+            <div className="sticky top-[88px]">
+              <div className="border-t border-border pt-3">
+                <div className="flex items-baseline justify-between">
+                  <p className="mono-label">Plan at a glance</p>
+                  <span className="font-mono text-[7.5px] uppercase tracking-[0.13em] text-muted-foreground/35">
+                    Live
+                  </span>
+                </div>
+                <p className="mt-4 font-display text-[28px] font-light leading-[1.05] tracking-[-0.035em] text-foreground">
                   {roadmap.priority_skill}
                 </p>
-                <p className="mt-1 text-[10.5px] text-muted-foreground/50">Priority skill</p>
-                <div className="mt-4 space-y-2 border-t border-border/60 pt-3">
-                  <div className="flex items-center justify-between text-[10.5px]">
-                    <span className="text-muted-foreground/50">Duration</span>
-                    <span className="text-secondary-foreground">{roadmap.weeks.length} weeks</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10.5px]">
-                    <span className="text-muted-foreground/50">Tasks</span>
-                    <span className="text-secondary-foreground">
-                      {roadmap.weeks.reduce((sum, week) => sum + week.tasks.length, 0)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10.5px]">
-                    <span className="text-muted-foreground/50">Resources</span>
-                    <span className="text-secondary-foreground">
-                      {roadmap.weeks.reduce((sum, week) => sum + (week.resources?.length || 0), 0)}
-                    </span>
-                  </div>
-                </div>
+                <p className="mt-1.5 text-[10.5px] text-muted-foreground/50">Priority skill</p>
               </div>
 
-              <div className="card-base p-4">
-                <p className="section-label">Weekly focus</p>
-                <ol className="mt-3 space-y-2.5">
+              <dl className="mt-5 divide-y divide-border border-y border-border">
+                {[
+                  { label: "Duration", value: `${roadmap.weeks.length} weeks` },
+                  {
+                    label: "Tasks",
+                    value: roadmap.weeks.reduce((sum, week) => sum + week.tasks.length, 0),
+                  },
+                  {
+                    label: "Resources",
+                    value: roadmap.weeks.reduce(
+                      (sum, week) => sum + (week.resources?.length || 0),
+                      0,
+                    ),
+                  },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-baseline justify-between gap-3 py-2.5">
+                    <dt className="font-mono text-[7.5px] uppercase tracking-[0.13em] text-muted-foreground/45">
+                      {row.label}
+                    </dt>
+                    <dd className="text-[11.5px] tabular text-secondary-foreground">{row.value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <div className="mt-6">
+                <p className="mono-label">Weekly focus</p>
+                <ol className="mt-3 space-y-3">
                   {roadmap.weeks.map((week) => (
-                    <li key={week.week} className="flex items-start gap-2.5">
-                      <span className="mt-px font-mono text-[9px] text-muted-foreground/30">
+                    <li key={week.week} className="flex items-start gap-3">
+                      <span className="mt-px font-mono text-[8px] tabular text-accent/60">
                         {String(week.week).padStart(2, "0")}
                       </span>
-                      <span className="text-[10.5px] leading-4 text-muted-foreground">
+                      <span className="text-[10.5px] leading-[1.5] text-muted-foreground">
                         {week.focus_skill}
                       </span>
                     </li>
                   ))}
                 </ol>
               </div>
+
+              <p className="mt-6 border-t border-border pt-4 text-[10px] leading-[1.75] text-muted-foreground/40">
+                One priority skill, four weeks, no filler. Regenerate after your next scored
+                session to keep the plan honest.
+              </p>
             </div>
           </aside>
         </div>

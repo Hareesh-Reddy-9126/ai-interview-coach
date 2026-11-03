@@ -11,7 +11,6 @@ import {
   Loader2,
   RefreshCw,
   ShieldCheck,
-  Sparkles,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -55,17 +54,19 @@ function DetailCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="card-base flex flex-col">
-      <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Icon className="h-3.5 w-3.5 text-muted-foreground/60" strokeWidth={1.8} />
-          <h2 className="text-[13px] font-semibold tracking-[-0.01em] text-foreground">{title}</h2>
+    <section className="flex flex-col border-t border-border pt-4">
+      <div className="flex items-baseline justify-between pb-3">
+        <div className="flex items-center gap-2.5">
+          <Icon className="h-3.5 w-3.5 text-accent/80" strokeWidth={1.7} />
+          <h2 className="font-display text-[21px] font-normal leading-none tracking-[-0.02em] text-foreground">
+            {title}
+          </h2>
         </div>
         {typeof count === "number" && (
-          <span className="tabular text-[10.5px] text-muted-foreground/40">{count}</span>
+          <span className="font-mono text-[8.5px] tabular text-muted-foreground/40">{count}</span>
         )}
       </div>
-      <div className="flex-1 p-4">{children}</div>
+      <div className="flex-1 border-t border-border pt-3">{children}</div>
     </section>
   );
 }
@@ -251,16 +252,16 @@ export default function ResumeAnalyzer() {
 
   return (
     <div className="mx-auto max-w-[1040px]">
-      <div className="mb-6 flex flex-col gap-4 border-b border-border/60 pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-8 flex flex-col gap-6 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
-            <span className="section-label">Resume intelligence</span>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-7 bg-accent" aria-hidden="true" />
+            <span className="section-label">Resume intelligence · PDF dossier</span>
           </div>
           <h1 className="text-display-lg text-foreground">Your resume, decoded.</h1>
-          <p className="mt-2.5 max-w-xl text-[13.5px] leading-6 text-muted-foreground">
+          <p className="mt-4 max-w-xl text-[14px] leading-[1.7] text-muted-foreground">
             Extract skills, technologies and experience, then generate interview questions
-            grounded in what you've actually shipped.
+            grounded in what you have actually shipped.
           </p>
         </div>
         {resume && (
@@ -286,14 +287,14 @@ export default function ResumeAnalyzer() {
       />
 
       {error && (
-        <div className="mb-4 flex items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/[0.06] px-4 py-3">
+        <div className="mb-4 flex items-start gap-3 border border-destructive/30 bg-destructive/[0.05] px-4 py-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <p className="flex-1 text-[12.5px] leading-5 text-destructive">{error}</p>
           {resume && (
             <button
               type="button"
               onClick={() => retryAnalysis(resume.id, resume.file_url)}
-              className="shrink-0 text-[12px] font-medium text-destructive underline underline-offset-4 hover:no-underline"
+              className="shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-destructive underline underline-offset-4 hover:no-underline"
             >
               Retry
             </button>
@@ -302,7 +303,7 @@ export default function ResumeAnalyzer() {
       )}
 
       {!resume ? (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-14">
           <section
             onDragOver={(e) => {
               e.preventDefault();
@@ -311,45 +312,71 @@ export default function ResumeAnalyzer() {
             onDragLeave={() => setDragActive(false)}
             onDrop={handleDrop}
             className={cn(
-              "card-base flex min-h-[340px] flex-col items-center justify-center px-6 py-12 text-center transition-colors",
-              dragActive && "border-primary/45 bg-primary/[0.03]",
+              "relative flex min-h-[360px] flex-col justify-between border border-dashed border-border-strong bg-card/40 p-8 transition-colors sm:p-10",
+              dragActive && "border-solid border-accent bg-accent/[0.045]",
             )}
           >
-            <div className="relative mb-5">
-              <div className="absolute inset-0 rounded-xl bg-primary/15 blur-xl" aria-hidden="true" />
-              <div className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted-foreground shadow-inset-top">
+            <span
+              className="pointer-events-none absolute inset-4 border border-border/40"
+              aria-hidden="true"
+            />
+
+            <div className="relative flex items-start justify-between">
+              <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
+                Document intake
+              </span>
+              <span className="font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/40">
+                PDF · 5MB max
+              </span>
+            </div>
+
+            <div className="relative py-12 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center border border-border-strong bg-background text-muted-foreground">
                 {uploading ? (
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 ) : (
-                  <Upload className="h-4 w-4" strokeWidth={1.8} />
+                  <Upload className="h-4 w-4" strokeWidth={1.7} />
                 )}
-              </div>
+              </span>
+              <h2 className="mt-6 font-display text-[26px] font-light leading-none tracking-[-0.03em] text-foreground">
+                {uploading
+                  ? "Uploading your resume…"
+                  : dragActive
+                    ? "Drop to upload"
+                    : "Place your resume here."}
+              </h2>
+              <p className="mx-auto mt-3 max-w-xs text-[12px] leading-[1.7] text-muted-foreground">
+                A single PDF is all we need. Analysis takes roughly twenty to thirty seconds.
+              </p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="btn-primary btn-sm mt-6 gap-1.5"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Choose PDF
+              </button>
+              <p className="mt-4 font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/40">
+                or drag and drop it here
+              </p>
             </div>
-            <h2 className="font-display text-[17px] font-semibold tracking-[-0.02em] text-foreground">
-              {uploading ? "Uploading your resume…" : dragActive ? "Drop to upload" : "Upload your resume"}
-            </h2>
-            <p className="mt-1.5 max-w-xs text-[12px] leading-5 text-muted-foreground">
-              PDF only, up to 5MB. Analysis takes roughly 20–30 seconds.
-            </p>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="btn-primary btn-sm mt-5 gap-1.5"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              Choose PDF
-            </button>
-            <p className="mt-4 text-[10.5px] text-muted-foreground/40">
-              or drag and drop it here
-            </p>
+
+            <div className="relative flex items-start gap-2.5 border-t border-border pt-4">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/60" />
+              <p className="max-w-sm text-[10.5px] leading-[1.6] text-muted-foreground/60">
+                Stored in a private bucket. Only your account can read it, and you can delete it
+                at any time.
+              </p>
+            </div>
           </section>
 
-          <aside className="card-base overflow-hidden">
-            <div className="border-b border-border/60 px-4 py-3">
+          <aside>
+            <div className="flex items-baseline justify-between border-b border-border pb-3">
               <h2 className="text-headline text-foreground">What happens next</h2>
+              <span className="mono-label">Three steps</span>
             </div>
-            <ol className="divide-y divide-border/60">
+            <ol className="divide-y divide-border border-b border-border">
               {[
                 {
                   title: "Parse the document",
@@ -364,41 +391,41 @@ export default function ResumeAnalyzer() {
                   description: "Practice questions target what you claim to know — and what you don't.",
                 },
               ].map((step, index) => (
-                <li key={step.title} className="flex gap-3 px-4 py-3.5">
-                  <span className="mt-0.5 font-mono text-[9.5px] text-primary/60">
+                <li key={step.title} className="flex gap-4 py-5">
+                  <span className="font-display text-[22px] font-light leading-none tracking-[-0.03em] tabular text-border-strong/60">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <p className="text-[12px] font-medium text-foreground">{step.title}</p>
-                    <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground/65">
+                    <p className="font-display text-[17px] leading-none tracking-[-0.02em] text-foreground">
+                      {step.title}
+                    </p>
+                    <p className="mt-2 text-[11.5px] leading-[1.7] text-muted-foreground/75">
                       {step.description}
                     </p>
                   </div>
                 </li>
               ))}
             </ol>
-            <div className="flex items-start gap-2 border-t border-border/60 bg-surface-2/35 px-4 py-3">
-              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/60" />
-              <p className="text-[10.5px] leading-4 text-muted-foreground/60">
-                Stored in a private bucket. Only your account can read it, and you can delete it
-                at any time.
-              </p>
-            </div>
+            <p className="mt-4 font-mono text-[7.5px] uppercase leading-[1.9] tracking-[0.12em] text-muted-foreground/40">
+              Your resume never leaves your account.
+            </p>
           </aside>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-7">
           {/* File row */}
-          <div className="card-base flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-surface-2 text-primary">
-                <FileText className="h-4 w-4" strokeWidth={1.8} />
-              </div>
+          <div className="flex flex-col gap-4 border-y border-border py-4 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border-strong bg-card text-primary">
+                <FileText className="h-4 w-4" strokeWidth={1.7} />
+              </span>
               <div className="min-w-0">
-                <p className="truncate text-[12.5px] font-medium text-foreground">{fileName}</p>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p className="truncate font-display text-[18px] leading-none tracking-[-0.02em] text-foreground">
+                  {fileName}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <StatusTag status={resume.analysis_status} analyzing={analyzing} />
-                  <span className="text-[10.5px] text-muted-foreground/50">
+                  <span className="font-mono text-[7.5px] uppercase tracking-[0.12em] text-muted-foreground/45">
                     Uploaded{" "}
                     {new Date(resume.created_at).toLocaleDateString(undefined, {
                       month: "short",
@@ -454,28 +481,30 @@ export default function ResumeAnalyzer() {
           </div>
 
           {(analyzing || resume.analysis_status === "analyzing") && (
-            <div className="card-base flex flex-col items-center justify-center px-6 py-16 text-center">
-              <div className="relative mb-5">
-                <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" aria-hidden="true" />
-                <Loader2 className="relative h-7 w-7 animate-spin text-primary" />
-              </div>
-              <h2 className="font-display text-[17px] font-semibold tracking-[-0.02em] text-foreground">
-                Reading your resume
-              </h2>
-              <p className="mt-1.5 max-w-sm text-[12px] leading-5 text-muted-foreground">
-                Extracting structure, skills and experience. This usually takes under 30 seconds.
+            <div className="border-y border-border py-14 text-center">
+              <p className="mono-label text-accent">Reading your resume</p>
+              <p className="mx-auto mt-3 max-w-sm font-display text-[24px] font-light leading-[1.35] tracking-[-0.025em] text-foreground">
+                Extracting structure, skills and experience.
               </p>
-              <div className="mt-5 flex items-center gap-2">
+              <p className="mt-2 text-[11.5px] text-muted-foreground/60">
+                This usually takes under thirty seconds.
+              </p>
+              <div className="mx-auto mt-7 flex max-w-md items-center justify-center gap-6">
                 {["Parsing", "Structuring", "Writing questions"].map((label, index) => (
                   <span
                     key={label}
                     className={cn(
-                      "rounded-md border px-2 py-1 text-[10px]",
-                      index === 0
-                        ? "border-primary/25 bg-primary/[0.07] text-primary"
-                        : "border-border/60 bg-surface-2/40 text-muted-foreground/45",
+                      "flex items-center gap-2 font-mono text-[7.5px] uppercase tracking-[0.14em]",
+                      index === 0 ? "text-foreground" : "text-muted-foreground/35",
                     )}
                   >
+                    <span
+                      className={cn(
+                        "h-1 w-1",
+                        index === 0 ? "animate-pulse bg-accent" : "bg-border-strong",
+                      )}
+                      aria-hidden="true"
+                    />
                     {label}
                   </span>
                 ))}
@@ -488,9 +517,9 @@ export default function ResumeAnalyzer() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-4"
+              className="space-y-9"
             >
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-x-12 gap-y-8 md:grid-cols-2">
                 <DetailCard icon={Code2} title="Skills" count={(resume.skills || []).length}>
                   {(resume.skills || []).length ? (
                     <div className="flex flex-wrap gap-1.5">
@@ -533,9 +562,9 @@ export default function ResumeAnalyzer() {
                       {(resume.experience || []).map((item, index) => (
                         <li
                           key={index}
-                          className="flex items-start gap-2.5 text-[12px] leading-5 text-secondary-foreground"
+                          className="flex items-start gap-3 text-[12px] leading-5 text-secondary-foreground"
                         >
-                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-primary/70" />
+                          <span className="mt-[9px] h-px w-2.5 shrink-0 bg-accent/70" />
                           {item}
                         </li>
                       ))}
@@ -555,9 +584,9 @@ export default function ResumeAnalyzer() {
                       {(resume.education || []).map((item, index) => (
                         <li
                           key={index}
-                          className="flex items-start gap-2.5 text-[12px] leading-5 text-secondary-foreground"
+                          className="flex items-start gap-3 text-[12px] leading-5 text-secondary-foreground"
                         >
-                          <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-info/70" />
+                          <span className="mt-[9px] h-px w-2.5 shrink-0 bg-border-strong" />
                           {item}
                         </li>
                       ))}
@@ -569,26 +598,34 @@ export default function ResumeAnalyzer() {
               </div>
 
               {resume.interview_questions?.length ? (
-                <section className="card-base overflow-hidden">
-                  <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-3.5 w-3.5 text-primary" />
-                      <h2 className="text-headline text-foreground">Questions built from your resume</h2>
+                <section>
+                  <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-3">
+                    <div className="flex items-baseline gap-3">
+                      <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
+                        Generated
+                      </span>
+                      <h2 className="text-headline text-foreground">
+                        Questions built from your resume
+                      </h2>
                     </div>
-                    <span className="tag-muted">{resume.interview_questions.length} questions</span>
+                    <span className="mono-label">
+                      {resume.interview_questions.length} questions
+                    </span>
                   </div>
-                  <ol className="divide-y divide-border/60">
+                  <ol className="divide-y divide-border border-b border-border">
                     {resume.interview_questions.map((question, index) => (
-                      <li key={index} className="flex gap-3.5 px-5 py-3.5">
-                        <span className="mt-0.5 font-mono text-[10px] text-primary/50">
+                      <li key={index} className="flex gap-5 py-4">
+                        <span className="pt-0.5 font-mono text-[8.5px] tracking-[0.1em] text-accent/70">
                           {String(index + 1).padStart(2, "0")}
                         </span>
-                        <p className="text-[12.5px] leading-5 text-secondary-foreground">{question}</p>
+                        <p className="font-display text-[17px] font-light leading-[1.5] tracking-[-0.015em] text-secondary-foreground">
+                          {question}
+                        </p>
                       </li>
                     ))}
                   </ol>
-                  <div className="flex flex-col gap-3 border-t border-border/60 bg-surface-2/35 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-[11px] text-muted-foreground/60">
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-[10.5px] leading-[1.7] text-muted-foreground/50">
                       Questions use your projects and technologies as context.
                     </p>
                     <button

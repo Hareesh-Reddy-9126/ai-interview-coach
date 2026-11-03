@@ -213,13 +213,13 @@ export function CommandPalette({
                           onMouseEnter={() => setActiveIndex(index)}
                           onClick={() => run(item.to)}
                           className={cn(
-                            "flex w-full items-center gap-3 rounded px-2.5 py-2.5 text-left transition-colors",
+                            "flex w-full items-center gap-3 px-2.5 py-2.5 text-left transition-colors",
                             active ? "bg-surface-2" : "hover:bg-surface-2/50",
                           )}
                         >
                           <span
                             className={cn(
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded border",
+                              "flex h-8 w-8 shrink-0 items-center justify-center border",
                               active
                                 ? "border-primary/30 bg-primary/10 text-primary"
                                 : "border-border bg-surface-2 text-muted-foreground",
@@ -251,12 +251,12 @@ export function CommandPalette({
             <div className="flex items-center justify-between border-t border-border bg-surface-2/30 px-4 py-2.5">
               <div className="flex items-center gap-4 mono-label text-muted-foreground/60">
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border border-border bg-card px-1 py-0.5">↑</kbd>
-                  <kbd className="rounded border border-border bg-card px-1 py-0.5">↓</kbd>
+                  <kbd className="border border-border bg-card px-1 py-0.5">↑</kbd>
+                  <kbd className="border border-border bg-card px-1 py-0.5">↓</kbd>
                   navigate
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <kbd className="rounded border border-border bg-card px-1.5 py-0.5">↵</kbd>
+                  <kbd className="border border-border bg-card px-1.5 py-0.5">↵</kbd>
                   open
                 </span>
               </div>

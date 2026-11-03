@@ -28,9 +28,6 @@ type Filter = (typeof FILTERS)[number]["id"];
 const scoreText = (score: number) =>
   score >= 80 ? "text-primary" : score >= 60 ? "text-warning" : "text-destructive";
 
-const scoreBar = (score: number) =>
-  score >= 80 ? "bg-primary" : score >= 60 ? "bg-warning" : "bg-destructive";
-
 const difficultyText = (difficulty: string) =>
   difficulty === "Hard"
     ? "text-destructive/80"
@@ -97,29 +94,29 @@ export default function InterviewHistory() {
   }, [filtered]);
 
   return (
-    <div className="mx-auto max-w-[900px]">
-      <div className="mb-6 flex flex-col gap-4 border-b border-border/60 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto max-w-[980px]">
+      <div className="mb-8 flex flex-col gap-6 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
-            <span className="section-label">Archive</span>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-7 bg-accent" aria-hidden="true" />
+            <span className="section-label">Archive · Every session</span>
           </div>
           <h1 className="text-display-lg text-foreground">Session history</h1>
-          <p className="mt-2.5 text-[13.5px] leading-6 text-muted-foreground">
-            Every interview you've run, with the score it produced.
+          <p className="mt-4 max-w-xl text-[14px] leading-[1.7] text-muted-foreground">
+            Every interview you have run, with the score it produced and the context around it.
           </p>
         </div>
-        <Link to="/interview" className="btn-primary btn-sm w-fit gap-1.5">
+        <Link to="/interview" className="btn-primary btn-sm w-fit gap-2">
           New session
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.8} />
         </Link>
       </div>
 
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="card-base flex items-center gap-4 p-4">
-              <div className="skeleton h-8 w-8 rounded-md" />
+            <div key={index} className="flex items-center gap-4 border-b border-border py-4">
+              <div className="skeleton h-8 w-8" />
               <div className="flex-1">
                 <div className="skeleton mb-2 h-3.5 w-40" />
                 <div className="skeleton h-2.5 w-24" />
@@ -141,29 +138,25 @@ export default function InterviewHistory() {
           }
         />
       ) : (
-        <div className="space-y-5">
-          {/* Summary strip */}
-          <div className="card-base grid grid-cols-2 divide-border/60 sm:grid-cols-4 sm:divide-x">
+        <div className="space-y-9">
+          <div className="grid grid-cols-2 gap-px border-y border-border bg-border sm:grid-cols-4">
             {[
               { label: "Sessions", value: stats.total },
               { label: "Completed", value: stats.completed },
               { label: "Average", value: stats.average ? `${stats.average}%` : "—" },
               { label: "Best score", value: stats.best ? `${stats.best}%` : "—" },
             ].map((stat) => (
-              <div key={stat.label} className="px-4 py-3.5">
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-                  {stat.label}
-                </p>
-                <p className="mt-1.5 font-display text-[20px] font-semibold leading-none tracking-[-0.03em] text-foreground tabular">
+              <div key={stat.label} className="bg-background px-4 py-4 sm:px-5">
+                <p className="mono-label">{stat.label}</p>
+                <p className="mt-2 font-display text-[30px] font-light leading-none tracking-[-0.04em] tabular text-foreground">
                   {stat.value}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-6 border-b-0">
               {FILTERS.map((option) => (
                 <button
                   key={option.id}
@@ -171,25 +164,32 @@ export default function InterviewHistory() {
                   onClick={() => setFilter(option.id)}
                   aria-pressed={filter === option.id}
                   className={cn(
-                    "rounded-[6px] px-2.5 py-1.5 text-[11.5px] font-medium transition-colors",
+                    "relative pb-1.5 font-mono text-[8.5px] uppercase tracking-[0.14em] transition-colors",
                     filter === option.id
-                      ? "bg-surface-3 text-foreground"
-                      : "text-muted-foreground/60 hover:text-foreground",
+                      ? "text-foreground"
+                      : "text-muted-foreground/50 hover:text-foreground",
                   )}
                 >
                   {option.label}
+                  <span
+                    className={cn(
+                      "absolute inset-x-0 bottom-0 h-px transition-colors",
+                      filter === option.id ? "bg-accent" : "bg-transparent",
+                    )}
+                    aria-hidden="true"
+                  />
                 </button>
               ))}
             </div>
-            <p className="text-[10.5px] text-muted-foreground/45">
+            <p className="mono-label text-muted-foreground/45">
               {filtered.length} {filtered.length === 1 ? "session" : "sessions"}
             </p>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="card-base flex flex-col items-center justify-center px-6 py-12 text-center">
+            <div className="flex flex-col items-center justify-center border border-border px-6 py-12 text-center">
               <Target className="h-5 w-5 text-muted-foreground/35" />
-              <p className="mt-3 text-[12.5px] font-medium text-foreground">
+              <p className="mt-3 font-display text-[19px] text-foreground">
                 No {filter === "completed" ? "completed" : "in-progress"} sessions
               </p>
               <p className="mt-1 text-[11.5px] text-muted-foreground/60">
@@ -197,41 +197,47 @@ export default function InterviewHistory() {
               </p>
             </div>
           ) : (
-            grouped.map(([month, monthSessions]) => (
-              <section key={month} aria-label={month}>
-                <div className="mb-2 flex items-center gap-3">
-                  <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
+            grouped.map(([month, monthSessions], groupIndex) => (
+              <motion.section
+                key={month}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: groupIndex * 0.05, duration: 0.3 }}
+                aria-label={month}
+              >
+                <div className="mb-3 flex items-baseline gap-4">
+                  <h2 className="font-display text-[24px] font-light leading-none tracking-[-0.03em] text-foreground">
                     {month}
                   </h2>
-                  <div className="h-px flex-1 bg-border/60" />
-                  <span className="tabular text-[10.5px] text-muted-foreground/35">
-                    {monthSessions.length}
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground/40">
+                    {monthSessions.length} {monthSessions.length === 1 ? "entry" : "entries"}
                   </span>
                 </div>
-                <div className="card-base divide-y divide-border/60 overflow-hidden">
+
+                <div className="border-t border-border">
                   {monthSessions.map((session, index) => (
-                    <motion.div
+                    <div
                       key={session.id}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.02, duration: 0.25 }}
-                      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/40 sm:px-5"
+                      className="grid grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border py-4 transition-colors hover:bg-surface-2/30 sm:grid-cols-[40px_minmax(0,1fr)_auto]"
                     >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-surface-2 text-muted-foreground/60">
-                        <Mic className="h-3.5 w-3.5" strokeWidth={1.8} />
+                      <span className="font-mono text-[8px] tracking-[0.1em] text-muted-foreground/35">
+                        {String(index + 1).padStart(2, "0")}
                       </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[12.5px] font-medium text-foreground">
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-[19px] leading-none tracking-[-0.02em] text-foreground">
                           {session.role}
                         </p>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10.5px] text-muted-foreground/55">
-                          <span>{session.company}</span>
-                          <span className="h-[3px] w-[3px] rounded-full bg-border-strong" />
-                          <span className={difficultyText(session.difficulty)}>
+                        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                          <span className="text-[10.5px] font-medium text-secondary-foreground">
+                            {session.company}
+                          </span>
+                          <span className="h-[3px] w-[3px] bg-border-strong" aria-hidden="true" />
+                          <span className={cn("text-[10.5px]", difficultyText(session.difficulty))}>
                             {session.difficulty}
                           </span>
-                          <span className="h-[3px] w-[3px] rounded-full bg-border-strong" />
-                          <span className="inline-flex items-center gap-1">
+                          <span className="h-[3px] w-[3px] bg-border-strong" aria-hidden="true" />
+                          <span className="inline-flex items-center gap-1 font-mono text-[7.5px] uppercase tracking-[0.1em] text-muted-foreground/45">
                             <Clock className="h-2.5 w-2.5" />
                             {new Date(session.created_at).toLocaleDateString(undefined, {
                               month: "short",
@@ -240,34 +246,27 @@ export default function InterviewHistory() {
                           </span>
                         </div>
                       </div>
+
                       {session.status !== "completed" ? (
                         <span className="tag-warning shrink-0 capitalize">
                           {session.status.replace("_", " ")}
                         </span>
                       ) : session.overall_score != null ? (
-                        <div className="flex shrink-0 items-center gap-2.5">
-                          <div className="hidden h-1 w-16 overflow-hidden rounded-full bg-surface-3 sm:block">
-                            <div
-                              className={cn("h-full rounded-full", scoreBar(session.overall_score))}
-                              style={{ width: `${session.overall_score}%` }}
-                            />
-                          </div>
-                          <span
-                            className={cn(
-                              "tabular w-8 text-right text-[12px] font-semibold",
-                              scoreText(session.overall_score),
-                            )}
-                          >
-                            {session.overall_score}
-                          </span>
-                        </div>
+                        <span
+                          className={cn(
+                            "shrink-0 font-display text-[26px] font-light leading-none tabular",
+                            scoreText(session.overall_score),
+                          )}
+                        >
+                          {session.overall_score}
+                        </span>
                       ) : (
                         <span className="tag-muted shrink-0">Scored</span>
                       )}
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
-              </section>
+              </motion.section>
             ))
           )}
         </div>

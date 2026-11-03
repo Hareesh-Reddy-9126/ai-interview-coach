@@ -4,10 +4,8 @@ import {
   Check,
   Code2,
   FileText,
-  Gauge,
   Map,
   Mic,
-  Settings,
   ShieldCheck,
   Timer,
 } from "lucide-react";
@@ -50,130 +48,161 @@ const included = [
 
 export default function Usage() {
   return (
-    <div className="mx-auto max-w-[900px]">
-      <div className="mb-6 border-b border-border/60 pb-6">
-        <div className="mb-3 flex items-center gap-2">
-          <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
-          <span className="section-label">Plan</span>
+    <div className="mx-auto max-w-[980px]">
+      <div className="mb-9 flex flex-col gap-6 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-7 bg-accent" aria-hidden="true" />
+            <span className="section-label">Plan · Fair use</span>
+          </div>
+          <h1 className="text-display-lg text-foreground">Plan &amp; usage</h1>
+          <p className="mt-4 max-w-xl text-[14px] leading-[1.7] text-muted-foreground">
+            Every feature is enabled on this deployment. AI endpoints use per-user fair-use limits
+            so the service stays fast for everyone.
+          </p>
         </div>
-        <h1 className="text-display-lg text-foreground">Plan &amp; usage</h1>
-        <p className="mt-2.5 max-w-xl text-[13.5px] leading-6 text-muted-foreground">
-          Every feature is enabled on this deployment. AI endpoints use per-user fair-use limits
-          so the service stays fast for everyone.
-        </p>
+        <div className="flex shrink-0 items-center gap-4 pb-1">
+          <span className="mono-label">Full access</span>
+          <span className="h-3 w-px bg-border-strong" aria-hidden="true" />
+          <span className="mono-label">No payment method</span>
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <section className="card-base overflow-hidden" aria-label="Current plan">
-          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-            <div className="flex items-center gap-2">
-              <Gauge className="h-3.5 w-3.5 text-muted-foreground/60" strokeWidth={1.8} />
-              <h2 className="text-headline text-foreground">Current plan</h2>
-            </div>
-            <span className="tag-success">Active</span>
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-14">
+        <section aria-label="Current plan">
+          <div className="flex items-baseline justify-between border-b border-border pb-3">
+            <h2 className="text-headline text-foreground">Current plan</h2>
+            <span className="flex items-center gap-2 font-mono text-[7.5px] uppercase tracking-[0.14em] text-primary">
+              <span className="h-1 w-1 bg-primary" aria-hidden="true" />
+              Active
+            </span>
           </div>
-          <div className="p-5">
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="font-display text-[28px] font-semibold leading-none tracking-[-0.035em] text-foreground">
-                Full access
-              </p>
-              <span className="text-[11px] text-muted-foreground/50">No payment method</span>
-            </div>
-            <p className="mt-2.5 max-w-md text-[12.5px] leading-5 text-muted-foreground">
-              All modules, no trial gates. Fair-use limits apply per account so a single session
-              can't starve the shared model capacity.
-            </p>
 
-            <ul className="mt-5 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-              {included.map((feature) => (
-                <li key={feature} className="flex items-center gap-2 text-[11.5px] text-secondary-foreground">
-                  <Check className="h-3 w-3 shrink-0 text-primary" strokeWidth={2.4} />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-surface-2/35 px-5 py-3">
-            <span className="inline-flex items-center gap-1.5 text-[10.5px] text-muted-foreground/60">
-              <ShieldCheck className="h-3.5 w-3.5 text-primary/60" />
+          <p className="mt-7 font-display text-[clamp(3rem,6vw,4.2rem)] font-light leading-[0.85] tracking-[-0.055em] text-foreground">
+            Full access.
+          </p>
+          <p className="mt-5 max-w-lg text-[13.5px] leading-[1.8] text-muted-foreground">
+            All modules, no trial gates. Fair-use limits apply per account so a single session
+            can&apos;t starve the shared model capacity.
+          </p>
+
+          <ul className="mt-8 grid grid-cols-1 gap-x-8 border-t border-border sm:grid-cols-2">
+            {included.map((feature) => (
+              <li
+                key={feature}
+                className="flex items-center gap-3 border-b border-border py-3 text-[12px] text-secondary-foreground"
+              >
+                <Check className="h-3 w-3 shrink-0 text-primary" strokeWidth={2.4} />
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <span className="inline-flex items-center gap-2 font-mono text-[7.5px] uppercase tracking-[0.13em] text-muted-foreground/50">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary/55" />
               Nothing is charged when a limit is reached
             </span>
-            <Link
-              to="/settings"
-              className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-foreground transition-colors hover:text-primary"
-            >
+            <Link to="/settings" className="link-editorial">
               Account settings
-              <ArrowRight className="h-3 w-3" />
+              <ArrowRight className="h-3 w-3" strokeWidth={1.8} />
             </Link>
           </div>
         </section>
 
-        <aside className="card-base overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-border/60 px-5 py-3.5">
-            <Timer className="h-3.5 w-3.5 text-muted-foreground/60" strokeWidth={1.8} />
+        <aside>
+          <div className="flex items-baseline justify-between border-b border-border pb-3">
             <h2 className="text-headline text-foreground">How limits work</h2>
+            <Timer className="h-3.5 w-3.5 text-muted-foreground/40" strokeWidth={1.7} />
           </div>
-          <div className="divide-y divide-border/60">
-            <div className="px-5 py-3.5">
-              <p className="text-[12px] font-medium text-foreground">Rolling hourly windows</p>
-              <p className="mt-1 text-[11px] leading-4 text-muted-foreground/65">
-                The interview and coding limits reset continuously as older requests age out.
-              </p>
-            </div>
-            <div className="px-5 py-3.5">
-              <p className="text-[12px] font-medium text-foreground">Daily windows at 00:00 UTC</p>
-              <p className="mt-1 text-[11px] leading-4 text-muted-foreground/65">
-                Resume analysis and roadmap generation reset once per calendar day.
-              </p>
-            </div>
-            <div className="px-5 py-3.5">
-              <p className="text-[12px] font-medium text-foreground">Clear retry messages</p>
-              <p className="mt-1 text-[11px] leading-4 text-muted-foreground/65">
-                Exceeding a limit returns a readable cooldown time — never a silent failure.
-              </p>
-            </div>
-          </div>
-          <div className="border-t border-border/60 p-3">
-            <Link to="/settings" className="btn-secondary btn-sm w-full gap-1.5">
-              <Settings className="h-3.5 w-3.5" />
-              Manage profile
-            </Link>
-          </div>
+          <dl className="divide-y divide-border border-b border-border">
+            {[
+              {
+                title: "Rolling hourly windows",
+                detail:
+                  "The interview and coding limits reset continuously as older requests age out.",
+              },
+              {
+                title: "Daily windows at 00:00 UTC",
+                detail: "Resume analysis and roadmap generation reset once per calendar day.",
+              },
+              {
+                title: "Clear retry messages",
+                detail:
+                  "Exceeding a limit returns a readable cooldown time — never a silent failure.",
+              },
+            ].map((item, index) => (
+              <div key={item.title} className="flex gap-4 py-5">
+                <span className="font-mono text-[8px] tracking-[0.1em] text-accent/70">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <dt className="font-display text-[17px] leading-none tracking-[-0.02em] text-foreground">
+                    {item.title}
+                  </dt>
+                  <dd className="mt-2 text-[11.5px] leading-[1.7] text-muted-foreground/75">
+                    {item.detail}
+                  </dd>
+                </div>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-4 font-mono text-[7.5px] uppercase leading-[1.9] tracking-[0.12em] text-muted-foreground/40">
+            Limits protect shared NVIDIA NIM capacity
+          </p>
         </aside>
       </div>
 
-      <section className="card-base mt-4 overflow-hidden" aria-label="Fair-use limits">
-        <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-          <h2 className="text-headline text-foreground">Fair-use limits</h2>
-          <span className="text-[10.5px] uppercase tracking-[0.1em] text-muted-foreground/45">
-            Per account
-          </span>
+      <section className="mt-12" aria-label="Fair-use limits">
+        <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-3">
+          <div className="flex items-baseline gap-3">
+            <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
+              Ledger
+            </span>
+            <h2 className="text-headline text-foreground">Fair-use limits</h2>
+          </div>
+          <span className="mono-label">Per account</span>
         </div>
-        <div className="divide-y divide-border/60">
-          {limits.map((item) => (
-            <div key={item.title} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-start gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-surface-2 text-muted-foreground/60">
-                  <item.icon className="h-3.5 w-3.5" strokeWidth={1.8} />
-                </span>
+
+        <div className="border-b border-border">
+          {limits.map((item, index) => (
+            <div
+              key={item.title}
+              className="grid grid-cols-[30px_minmax(0,1fr)_auto] items-start gap-4 border-b border-border py-5 last:border-b-0 sm:grid-cols-[40px_minmax(0,1fr)_110px] sm:gap-6"
+            >
+              <span className="pt-0.5 font-mono text-[8px] tracking-[0.1em] text-muted-foreground/35">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div className="flex min-w-0 items-start gap-3.5">
+                <item.icon
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/45"
+                  strokeWidth={1.7}
+                />
                 <div className="min-w-0">
-                  <p className="text-[12.5px] font-medium text-foreground">{item.title}</p>
-                  <p className="mt-0.5 max-w-lg text-[11px] leading-4 text-muted-foreground/60">
+                  <p className="font-display text-[18px] leading-none tracking-[-0.02em] text-foreground">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 max-w-lg text-[11.5px] leading-[1.7] text-muted-foreground/70">
                     {item.detail}
                   </p>
                 </div>
               </div>
-              <span className="shrink-0 self-start rounded-md border border-border bg-surface-2 px-2 py-1 font-mono text-[10.5px] text-secondary-foreground sm:self-center">
+              <span className="shrink-0 text-right font-mono text-[10px] tabular text-secondary-foreground sm:text-[11px]">
                 {item.limit}
               </span>
             </div>
           ))}
         </div>
-        <div className="border-t border-border/60 bg-surface-2/35 px-5 py-3">
-          <p className="text-[10.5px] text-muted-foreground/55">
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-lg text-[10.5px] leading-[1.7] text-muted-foreground/50">
             Limits protect shared NVIDIA NIM capacity. If you need a higher ceiling, get in touch
             before relying on the app for a live interview loop.
           </p>
+          <Link to="/interview" className="btn-secondary btn-sm gap-1.5">
+            Start a session
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       </section>
     </div>

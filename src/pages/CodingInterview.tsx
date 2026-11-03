@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -151,8 +150,12 @@ interface AIEvaluation {
   suggestedAnswer: string;
 }
 
-const difficultyTag = (difficulty: string) =>
-  difficulty === "Easy" ? "tag-success" : difficulty === "Medium" ? "tag-warning" : "tag-destructive";
+const difficultyTone = (difficulty: string) =>
+  difficulty === "Easy"
+    ? "text-primary"
+    : difficulty === "Medium"
+      ? "text-warning"
+      : "text-destructive";
 
 const barClass = (score: number) =>
   score >= 80 ? "bg-primary" : score >= 60 ? "bg-warning" : "bg-destructive";
@@ -274,103 +277,118 @@ export default function CodingInterview() {
     const easyCount = problems.filter((p) => p.difficulty === "Easy").length;
     return (
       <div className="mx-auto max-w-[960px]">
-        <div className="mb-6 border-b border-border/60 pb-6">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
-            <span className="section-label">Coding lab</span>
+        <div className="mb-9 flex flex-col gap-6 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="h-px w-7 bg-accent" aria-hidden="true" />
+              <span className="section-label">Coding lab · Three problems</span>
+            </div>
+            <h1 className="text-display-lg text-foreground">Solve under real conditions.</h1>
+            <p className="mt-4 max-w-xl text-[14px] leading-[1.7] text-muted-foreground">
+              Write a solution, run the test suite, then get an AI review of correctness,
+              complexity and code quality.
+            </p>
           </div>
-          <h1 className="text-display-lg text-foreground">Solve under real conditions.</h1>
-          <p className="mt-2.5 max-w-xl text-[13.5px] leading-6 text-muted-foreground">
-            Write a solution, run the test suite, then get an AI review of correctness,
-            complexity and code quality.
-          </p>
+          <div className="flex shrink-0 items-center gap-4 pb-1">
+            <span className="mono-label">{problems.length} problems</span>
+            <span className="h-3 w-px bg-border-strong" aria-hidden="true" />
+            <span className="mono-label">{easyCount} easy</span>
+          </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_248px]">
-          <section className="card-base overflow-hidden" aria-label="Problem set">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_248px] lg:gap-14">
+          <section aria-label="Problem set">
+            <div className="flex items-baseline justify-between border-b border-border pb-3">
               <h2 className="text-headline text-foreground">Problem set</h2>
-              <div className="flex items-center gap-1.5">
-                <span className="tag-muted">{problems.length} problems</span>
-                <span className="tag-muted hidden sm:inline-flex">{easyCount} easy</span>
-              </div>
+              <span className="mono-label">Select to begin</span>
             </div>
-            <ul className="divide-y divide-border/60">
+            <ul className="border-b border-border">
               {problems.map((problem, index) => (
                 <li key={problem.title}>
                   <button
                     type="button"
                     onClick={() => startCoding(problem)}
-                    className="group flex w-full items-center gap-4 px-5 py-3.5 text-left transition-colors hover:bg-surface-2/50"
+                    className="group grid w-full grid-cols-[34px_minmax(0,1fr)_auto_auto] items-center gap-4 border-b border-border py-5 text-left transition-colors last:border-b-0 hover:bg-surface-2/25 sm:gap-5"
                   >
-                    <span className="w-5 shrink-0 text-center font-mono text-[10.5px] text-muted-foreground/35">
+                    <span className="font-display text-[24px] font-light leading-none tracking-[-0.03em] tabular text-border-strong/55">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-surface-2 text-muted-foreground transition-colors group-hover:border-primary/25 group-hover:text-primary">
-                      <Code2 className="h-3.5 w-3.5" strokeWidth={1.8} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-medium text-foreground">
+                    <span className="min-w-0">
+                      <span className="block truncate font-display text-[20px] leading-none tracking-[-0.025em] text-foreground">
                         {problem.title}
                       </span>
-                      <span className="mt-0.5 block text-[11px] text-muted-foreground/55">
+                      <span className="mt-2 block font-mono text-[7.5px] uppercase tracking-[0.12em] text-muted-foreground/45">
                         {problem.testCases.length} test cases
                       </span>
                     </span>
-                    <span className={difficultyTag(problem.difficulty)}>{problem.difficulty}</span>
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/25 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground/70" />
+                    <span
+                      className={cn(
+                        "font-mono text-[7.5px] uppercase tracking-[0.13em]",
+                        difficultyTone(problem.difficulty),
+                      )}
+                    >
+                      {problem.difficulty}
+                    </span>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/25 transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />
                   </button>
                 </li>
               ))}
             </ul>
           </section>
 
-          <aside className="space-y-3">
-            <div className="card-base overflow-hidden">
-              <div className="border-b border-border/60 px-4 py-3">
-                <h2 className="text-headline text-foreground">Language</h2>
-                <p className="mt-0.5 text-[11px] text-muted-foreground/60">
-                  Applied when you open a problem
-                </p>
-              </div>
-              <div className="space-y-1 p-2">
-                {languages.map((lang) => (
-                  <button
-                    key={lang.id}
-                    type="button"
-                    onClick={() => changeLang(lang)}
-                    aria-pressed={selectedLang.id === lang.id}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-[12px] font-medium transition-colors",
-                      selectedLang.id === lang.id
-                        ? "bg-primary/[0.08] text-primary"
-                        : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
-                    )}
-                  >
-                    {lang.label}
-                    {selectedLang.id === lang.id && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
-                    )}
-                  </button>
-                ))}
-              </div>
+          <aside>
+            <div className="flex items-baseline justify-between border-b border-border pb-3">
+              <h2 className="text-headline text-foreground">Language</h2>
+              <Terminal className="h-3.5 w-3.5 text-muted-foreground/40" strokeWidth={1.7} />
             </div>
+            <div className="border-b border-border">
+              {languages.map((lang) => (
+                <button
+                  key={lang.id}
+                  type="button"
+                  onClick={() => changeLang(lang)}
+                  aria-pressed={selectedLang.id === lang.id}
+                  className={cn(
+                    "flex w-full items-center justify-between border-b border-border py-2.5 text-left text-[12px] transition-colors last:border-b-0",
+                    selectedLang.id === lang.id
+                      ? "text-foreground"
+                      : "text-muted-foreground/60 hover:text-foreground",
+                  )}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <span
+                      className={cn(
+                        "h-1 w-1",
+                        selectedLang.id === lang.id ? "bg-accent" : "bg-transparent",
+                      )}
+                      aria-hidden="true"
+                    />
+                    {lang.label}
+                  </span>
+                  {selectedLang.id === lang.id && (
+                    <span className="font-mono text-[7px] uppercase tracking-[0.12em] text-accent">
+                      Active
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 font-mono text-[7.5px] uppercase tracking-[0.12em] text-muted-foreground/40">
+              Applied when you open a problem
+            </p>
 
-            <div className="rounded-lg border border-border/50 bg-surface-2/30 p-3.5">
-              <div className="mb-2 flex items-center gap-1.5">
-                <Terminal className="h-3.5 w-3.5 text-muted-foreground/50" />
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-                  How it works
-                </p>
-              </div>
-              <ol className="space-y-2">
+            <div className="mt-8">
+              <p className="mono-label border-b border-border pb-3">How it works</p>
+              <ol className="divide-y divide-border border-b border-border">
                 {["Write your solution", "Run the provided tests", "Submit for AI review"].map(
                   (step, index) => (
-                    <li key={step} className="flex items-start gap-2 text-[11px] leading-4 text-muted-foreground/70">
-                      <span className="mt-px font-mono text-[9px] text-primary/60">
+                    <li key={step} className="flex items-start gap-3 py-3">
+                      <span className="font-mono text-[8px] text-accent/65">
                         {String(index + 1).padStart(2, "0")}
                       </span>
-                      {step}
+                      <span className="text-[11px] leading-[1.6] text-muted-foreground/75">
+                        {step}
+                      </span>
                     </li>
                   ),
                 )}
@@ -387,23 +405,23 @@ export default function CodingInterview() {
     const passedCount = testResults.filter((t) => t.passed).length;
     const passRate = testResults.length ? Math.round((passedCount / testResults.length) * 100) : 0;
     return (
-      <div className="mx-auto max-w-[960px] space-y-4">
-        <div className="border-b border-border/60 pb-6">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-4 w-4 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-              <CheckCircle2 className="h-3 w-3 text-primary" />
+      <div className="mx-auto max-w-[960px]">
+        <div className="border-b border-border pb-7">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-4 w-4 items-center justify-center border border-primary/30 bg-primary/[0.06]">
+              <CheckCircle2 className="h-2.5 w-2.5 text-primary" />
             </span>
-            <span className="section-label">Review complete</span>
+            <span className="section-label">Review complete · Coding dossier</span>
           </div>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-display-lg text-foreground">{selectedProblem?.title}</h1>
-              <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+              <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[8.5px] uppercase tracking-[0.13em] text-muted-foreground/55">
                 <span>{selectedProblem?.difficulty}</span>
-                <span className="h-[3px] w-[3px] rounded-full bg-border-strong" />
+                <span className="h-[3px] w-[3px] bg-border-strong" aria-hidden="true" />
                 <span>{selectedLang.label}</span>
-                <span className="h-[3px] w-[3px] rounded-full bg-border-strong" />
-                <span className="inline-flex items-center gap-1">
+                <span className="h-[3px] w-[3px] bg-border-strong" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1.5">
                   <Clock className="h-3 w-3" /> {formatTime(elapsedTime)}
                 </span>
               </p>
@@ -415,91 +433,98 @@ export default function CodingInterview() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mt-7 grid grid-cols-2 gap-px border-y border-border bg-border lg:grid-cols-4">
           {[
             { label: "Correctness", value: `${aiEvaluation.correctness}%`, bar: aiEvaluation.correctness },
             { label: "Code quality", value: `${aiEvaluation.codeQuality}%`, bar: aiEvaluation.codeQuality },
             { label: "Tests passed", value: `${passedCount}/${testResults.length}`, bar: passRate },
             { label: "Time", value: formatTime(elapsedTime), bar: null },
           ].map((metric) => (
-            <div key={metric.label} className="card-base p-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/55">
-                {metric.label}
-              </p>
-              <p className="mt-2 font-display text-[24px] font-semibold leading-none tracking-[-0.03em] text-foreground tabular">
+            <div key={metric.label} className="bg-background px-5 py-5">
+              <p className="mono-label">{metric.label}</p>
+              <p className="mt-3 font-display text-[30px] font-normal leading-none tracking-[-0.035em] text-foreground tabular">
                 {metric.value}
               </p>
               {metric.bar !== null ? (
-                <div className="mt-3 h-1 overflow-hidden rounded-full bg-surface-3">
+                <div className="mt-4 h-px bg-border">
                   <div
-                    className={cn("h-full rounded-full", barClass(metric.bar))}
+                    className={cn("h-px", barClass(metric.bar))}
                     style={{ width: `${metric.bar}%` }}
                   />
                 </div>
               ) : (
-                <div className="mt-3 h-1 rounded-full bg-surface-3" />
+                <div className="mt-4 h-px bg-border" />
               )}
             </div>
           ))}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <section className="card-base overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-border/60 px-5 py-3.5">
-              <Zap className="h-3.5 w-3.5 text-primary" />
-              <h2 className="text-headline text-foreground">AI review</h2>
-            </div>
-            <div className="space-y-4 p-5">
-              <p className="text-[13px] leading-6 text-secondary-foreground">{aiEvaluation.feedback}</p>
-              {aiEvaluation.optimizations.length > 0 && (
-                <div>
-                  <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-                    Suggested optimizations
-                  </p>
-                  <ul className="space-y-1.5">
-                    {aiEvaluation.optimizations.map((optimization, index) => (
-                      <li key={index} className="flex items-start gap-2 text-[12px] leading-5 text-muted-foreground">
-                        <ArrowRight className="mt-1 h-3 w-3 shrink-0 text-primary/60" />
-                        {optimization}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-2 divide-x divide-border/60 border-t border-border/60">
-              <div className="px-5 py-3">
-                <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/50">
-                  Time complexity
-                </p>
-                <p className="mt-1 font-mono text-[13px] text-foreground">{aiEvaluation.timeComplexity}</p>
+        <div className="grid gap-10 border-b border-border py-9 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-14">
+          <section aria-label="AI review">
+            <div className="flex items-baseline justify-between border-b border-border pb-3">
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
+                  Verdict
+                </span>
+                <h2 className="text-headline text-foreground">AI review</h2>
               </div>
-              <div className="px-5 py-3">
-                <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/50">
-                  Space complexity
+              <Zap className="h-3.5 w-3.5 text-muted-foreground/40" strokeWidth={1.7} />
+            </div>
+            <p className="mt-5 font-display text-[20px] font-light leading-[1.55] tracking-[-0.02em] text-secondary-foreground">
+              {aiEvaluation.feedback}
+            </p>
+            {aiEvaluation.optimizations.length > 0 && (
+              <div className="mt-6">
+                <p className="mono-label mb-3">Suggested optimizations</p>
+                <ul className="divide-y divide-border border-y border-border">
+                  {aiEvaluation.optimizations.map((optimization, index) => (
+                    <li key={index} className="flex items-start gap-3 py-3">
+                      <span className="font-mono text-[8px] text-accent/65">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="text-[12px] leading-[1.7] text-muted-foreground">
+                        {optimization}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="mt-5 grid grid-cols-2 divide-x divide-border border-y border-border">
+              <div className="py-4 pr-5">
+                <p className="mono-label">Time complexity</p>
+                <p className="mt-2 font-mono text-[13px] text-foreground">
+                  {aiEvaluation.timeComplexity}
                 </p>
-                <p className="mt-1 font-mono text-[13px] text-foreground">{aiEvaluation.spaceComplexity}</p>
+              </div>
+              <div className="py-4 pl-5">
+                <p className="mono-label">Space complexity</p>
+                <p className="mt-2 font-mono text-[13px] text-foreground">
+                  {aiEvaluation.spaceComplexity}
+                </p>
               </div>
             </div>
           </section>
 
-          <section className="card-base overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+          <section aria-label="Test cases">
+            <div className="flex items-baseline justify-between border-b border-border pb-3">
               <h2 className="text-headline text-foreground">Test cases</h2>
-              <span className="text-[11px] text-muted-foreground/55">{passRate}% passing</span>
+              <span className="mono-label">{passRate}% passing</span>
             </div>
-            <ul className="divide-y divide-border/60">
+            <ul className="divide-y divide-border border-b border-border">
               {testResults.map((result, index) => (
-                <li key={index} className="flex items-center gap-2.5 px-5 py-2.5">
+                <li key={index} className="flex items-center gap-3 py-3">
                   {result.passed ? (
                     <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />
                   ) : (
                     <XCircle className="h-3.5 w-3.5 shrink-0 text-destructive" />
                   )}
-                  <span className="flex-1 text-[12px] text-secondary-foreground">Test {index + 1}</span>
+                  <span className="flex-1 text-[12px] text-secondary-foreground">
+                    Test {index + 1}
+                  </span>
                   <span
                     className={cn(
-                      "text-[11px] font-medium",
+                      "font-mono text-[7.5px] uppercase tracking-[0.13em]",
                       result.passed ? "text-primary" : "text-destructive",
                     )}
                   >
@@ -508,7 +533,7 @@ export default function CodingInterview() {
                 </li>
               ))}
               {testResults.length === 0 && (
-                <li className="px-5 py-6 text-center text-[11.5px] text-muted-foreground/50">
+                <li className="py-6 text-center text-[11.5px] text-muted-foreground/50">
                   No test results returned.
                 </li>
               )}
@@ -517,20 +542,25 @@ export default function CodingInterview() {
         </div>
 
         {aiEvaluation.suggestedAnswer && (
-          <section className="card-base overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-              <h2 className="text-headline text-foreground">Reference solution</h2>
-              <span className="tag-muted">{selectedLang.label}</span>
+          <section className="py-9">
+            <div className="flex items-baseline justify-between border-b border-border pb-3">
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">
+                  Model answer
+                </span>
+                <h2 className="text-headline text-foreground">Reference solution</h2>
+              </div>
+              <span className="mono-label">{selectedLang.label}</span>
             </div>
-            <pre className="max-h-[420px] overflow-auto bg-[hsl(240_7%_4%)] p-5 font-mono text-[12px] leading-5 text-secondary-foreground">
+            <pre className="mt-4 max-h-[420px] overflow-auto bg-sidebar p-5 font-mono text-[12px] leading-6 text-[hsl(var(--sidebar-accent-foreground))]/85">
               {aiEvaluation.suggestedAnswer}
             </pre>
           </section>
         )}
 
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] text-muted-foreground/50">
-            Correctness and quality are judged by the AI reviewer.
+        <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/45">
+            Correctness and quality are judged by the AI reviewer
           </p>
           <button type="button" onClick={resetToList} className="btn-secondary btn-sm gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" />
@@ -544,7 +574,7 @@ export default function CodingInterview() {
   // ── Coding workspace ──
   return (
     <div className="mx-auto max-w-[1320px]">
-      <div className="mb-4 flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
@@ -555,56 +585,66 @@ export default function CodingInterview() {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
-            <h1 className="truncate font-display text-[17px] font-semibold tracking-[-0.02em] text-foreground">
+            <div className="mb-2 flex items-center gap-2.5">
+              <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping bg-primary/50" />
+                <span className="relative inline-flex h-1.5 w-1.5 bg-primary" />
+              </span>
+              <span className="section-label">Coding session in progress</span>
+            </div>
+            <h1 className="truncate font-display text-[clamp(1.7rem,2.6vw,2.3rem)] font-light leading-none tracking-[-0.035em] text-foreground">
               {selectedProblem?.title}
             </h1>
-            <div className="mt-0.5 flex items-center gap-2">
-              <span className={difficultyTag(selectedProblem?.difficulty || "Easy")}>
-                {selectedProblem?.difficulty}
-              </span>
-              <span className="text-[11px] text-muted-foreground/50">{selectedLang.label}</span>
-            </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
+        <div className="flex shrink-0 items-center gap-5">
+          <span className="inline-flex items-center gap-2 text-[12px] text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" strokeWidth={1.6} />
             <span className="tabular font-medium text-foreground">{formatTime(elapsedTime)}</span>
           </span>
-          <div className="hidden h-4 w-px bg-border sm:block" aria-hidden="true" />
-          <span className="text-[11px] text-muted-foreground/50">
-            {testResults.filter((t) => t.passed).length}/{testResults.length || selectedProblem?.testCases.length} tests
+          <span className="h-3 w-px bg-border-strong" aria-hidden="true" />
+          <span className="mono-label">
+            {testResults.filter((t) => t.passed).length}/
+            {testResults.length || selectedProblem?.testCases.length} tests
           </span>
         </div>
       </div>
 
       {error && (
-        <div className="mb-3 flex items-start gap-3 rounded-lg border border-destructive/25 bg-destructive/[0.06] px-4 py-3">
+        <div className="mb-4 flex items-start gap-3 border border-destructive/30 bg-destructive/[0.05] px-4 py-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <p className="flex-1 text-[12.5px] leading-5 text-destructive">{error}</p>
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-8">
         {/* Problem panel */}
-        <section className="card-base flex max-h-[calc(100vh-190px)] min-h-[420px] flex-col overflow-hidden lg:max-h-[calc(100vh-170px)]">
-          <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-            <h2 className="text-headline text-foreground">Problem</h2>
-            <span className="text-[10.5px] text-muted-foreground/45">
+        <section className="flex max-h-[calc(100vh-190px)] min-h-[420px] flex-col border border-border bg-card/40 lg:max-h-[calc(100vh-170px)]">
+          <div className="flex items-baseline justify-between border-b border-border px-4 py-3">
+            <div className="flex items-baseline gap-2.5">
+              <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-accent">
+                Brief
+              </span>
+              <h2 className="text-headline text-foreground">Problem</h2>
+            </div>
+            <span className="mono-label">
               {selectedProblem?.testCases.length} cases
             </span>
           </div>
-          <div className="flex-1 space-y-5 overflow-y-auto p-4">
-            <p className="text-[12.5px] leading-6 text-secondary-foreground">{selectedProblem?.description}</p>
+          <div className="flex-1 space-y-6 overflow-y-auto p-4">
+            <p className="text-[12.5px] leading-[1.8] text-secondary-foreground">
+              {selectedProblem?.description}
+            </p>
 
             <div>
-              <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/45">
-                Constraints
-              </p>
-              <ul className="space-y-1">
+              <p className="mono-label mb-2.5">Constraints</p>
+              <ul className="space-y-1.5 border-t border-border pt-3">
                 {selectedProblem?.constraints.map((constraint, index) => (
-                  <li key={index} className="flex items-start gap-2 font-mono text-[11px] leading-5 text-muted-foreground">
-                    <span className="text-primary/40">·</span>
+                  <li
+                    key={index}
+                    className="flex items-start gap-2.5 font-mono text-[10.5px] leading-[1.7] text-muted-foreground"
+                  >
+                    <span className="mt-[7px] h-px w-2.5 shrink-0 bg-accent/60" />
                     {constraint}
                   </li>
                 ))}
@@ -612,22 +652,22 @@ export default function CodingInterview() {
             </div>
 
             <div>
-              <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/45">
-                Examples
-              </p>
-              <div className="space-y-2">
+              <p className="mono-label mb-2.5">Examples</p>
+              <div className="divide-y divide-border border-y border-border">
                 {selectedProblem?.examples.map((example, index) => (
-                  <div key={index} className="inset-panel space-y-1 p-3">
-                    <p className="font-mono text-[11px] leading-5 text-foreground">
-                      <span className="text-muted-foreground/50">Input  </span>
+                  <div key={index} className="space-y-1.5 py-3">
+                    <p className="font-mono text-[10.5px] leading-[1.7] text-foreground">
+                      <span className="text-muted-foreground/45">Input&nbsp;&nbsp;</span>
                       {example.input}
                     </p>
-                    <p className="font-mono text-[11px] leading-5 text-foreground">
-                      <span className="text-muted-foreground/50">Output </span>
+                    <p className="font-mono text-[10.5px] leading-[1.7] text-foreground">
+                      <span className="text-muted-foreground/45">Output&nbsp;</span>
                       {example.output}
                     </p>
                     {example.explanation && (
-                      <p className="text-[10.5px] leading-4 text-muted-foreground/60">{example.explanation}</p>
+                      <p className="text-[10px] leading-[1.6] text-muted-foreground/60">
+                        {example.explanation}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -636,21 +676,21 @@ export default function CodingInterview() {
 
             {testResults.length > 0 && (
               <div>
-                <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/45">
-                  Latest run
-                </p>
-                <div className="divide-y divide-border/50 overflow-hidden rounded-lg border border-border/60">
+                <p className="mono-label mb-2.5">Latest run</p>
+                <div className="divide-y divide-border border-y border-border">
                   {testResults.map((result, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-surface-2/30 px-3 py-2">
+                    <div key={index} className="flex items-center gap-2.5 py-2">
                       {result.passed ? (
                         <CheckCircle2 className="h-3 w-3 shrink-0 text-primary" />
                       ) : (
                         <XCircle className="h-3 w-3 shrink-0 text-destructive" />
                       )}
-                      <span className="flex-1 text-[11px] text-secondary-foreground">Test {index + 1}</span>
+                      <span className="flex-1 text-[11px] text-secondary-foreground">
+                        Test {index + 1}
+                      </span>
                       <span
                         className={cn(
-                          "text-[10.5px] font-medium",
+                          "font-mono text-[7.5px] uppercase tracking-[0.12em]",
                           result.passed ? "text-primary" : "text-destructive",
                         )}
                       >
@@ -665,9 +705,9 @@ export default function CodingInterview() {
         </section>
 
         {/* Editor */}
-        <section className="card-base flex min-h-[520px] flex-col overflow-hidden lg:h-[calc(100vh-170px)]">
-          <div className="flex items-center justify-between border-b border-border/60 bg-surface-2/30 px-3 py-2">
-            <div className="flex items-center gap-1">
+        <section className="panel-ink flex min-h-[520px] flex-col overflow-hidden lg:h-[calc(100vh-170px)]">
+          <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-2.5">
+            <div className="flex items-center gap-4">
               {languages.map((lang) => (
                 <button
                   key={lang.id}
@@ -675,17 +715,24 @@ export default function CodingInterview() {
                   onClick={() => changeLang(lang)}
                   aria-pressed={selectedLang.id === lang.id}
                   className={cn(
-                    "rounded-[5px] px-2 py-1 text-[11px] font-medium transition-colors",
+                    "relative py-1 font-mono text-[8px] uppercase tracking-[0.13em] transition-colors",
                     selectedLang.id === lang.id
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground/60 hover:text-foreground",
+                      ? "text-[hsl(var(--sidebar-accent-foreground))]"
+                      : "text-sidebar-foreground/45 hover:text-sidebar-foreground/80",
                   )}
                 >
                   {lang.label}
+                  <span
+                    className={cn(
+                      "absolute inset-x-0 -bottom-[11px] h-px transition-colors",
+                      selectedLang.id === lang.id ? "bg-accent" : "bg-transparent",
+                    )}
+                    aria-hidden="true"
+                  />
                 </button>
               ))}
             </div>
-            <span className="hidden items-center gap-1 text-[10px] text-muted-foreground/35 sm:flex">
+            <span className="hidden items-center gap-1.5 font-mono text-[7px] uppercase tracking-[0.14em] text-sidebar-foreground/35 sm:flex">
               <Code2 className="h-3 w-3" />
               Monaco
             </span>
@@ -704,12 +751,15 @@ export default function CodingInterview() {
                   inherit: true,
                   rules: [],
                   colors: {
-                    "editor.background": "#0b0b0d",
-                    "editor.lineHighlightBackground": "#141418",
-                    "editor.selectionBackground": "#1f3b32",
-                    "editorLineNumber.foreground": "#3a3a42",
-                    "editorLineNumber.activeForeground": "#8a8a96",
-                    "editorGutter.background": "#0b0b0d",
+                    "editor.background": "#0c1712",
+                    "editor.lineHighlightBackground": "#12241c",
+                    "editor.selectionBackground": "#234638",
+                    "editorLineNumber.foreground": "#3d5548",
+                    "editorLineNumber.activeForeground": "#a7b8ac",
+                    "editorGutter.background": "#0c1712",
+                    "editorCursor.foreground": "#c9a86a",
+                    "editorIndentGuide.background1": "#1a2c24",
+                    "editorIndentGuide.activeBackground1": "#2e463b",
                   },
                 });
               }}
@@ -729,8 +779,8 @@ export default function CodingInterview() {
             />
           </div>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border/60 bg-surface-2/30 px-3 py-2.5">
-            <div className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground/45">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sidebar-border bg-sidebar-accent/20 px-4 py-3">
+            <div className="flex items-center gap-2 font-mono text-[7.5px] uppercase tracking-[0.12em] text-sidebar-foreground/40">
               <Terminal className="h-3 w-3" />
               Runs against the provided test cases
             </div>
@@ -741,14 +791,18 @@ export default function CodingInterview() {
                 disabled={isRunning || isEvaluating}
                 className="btn-secondary btn-sm gap-1.5"
               >
-                {isRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+                {isRunning ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Play className="h-3.5 w-3.5" />
+                )}
                 Run
               </button>
               <button
                 type="button"
                 onClick={submitSolution}
                 disabled={isEvaluating || isRunning}
-                className="btn-primary btn-sm gap-1.5"
+                className="btn-invert btn-sm gap-1.5"
               >
                 {isEvaluating ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -762,8 +816,8 @@ export default function CodingInterview() {
         </section>
       </div>
 
-      <p className="mt-3 text-center text-[10.5px] text-muted-foreground/35">
-        AI evaluation typically takes a few seconds. Your code is not stored after review.
+      <p className="mt-3 text-center font-mono text-[7.5px] uppercase tracking-[0.13em] text-muted-foreground/35">
+        AI evaluation typically takes a few seconds · your code is not stored after review
       </p>
     </div>
   );
