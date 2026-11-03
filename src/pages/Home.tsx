@@ -188,8 +188,10 @@ const FAQ = [
 function useReveal() {
   useEffect(() => {
     const elements = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
+    const revealAll = () => elements.forEach((element) => element.classList.add("is-visible"));
+
     if (!("IntersectionObserver" in window)) {
-      elements.forEach((element) => element.classList.add("is-visible"));
+      revealAll();
       return;
     }
 
@@ -206,7 +208,19 @@ function useReveal() {
     );
 
     elements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
+
+    // Safety net: never leave content hidden if the observer is throttled
+    // (background tab, prerender, embedded webview).
+    const fallback = window.setTimeout(() => {
+      if (!elements.some((element) => element.classList.contains("is-visible"))) {
+        revealAll();
+      }
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(fallback);
+      observer.disconnect();
+    };
   }, []);
 }
 

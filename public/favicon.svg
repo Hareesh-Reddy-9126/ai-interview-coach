@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Interview Lab">
+  <rect width="64" height="64" fill="#f8f6f1"/>
+  <rect x="7.5" y="7.5" width="49" height="49" fill="none" stroke="#182f27" stroke-width="1.5"/>
+  <rect x="15" y="15" width="34" height="34" fill="none" stroke="#182f27" stroke-opacity="0.28" stroke-width="1"/>
+  <circle cx="32" cy="32" r="2.4" fill="#182f27"/>
+  <rect x="52" y="5" width="7" height="7" fill="#a9824b"/>
+</svg>
