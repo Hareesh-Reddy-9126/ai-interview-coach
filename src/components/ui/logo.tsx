@@ -1,40 +1,73 @@
 import { cn } from "@/lib/utils";
 
-export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
+export function LogoMark({
+  size = 34,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <div
-      className={cn(
-        "relative flex shrink-0 items-center justify-center rounded-[9px] text-primary-foreground",
-        "bg-[linear-gradient(145deg,hsl(var(--primary-glow)),hsl(var(--primary))_55%,hsl(162_62%_36%))]",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_4px_14px_-6px_hsl(var(--primary)/0.8)]",
-        className,
-      )}
+      className={cn("relative flex shrink-0 items-center justify-center", className)}
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      <svg viewBox="0 0 24 24" fill="none" style={{ width: size * 0.62, height: size * 0.62 }}>
-        <path
-          d="M4.5 13.5v-3M9 17V7M13.5 14.5v-5M18 12.5v-1"
-          stroke="currentColor"
-          strokeWidth="2.3"
-          strokeLinecap="round"
-        />
-      </svg>
+      <span
+        className="absolute inset-0 border"
+        style={{ borderColor: "color-mix(in srgb, currentColor 30%, transparent)" }}
+      />
+      <span
+        className="absolute border"
+        style={{
+          inset: Math.max(3, size * 0.12),
+          borderColor: "color-mix(in srgb, currentColor 12%, transparent)",
+        }}
+      />
+      <span
+        className="relative font-display leading-none"
+        style={{ fontSize: Math.max(11, size * 0.4), letterSpacing: "-0.06em" }}
+      >
+        IL
+      </span>
+      <span
+        className="absolute bg-accent"
+        style={{
+          width: Math.max(4, size * 0.15),
+          height: Math.max(4, size * 0.15),
+          top: -2,
+          right: -2,
+        }}
+      />
     </div>
   );
 }
 
-export function Logo({ compact = false }: { compact?: boolean }) {
+export function Logo({
+  compact = false,
+  tone = "default",
+  className,
+}: {
+  compact?: boolean;
+  tone?: "default" | "inverse";
+  className?: string;
+}) {
   return (
-    <div className="flex items-center gap-2.5">
-      <LogoMark size={30} />
+    <div
+      className={cn(
+        "flex items-center gap-3",
+        tone === "inverse" ? "text-[hsl(var(--sidebar-accent-foreground))]" : "text-foreground",
+        className,
+      )}
+    >
+      <LogoMark size={34} />
       {!compact && (
         <div className="min-w-0 leading-none">
-          <span className="block truncate font-display text-[13.5px] font-semibold tracking-[-0.02em] text-foreground">
+          <span className="block truncate font-display text-[21px] leading-none tracking-[-0.02em]">
             Interview Lab
           </span>
-          <span className="mt-1 block text-[9.5px] font-medium uppercase tracking-[0.14em] text-muted-foreground/50">
-            AI practice studio
+          <span className="mt-1.5 block font-mono text-[7px] font-medium uppercase tracking-[0.24em] opacity-55">
+            Practice atelier
           </span>
         </div>
       )}

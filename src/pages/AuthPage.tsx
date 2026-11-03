@@ -52,54 +52,52 @@ export default function AuthPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="pointer-events-none fixed inset-0 bg-mesh opacity-80" aria-hidden="true" />
+      <div className="pointer-events-none fixed inset-0 bg-grid opacity-60" aria-hidden="true" />
       <div
         className="pointer-events-none fixed inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border-strong to-transparent"
         aria-hidden="true"
       />
 
-      <div className="relative z-10 grid min-h-screen lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+      <div className="relative z-10 grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         {/* Brand / product proof */}
-        <div className="hidden flex-col justify-between border-r border-border/60 px-10 py-10 lg:flex xl:px-14 xl:py-12">
+        <div className="hidden flex-col justify-between border-r border-border px-10 py-12 lg:flex xl:px-14 xl:py-16">
           <div className="flex items-center justify-between">
             <Logo />
             <span className="tag-muted">Early access</span>
           </div>
 
-          <div className="my-12 max-w-[460px]">
-            <div className="mb-5 flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+          <div className="my-16 max-w-[480px]">
+            <div className="mb-6 flex items-center gap-2.5">
+              <span className="h-1 w-1 rounded bg-primary" aria-hidden="true" />
               <span className="section-label">AI interview practice</span>
             </div>
             <h1 className="text-display-xl text-foreground">
               Interviews are a skill.
               <br />
-              <span className="text-muted-foreground">Practice them properly.</span>
+              <span className="font-normal text-muted-foreground">Practice them properly.</span>
             </h1>
-            <p className="mt-5 max-w-[400px] text-[13.5px] leading-6 text-muted-foreground">
+            <p className="mt-6 max-w-[420px] text-body text-muted-foreground">
               Run realistic mock interviews, get scored on five dimensions, and follow a plan
               that adapts to the gaps in your answers — not a generic question bank.
             </p>
 
             {/* Sample session report */}
-            <div className="card-base mt-9 max-w-[420px] overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border/60 px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="text-[11px] font-medium text-foreground">Session report</span>
+            <div className="card-base mt-12 max-w-[440px] overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-1.5 w-1.5 rounded bg-primary" aria-hidden="true" />
+                  <span className="mono-label">Session report</span>
                 </div>
-                <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/50">
-                  18 min · Senior
-                </span>
+                <span className="mono-label">18 min · Senior</span>
               </div>
-              <div className="flex items-center gap-5 p-4">
-                <ScoreRing value={82} size={92} stroke={6} label="Overall" />
-                <div className="min-w-0 flex-1 space-y-2.5">
+              <div className="flex items-center gap-6 p-5">
+                <ScoreRing value={82} size={104} stroke={6} label="Overall" />
+                <div className="min-w-0 flex-1 space-y-3">
                   {sampleSkills.map((skill) => (
                     <div key={skill.label}>
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <span className="text-[10.5px] text-secondary-foreground">{skill.label}</span>
-                        <span className="tabular text-[10px] text-muted-foreground/70">{skill.score}</span>
+                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                        <span className="text-[12px] text-secondary-foreground">{skill.label}</span>
+                        <span className="tabular text-[11px] text-muted-foreground/70">{skill.score}</span>
                       </div>
                       <div className="h-[3px] overflow-hidden rounded-full bg-surface-3">
                         <div
@@ -111,8 +109,8 @@ export default function AuthPage() {
                   ))}
                 </div>
               </div>
-              <div className="border-t border-border/60 bg-surface-2/40 px-4 py-2.5">
-                <p className="text-[10.5px] leading-4 text-muted-foreground">
+              <div className="border-t border-border bg-surface-2/30 px-5 py-3.5">
+                <p className="text-[11.5px] leading-5 text-muted-foreground">
                   <span className="font-medium text-foreground">Coaching note: </span>
                   Quantify the outcome in your design answer before discussing trade-offs.
                 </p>
@@ -120,7 +118,7 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[10.5px] text-muted-foreground/50">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-2.5 mono-label text-muted-foreground/50">
             <span>Powered by NVIDIA Nemotron</span>
             <span className="h-[3px] w-[3px] rounded-full bg-border-strong" aria-hidden="true" />
             <span>Private by default</span>
@@ -130,35 +128,35 @@ export default function AuthPage() {
         </div>
 
         {/* Auth form */}
-        <div className="flex items-center justify-center px-5 py-10 sm:px-8">
-          <div className="w-full max-w-[400px]">
-            <div className="mb-9 flex items-center justify-between lg:hidden">
+        <div className="flex items-center justify-center px-6 py-12 sm:px-10">
+          <div className="w-full max-w-[420px]">
+            <div className="mb-12 flex items-center justify-between lg:hidden">
               <Logo />
               <span className="tag-muted">Early access</span>
             </div>
 
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="mb-6">
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+              <div className="mb-10">
+                <div className="mb-4 flex items-center gap-2.5">
+                  <span className="h-1 w-1 rounded bg-primary" aria-hidden="true" />
                   <span className="section-label">{isLogin ? "Welcome back" : "Create account"}</span>
                 </div>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={isLogin ? "login-heading" : "signup-heading"}
-                    initial={{ opacity: 0, y: 4 }}
+                    initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.14 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.16 }}
                   >
                     <h2 className="text-display-md text-foreground">
-                      {isLogin ? "Sign in to your lab" : "Start your first session"}
+                      {isLogin ? "Sign in to your atelier" : "Start your first session"}
                     </h2>
-                    <p className="mt-2 text-[13px] leading-5 text-muted-foreground">
+                    <p className="mt-3 text-body text-muted-foreground">
                       {isLogin
                         ? "Pick up where you left off — your history and scores are saved."
                         : "Free to start. Your first interview takes about twenty minutes."}
@@ -167,7 +165,7 @@ export default function AuthPage() {
                 </AnimatePresence>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <AnimatePresence initial={false}>
                   {!isLogin && (
                     <motion.div
@@ -175,7 +173,7 @@ export default function AuthPage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
                       className="overflow-hidden"
                     >
                       <label htmlFor="name" className="label-base">
@@ -217,7 +215,7 @@ export default function AuthPage() {
                       Password
                     </label>
                     {!isLogin && (
-                      <span className="mb-1.5 text-[10.5px] text-muted-foreground/50">
+                      <span className="mb-2 font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground/50">
                         8 characters minimum
                       </span>
                     )}
@@ -231,17 +229,17 @@ export default function AuthPage() {
                       required
                       minLength={8}
                       autoComplete={isLogin ? "current-password" : "new-password"}
-                      className="input-base pr-11"
+                      className="input-base pr-12"
                       placeholder={isLogin ? "Your password" : "Create a strong password"}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((value) => !value)}
-                      className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/50 transition-colors hover:text-foreground"
+                      className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground/50 transition-colors hover:text-foreground"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       tabIndex={-1}
                     >
-                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
@@ -249,7 +247,7 @@ export default function AuthPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary btn-lg mt-1 w-full gap-2"
+                  className="btn-primary btn-lg mt-2 w-full gap-2"
                 >
                   {loading ? (
                     <>
@@ -259,26 +257,26 @@ export default function AuthPage() {
                   ) : (
                     <>
                       {isLogin ? "Sign in" : "Create account"}
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
                     </>
                   )}
                 </button>
               </form>
 
-              <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-5">
+              <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
                 <p className="text-[12px] text-muted-foreground">
                   {isLogin ? "New to Interview Lab?" : "Already have an account?"}
                 </p>
                 <button
                   type="button"
                   onClick={switchMode}
-                  className="text-[12px] font-medium text-foreground underline decoration-border-strong decoration-1 underline-offset-4 transition-colors hover:text-primary hover:decoration-primary/50"
+                  className="link-editorial"
                 >
                   {isLogin ? "Create an account" : "Sign in instead"}
                 </button>
               </div>
 
-              <p className="mt-8 text-[10.5px] leading-4 text-muted-foreground/45">
+              <p className="mt-10 mono-label text-muted-foreground/45">
                 By continuing you agree to fair-use limits on AI requests. Your resume and
                 interview data stay private to your account.
               </p>

@@ -46,7 +46,7 @@ export function Sparkline({
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+          <stop offset="0%" stopColor={color} stopOpacity="0.18" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -87,14 +87,14 @@ export function Delta({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-[11.5px] font-medium",
+        "inline-flex items-center gap-1 font-mono text-[9.5px] font-medium uppercase tracking-[0.1em]",
         resolved === "positive" && "text-primary",
         resolved === "negative" && "text-destructive",
         resolved === "neutral" && "text-muted-foreground",
         className,
       )}
     >
-      <Icon className="h-3 w-3" aria-hidden="true" />
+      <Icon className="h-2.5 w-2.5" aria-hidden="true" />
       <span className="tabular">{value > 0 ? "+" : ""}{value}%</span>
       <span className="font-normal text-muted-foreground/60">{suffix}</span>
     </span>
@@ -125,26 +125,24 @@ export function Metric({
   className,
 }: MetricProps) {
   return (
-    <div className={cn("card-base group p-5 transition-colors hover:border-border-strong", className)}>
+    <div className={cn("card-base group p-6 transition-colors hover:border-border-strong", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground/65">
-            {label}
-          </p>
-          <p className="mt-2.5 truncate font-display text-[27px] font-semibold leading-none tracking-[-0.035em] text-foreground tabular">
+          <p className="mono-label">{label}</p>
+          <p className="mt-3 truncate font-display text-[30px] font-normal leading-none tracking-[-0.035em] text-foreground tabular">
             {value}
           </p>
         </div>
         {spark && spark.length > 1 ? (
           <Sparkline data={spark} positive={sparkPositive} className="mt-1 opacity-90" />
         ) : Icon ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/70 bg-surface-2 text-muted-foreground transition-colors group-hover:text-foreground">
-            <Icon className="h-3.5 w-3.5" />
+          <span className="flex h-9 w-9 items-center justify-center border border-border/60 bg-surface-2 text-muted-foreground transition-colors group-hover:text-foreground">
+            <Icon className="h-4 w-4" strokeWidth={1.7} />
           </span>
         ) : null}
       </div>
-      <div className="mt-3.5 flex min-h-[18px] items-center justify-between gap-2 border-t border-border/50 pt-2.5">
-        <span className="truncate text-[11.5px] text-muted-foreground/70">{hint}</span>
+      <div className="mt-4 flex min-h-[18px] items-center justify-between gap-2 border-t border-border pt-3">
+        <span className="truncate text-[12px] text-muted-foreground/70">{hint}</span>
         {typeof delta === "number" && <Delta value={delta} suffix={deltaSuffix ?? "vs last week"} />}
       </div>
     </div>
@@ -187,11 +185,11 @@ export function ScoreRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-[32px] font-semibold leading-none tracking-[-0.04em] text-foreground tabular">
+        <span className="font-display text-[34px] font-normal leading-none tracking-[-0.04em] text-foreground tabular">
           {safe}
-          <span className="text-base font-normal text-muted-foreground">%</span>
+          <span className="font-body text-[12px] font-normal text-muted-foreground">%</span>
         </span>
-        {label && <span className="mt-1.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60">{label}</span>}
+        {label && <span className="mt-2 mono-label">{label}</span>}
       </div>
     </div>
   );

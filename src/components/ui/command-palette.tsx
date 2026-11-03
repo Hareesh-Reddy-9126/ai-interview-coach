@@ -154,7 +154,7 @@ export function CommandPalette({
           transition={{ duration: 0.14 }}
         >
           <div
-            className="absolute inset-0 bg-background/70 backdrop-blur-[6px]"
+            className="absolute inset-0 bg-background/75 backdrop-blur-[6px]"
             onClick={() => onOpenChange(false)}
             aria-hidden="true"
           />
@@ -163,40 +163,42 @@ export function CommandPalette({
             role="dialog"
             aria-modal="true"
             aria-label="Command palette"
-            initial={{ opacity: 0, y: -8, scale: 0.985 }}
+            initial={{ opacity: 0, y: -10, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.99 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-[560px] overflow-hidden rounded-xl border border-border-strong bg-popover shadow-premium-xl"
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-[580px] overflow-hidden border border-border-strong bg-card shadow-premium-xl"
             onKeyDown={onKeyDown}
           >
-            <div className="flex items-center gap-3 border-b border-border px-4">
-              <Search className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden="true" />
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search pages, actions, practice modes…"
-                aria-label="Search commands"
-                className="h-[52px] flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground/40"
-              />
-              <kbd className="hidden rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:block">
-                ESC
-              </kbd>
+            <div className="border-b border-border px-4">
+              <div className="flex items-center gap-3 h-[56px]">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden="true" />
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search pages, actions, practice modes…"
+                  aria-label="Search commands"
+                  className="h-[52px] flex-1 bg-transparent text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground/40"
+                />
+                <kbd className="hidden mono-label border border-border bg-card px-1.5 py-0.5 sm:block">
+                  ESC
+                </kbd>
+              </div>
             </div>
 
-            <div className="max-h-[min(52vh,360px)] overflow-y-auto p-2">
+            <div className="max-h-[min(52vh,360px)] overflow-y-auto p-1">
               {flatItems.length === 0 ? (
                 <div className="px-4 py-12 text-center">
-                  <p className="text-[13px] font-medium text-foreground">No results for “{query}”</p>
-                  <p className="mt-1 text-[11.5px] text-muted-foreground">
+                  <p className="text-[13px] font-medium text-foreground">No results for "{query}"</p>
+                  <p className="mt-1 mono-label text-muted-foreground">
                     Try a page name, a topic, or an action.
                   </p>
                 </div>
               ) : (
                 groups.map((group) => (
                   <div key={group.label} className="mb-1 last:mb-0">
-                    <p className="px-2.5 pb-1.5 pt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/50">
+                    <p className="px-2 pb-1 pt-1.5 mono-label text-muted-foreground/50">
                       {group.label}
                     </p>
                     {group.items.map((item) => {
@@ -211,15 +213,15 @@ export function CommandPalette({
                           onMouseEnter={() => setActiveIndex(index)}
                           onClick={() => run(item.to)}
                           className={cn(
-                            "flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition-colors",
-                            active ? "bg-surface-3" : "hover:bg-surface-2",
+                            "flex w-full items-center gap-3 rounded px-2.5 py-2.5 text-left transition-colors",
+                            active ? "bg-surface-2" : "hover:bg-surface-2/50",
                           )}
                         >
                           <span
                             className={cn(
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border",
+                              "flex h-8 w-8 shrink-0 items-center justify-center rounded border",
                               active
-                                ? "border-primary/25 bg-primary/10 text-primary"
+                                ? "border-primary/30 bg-primary/10 text-primary"
                                 : "border-border bg-surface-2 text-muted-foreground",
                             )}
                           >
@@ -229,7 +231,7 @@ export function CommandPalette({
                             <span className="block truncate text-[13px] font-medium text-foreground">
                               {item.label}
                             </span>
-                            <span className="block truncate text-[11px] text-muted-foreground">
+                            <span className="block truncate mono-label text-muted-foreground/60">
                               {item.description}
                             </span>
                           </span>
@@ -246,19 +248,19 @@ export function CommandPalette({
               )}
             </div>
 
-            <div className="flex items-center justify-between border-t border-border bg-surface-2/60 px-4 py-2.5">
-              <div className="flex items-center gap-3 text-[10.5px] text-muted-foreground/70">
-                <span className="flex items-center gap-1">
+            <div className="flex items-center justify-between border-t border-border bg-surface-2/30 px-4 py-2.5">
+              <div className="flex items-center gap-4 mono-label text-muted-foreground/60">
+                <span className="flex items-center gap-1.5">
                   <kbd className="rounded border border-border bg-card px-1 py-0.5">↑</kbd>
                   <kbd className="rounded border border-border bg-card px-1 py-0.5">↓</kbd>
                   navigate
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5">
                   <kbd className="rounded border border-border bg-card px-1.5 py-0.5">↵</kbd>
                   open
                 </span>
               </div>
-              <span className="text-[10.5px] text-muted-foreground/50">
+              <span className="mono-label text-muted-foreground/40">
                 {flatItems.length} {flatItems.length === 1 ? "result" : "results"}
               </span>
             </div>

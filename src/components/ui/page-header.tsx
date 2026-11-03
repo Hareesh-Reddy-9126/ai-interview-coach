@@ -1,16 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-interface PageHeaderProps {
-  eyebrow?: string;
-  title: ReactNode;
-  description?: ReactNode;
-  actions?: ReactNode;
-  meta?: ReactNode;
-  className?: string;
-  divider?: boolean;
-}
-
 export function PageHeader({
   eyebrow,
   title,
@@ -19,32 +9,38 @@ export function PageHeader({
   meta,
   className,
   divider = true,
-}: PageHeaderProps) {
+}: {
+  eyebrow?: string;
+  title: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+  meta?: ReactNode;
+  className?: string;
+  divider?: boolean;
+}) {
   return (
-    <div className={cn("mb-7", className)}>
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+    <div className={cn("mb-8", className)}>
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {eyebrow && (
-            <div className="mb-3 flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="h-1 w-1 rounded bg-primary" aria-hidden="true" />
               <span className="section-label">{eyebrow}</span>
             </div>
           )}
           <h1 className="text-display-lg text-foreground">{title}</h1>
           {description && (
-            <p className="mt-2.5 max-w-2xl text-[13.5px] leading-6 text-muted-foreground">
-              {description}
-            </p>
+            <p className="mt-3 max-w-2xl text-body text-muted-foreground">{description}</p>
           )}
           {meta && (
-            <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-muted-foreground">
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 mono-label text-muted-foreground/50">
               {meta}
             </div>
           )}
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+        {actions && <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>}
       </div>
-      {divider && <div className="mt-6 hairline" />}
+      {divider && <div className="mt-7 hairline" />}
     </div>
   );
 }
@@ -61,10 +57,10 @@ export function SectionHeading({
   className?: string;
 }) {
   return (
-    <div className={cn("mb-4 flex items-end justify-between gap-4", className)}>
+    <div className={cn("mb-5 flex items-end justify-between gap-4", className)}>
       <div>
-        <h2 className="text-[15px] font-semibold tracking-[-0.02em] text-foreground">{title}</h2>
-        {description && <p className="mt-1 text-[12.5px] text-muted-foreground">{description}</p>}
+        <h2 className="text-headline text-foreground">{title}</h2>
+        {description && <p className="mt-1.5 mono-label text-muted-foreground">{description}</p>}
       </div>
       {action}
     </div>
