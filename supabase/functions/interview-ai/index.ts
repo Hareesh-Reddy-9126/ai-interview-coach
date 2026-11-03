@@ -239,6 +239,18 @@ function normalizeEvaluation(value: unknown): InterviewEvaluation | null {
   };
 }
 
+/**
+ * Simple deterministic hash (FNV-1a) for cache keys.
+ */
+function simpleHash(input: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = (hash * 16777619) >>> 0;
+  }
+  return hash.toString(16);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return optionsResponse(req);
 
@@ -308,6 +320,25 @@ Deno.serve(async (req) => {
 
     const messages = buildMessages(systemPrompt, conversation);
 
+    // ── Semantic cache lookup ──
+    // Cache key: normalized system prompt + last user message.
+    // Returns cached evaluation when the same/similar interview turn
+    // has already been answered, avoiding a redundant NVIDIA call.
+    const cachePrompt = `${systemPrompt}||${conversation.at(-1)?.answer || conversation.at(-1)?.question || ""}`;
+    const cacheHash = await simpleHash(cachePrompt);
+    const { data: cached } = await adminClient
+      .from("ai_response_cache")
+      .select("response")
+      .eq("prompt_hash", cacheHash)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (cached?.response) {
+      log.info("Cache hit, skipping NVIDIA call");
+      await recordRequest(adminClient, user.id, "interview-ai");
+      return jsonResponse(cached.response, 200, req);
+    }
+
     await recordRequest(adminClient, user.id, "interview-ai");
     log.info(`Calling NVIDIA NIM, turns: ${conversation.length}`);
 
@@ -333,6 +364,22 @@ Deno.serve(async (req) => {
         502,
         req,
       );
+    }
+
+    // ── Store in cache ──
+    try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      await adminClient.from("ai_response_cache").upsert(
+        {
+          prompt_hash: cacheHash,
+          prompt_text: cachePrompt.slice(0, 1000),
+          response: parsed,
+          expires_at: expiresAt,
+        },
+        { onConflict: "prompt_hash" },
+      );
+    } catch {
+      // Cache write failure is non-fatal
     }
 
     log.info(`Success, score: ${parsed.score}`);

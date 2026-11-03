@@ -1424,6 +1424,8 @@ export default function Interview() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className="ml-[46px] mt-7 flex items-start gap-3 panel-ink p-4"
+              aria-live="polite"
+              aria-atomic="true"
             >
               <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-accent bg-accent/[0.05] text-accent">
                 <span className="typing-dot" />
@@ -1480,6 +1482,7 @@ export default function Interview() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className="panel-ink mt-9 overflow-hidden"
+              aria-live="polite"
             >
               <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-2.5">
                 <p className="font-mono text-[7.5px] uppercase tracking-[0.12em] text-sidebar-foreground/40">

@@ -33,10 +33,11 @@
     --muted: 40 16% 91%;
     --muted-foreground: 158 5% 38%;
 
-    /* Brass — used sparingly, like foil on a printed page */
-    --accent: 32 38% 38%;
+    /* Brass — used sparingly, like foil on a printed page.
+       WCAG 2.1 AA: 4.5:1 contrast against --background at all sizes. */
+    --accent: 32 44% 26%;
     --accent-foreground: 42 34% 96%;
-    --accent-glow: 34 44% 52%;
+    --accent-glow: 34 44% 42%;
 
     --destructive: 0 52% 38%;
     --destructive-foreground: 42 34% 96%;
@@ -686,5 +687,31 @@
 
   @media print {
     .no-print { display: none !important; }
+  }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* ── Focus visible ── */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Ensure custom buttons show focus rings */
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 }
