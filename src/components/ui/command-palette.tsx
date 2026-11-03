@@ -167,7 +167,7 @@ export function CommandPalette({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.99 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-[580px] overflow-hidden border border-border-strong bg-card shadow-premium-xl"
+            className="relative w-full max-w-[580px] overflow-hidden border border-[hsl(var(--surface-border))] bg-[hsl(var(--surface))]"
             onKeyDown={onKeyDown}
           >
             <div className="border-b border-border px-4">

@@ -8,7 +8,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantClass: Record<CardVariant, string> = {
-  base: "card-base",
+  base: "ruled",
   elevated: "card-elevated",
   interactive: "card-interactive",
   glow: "card-glow",

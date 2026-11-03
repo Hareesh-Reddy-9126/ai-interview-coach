@@ -247,7 +247,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="fixed inset-0 z-50 bg-foreground/35 backdrop-blur-md md:hidden"
+              className="fixed inset-0 z-50 bg-[hsl(var(--foreground)/0.35)] md:hidden"
             />
             <motion.aside
               initial={{ x: -300 }}
@@ -285,7 +285,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       <div className="relative min-h-screen md:pl-[240px]">
-        <header className="sticky top-0 z-30 flex h-[56px] items-center gap-3 border-b border-border bg-background/96 px-4 backdrop-blur-md md:px-8">
+        <header className="sticky top-0 z-30 flex h-[56px] items-center gap-3 border-b border-border bg-background/96 px-4 md:px-8">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}

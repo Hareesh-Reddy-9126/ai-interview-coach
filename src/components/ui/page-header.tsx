@@ -68,5 +68,5 @@ export function SectionHeading({
 }
 
 export function MetaDot() {
-  return <span className="h-[3px] w-[3px] rounded-full bg-border-strong" aria-hidden="true" />;
+  return <span className="h-[3px] w-[3px] bg-border-strong" aria-hidden="true" />;
 }

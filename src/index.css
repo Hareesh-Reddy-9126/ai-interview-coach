@@ -4,18 +4,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   EDITORIAL ATELIER DESIGN SYSTEM
+   Discipline: zero rounded corners, zero gradients, zero shadows, zero blur.
+   Hairline borders only. Massive serif typography. Single brass accent.
+   ============================================================================ */
+
 @layer base {
   :root {
     /* Canvas — warm bone paper, never pure white */
     --background: 42 33% 96%;
     --foreground: 158 18% 9%;
 
-    /* Editorial surfaces — hairline-ruled, no bubbles */
+    /* Surfaces — hairline-ruled paper */
     --surface: 42 38% 98.5%;
-    --surface-ink: 158 24% 10%;
+    --surface-hover: 42 30% 94%;
     --surface-border: 40 10% 78%;
     --surface-border-strong: 40 6% 55%;
-    --surface-hover: 42 30% 94%;
 
     /* Ink — deep evergreen, the single brand colour */
     --primary: 158 32% 14%;
@@ -74,7 +79,7 @@
     letter-spacing: -0.02em;
   }
 
-  /* ── Editorial type scale ─────────────────────────────── */
+  /* ── Editorial type scale — massive serif headings ── */
   .text-display-xl {
     font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
     font-size: clamp(4.5rem, 9vw, 8rem);
@@ -162,7 +167,7 @@
 }
 
 @layer components {
-  /* ── Surfaces — no cards, no bubbles ───────────────────── */
+  /* ── Surfaces — no cards, no bubbles ── */
 
   .section {
     position: relative;
@@ -190,6 +195,7 @@
     border: 1px solid hsl(var(--sidebar-border));
   }
 
+  /* Hairline rules */
   .hairline {
     height: 1px;
     background: hsl(var(--surface-border));
@@ -208,7 +214,7 @@
     background: hsl(var(--surface-border));
   }
 
-  /* ── Typography helpers ───────────────────────────────── */
+  /* ── Typography helpers ── */
   .font-display {
     font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
   }
@@ -258,6 +264,7 @@
     font-feature-settings: "tnum";
   }
 
+  /* Editorial links — typographic, with bottom hairline */
   .link-editorial {
     position: relative;
     display: inline-flex;
@@ -288,8 +295,9 @@
     transform: scaleX(1);
   }
 
-  /* ── Buttons — flat, squared, editorial ───────────────── */
-  .btn-primary {
+  /* ── Buttons — flat, squared, editorial ── */
+
+  .btn-base {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -302,49 +310,38 @@
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border: 1px solid hsl(var(--primary-border));
+    border: 1px solid transparent;
     border-radius: 2px;
     cursor: pointer;
+    transition: all 200ms ease;
   }
-  .btn-primary:hover {
-    background: hsl(var(--primary-border));
-  }
-  .btn-primary:active {
+  .btn-base:active {
     transform: translateY(0.5px);
   }
-  .btn-primary:disabled {
+  .btn-base:disabled {
     opacity: 0.35;
     pointer-events: none;
   }
 
+  .btn-primary {
+    @apply btn-base;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary-border));
+  }
+  .btn-primary:hover {
+    background: hsl(var(--primary-border));
+  }
+
   .btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    white-space: nowrap;
-    padding: 0 20px;
-    height: 40px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    @apply btn-base;
     border: 1px solid hsl(var(--surface-border-strong));
     background: transparent;
     color: hsl(var(--foreground));
-    border-radius: 2px;
-    cursor: pointer;
   }
   .btn-secondary:hover {
     border-color: hsl(var(--foreground));
     background: hsl(var(--surface-hover));
-  }
-  .btn-secondary:disabled {
-    opacity: 0.35;
-    pointer-events: none;
   }
 
   .btn-ghost {
@@ -387,14 +384,23 @@
   }
 
   .btn-sm {
+    @apply btn-base;
     height: 32px;
     padding-inline: 14px;
     font-size: 8.5px;
     letter-spacing: 0.1em;
-    border-radius: 2px;
   }
 
-  /* ── Forms — ruled, squared ───────────────────────────── */
+  .btn-lg {
+    @apply btn-base;
+    height: 48px;
+    padding-inline: 24px;
+    font-size: 10px;
+    letter-spacing: 0.13em;
+  }
+
+  /* ── Forms — ruled, squared ── */
+
   .input-base {
     width: 100%;
     height: 44px;
@@ -467,7 +473,7 @@
     color: hsl(36 32% 62%);
   }
 
-  /* ── Tags — hairline, squared ─────────────────────────── */
+  /* ── Tags — hairline, squared ── */
   .tag {
     display: inline-flex;
     align-items: center;
@@ -491,7 +497,7 @@
 }
 
 @layer utilities {
-  /* ── Paper grain — the only texture ───────────────────── */
+  /* ── Paper grain — the only texture ── */
   .grain::after {
     content: '';
     position: fixed;
@@ -503,7 +509,7 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* ── Skeletons ────────────────────────────────────────── */
+  /* ── Skeletons ── */
   .skeleton {
     position: relative;
     overflow: hidden;
@@ -511,7 +517,7 @@
     border-radius: 2px;
   }
 
-  /* ── Motion — restrained, editorial ───────────────────── */
+  /* ── Motion — restrained, editorial ── */
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
@@ -536,7 +542,7 @@
   .stagger-3 { animation-delay: 120ms; }
   .stagger-4 { animation-delay: 160ms; }
 
-  /* ── Layout ───────────────────────────────────────────── */
+  /* ── Layout ── */
   .container-narrow { margin: 0 auto; max-width: 34rem; padding: 0 1.25rem; }
   .container-wide { margin: 0 auto; max-width: 74rem; padding: 0 1.5rem; }
   .container-full { margin: 0 auto; max-width: 90rem; padding: 0 1.75rem; }
@@ -545,7 +551,7 @@
     border-top: 1px solid hsl(var(--border));
   }
 
-  /* ── Misc ─────────────────────────────────────────────── */
+  /* ── Misc ── */
   .clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
   .clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
