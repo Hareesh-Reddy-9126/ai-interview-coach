@@ -13,6 +13,7 @@ import { LogoMark } from "@/components/ui/logo";
 
 // Lazy load pages
 const OrgPageLazy = lazy(() => import("./pages/OrgPage"));
+const Home = lazy(() => import("./pages/Home"));
 const Index = lazy(() => import("./pages/Index"));
 const Interview = lazy(() => import("./pages/Interview"));
 const PracticeModes = lazy(() => import("./pages/PracticeModes"));
@@ -74,7 +75,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
       <LogoMark size={32} className="animate-pulse-soft" />
     </div>
   );
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -82,7 +83,8 @@ const AppRoutes = () => (
   <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
-      <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
+      <Route path="/" element={<Home />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
       <Route path="/interview" element={<ProtectedRoute><Layout><Interview /></Layout></ProtectedRoute>} />
       <Route path="/practice" element={<ProtectedRoute><Layout><PracticeModes /></Layout></ProtectedRoute>} />
       <Route path="/coding" element={<ProtectedRoute><Layout><CodingInterview /></Layout></ProtectedRoute>} />

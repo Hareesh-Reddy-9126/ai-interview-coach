@@ -47,7 +47,7 @@ export default function NotFound() {
             <p className="mono-label mb-4">Continue from here</p>
             <div className="divide-y divide-border border-y border-border">
               <Link
-                to="/"
+                to="/dashboard"
                 className="group flex items-center justify-between gap-4 py-4 transition-colors hover:bg-surface-2/30"
               >
                 <span>

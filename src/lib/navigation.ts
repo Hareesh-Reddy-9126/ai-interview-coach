@@ -31,7 +31,7 @@ export const navGroups: NavGroup[] = [
     label: "Workspace",
     items: [
       {
-        to: "/",
+        to: "/dashboard",
         icon: LayoutDashboard,
         label: "Overview",
         description: "Your preparation at a glance",
@@ -120,7 +120,5 @@ export const navGroups: NavGroup[] = [
 export const allNavItems = navGroups.flatMap((group) => group.items);
 
 export function findNavItem(pathname: string): NavItem | undefined {
-  return allNavItems.find((item) =>
-    item.to === "/" ? pathname === "/" : pathname.startsWith(item.to),
-  );
+  return allNavItems.find((item) => pathname.startsWith(item.to));
 }

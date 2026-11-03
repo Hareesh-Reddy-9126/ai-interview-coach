@@ -37,7 +37,7 @@ export default function AuthPage() {
         // MFA required — show verification step
         setLoading(false);
       } else {
-        navigate("/");
+        navigate("/dashboard");
         setLoading(false);
       }
     } else {
@@ -51,7 +51,7 @@ export default function AuthPage() {
         setPassword("");
         setLoading(false);
       } else {
-        navigate("/");
+        navigate("/dashboard");
         setLoading(false);
       }
     }
@@ -65,7 +65,7 @@ export default function AuthPage() {
       toast.error(error.message);
       setMfaLoading(false);
     } else {
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 

@@ -5,50 +5,89 @@
 @tailwind utilities;
 
 /* ============================================================================
-   EDITORIAL ATELIER DESIGN SYSTEM
-   Discipline: zero rounded corners, zero gradients, zero shadows, zero blur.
-   Hairline borders only. Massive serif typography. Single brass accent.
+   INTERVIEW LAB — EDITORIAL ATELIER DESIGN SYSTEM
+   Discipline: squared corners, hairline rules, no decorative gradients,
+   no shadows, no blur. Typography and whitespace carry the hierarchy.
    ============================================================================ */
 
 @layer base {
   :root {
-    /* Canvas — warm bone paper, never pure white */
+    /* ── Canvas — warm bone paper, never pure white ── */
     --background: 42 33% 96%;
     --foreground: 158 18% 9%;
 
-    /* Surfaces — hairline-ruled paper */
+    /* ── Surfaces ── */
     --surface: 42 38% 98.5%;
+    --surface-2: 42 38% 98.5%;
+    --surface-3: 42 26% 93%;
     --surface-hover: 42 30% 94%;
     --surface-border: 40 10% 78%;
     --surface-border-strong: 40 6% 55%;
 
-    /* Ink — deep evergreen, the single brand colour */
+    /* ── Ink — deep evergreen, the single brand colour ── */
     --primary: 158 32% 14%;
     --primary-foreground: 42 34% 97%;
     --primary-border: 158 28% 30%;
+    --primary-glow: 158 32% 24%;
+    --primary-muted: 158 16% 40%;
 
-    /* Brass foil — used sparingly, like foil on a printed page */
+    /* ── Brass foil — used sparingly, like foil on a printed page ── */
     --accent: 34 40% 24%;
     --accent-foreground: 42 34% 97%;
     --accent-border: 34 36% 40%;
+    --accent-glow: 36 38% 56%;
 
+    /* ── Supporting tones ── */
+    --secondary: 42 24% 92%;
+    --secondary-foreground: 158 20% 13%;
+    --secondary-hover: 42 24% 88%;
+    --muted: 42 20% 92%;
     --muted-foreground: 158 6% 42%;
     --destructive: 0 48% 36%;
     --destructive-foreground: 42 34% 97%;
+    --destructive-muted: 0 34% 88%;
+    --success: 158 32% 24%;
+    --success-foreground: 42 34% 97%;
+    --warning: 34 46% 36%;
+    --warning-foreground: 42 34% 97%;
+    --info: 200 24% 30%;
+    --info-foreground: 42 34% 97%;
 
+    /* ── Form / focus ── */
     --border: 40 10% 80%;
+    --border-strong: 40 7% 56%;
+    --input: 40 10% 76%;
     --ring: 158 32% 20%;
 
-    /* Architecture — squared corners only, never rounded */
-    --radius: 2px;
+    /* ── Raised surfaces (rarely used — no shadows in this system) ── */
+    --card: 42 38% 98.5%;
+    --card-foreground: 158 18% 9%;
+    --card-border: 40 10% 80%;
+    --popover: 42 38% 98.5%;
+    --popover-foreground: 158 18% 9%;
 
-    /* The member's rail — dark forest counterpoint */
+    /* ── The member's rail — dark forest counterpoint ── */
     --sidebar-background: 158 26% 8%;
     --sidebar-foreground: 42 12% 60%;
     --sidebar-primary: 36 30% 60%;
     --sidebar-primary-foreground: 158 24% 9%;
+    --sidebar-accent: 158 18% 14%;
+    --sidebar-accent-foreground: 42 26% 92%;
     --sidebar-border: 158 14% 18%;
     --sidebar-ring: 36 30% 60%;
+
+    /* ── Data visualisation ── */
+    --chart-1: 158 32% 22%;
+    --chart-2: 34 36% 44%;
+    --chart-3: 158 12% 48%;
+    --chart-4: 34 22% 30%;
+    --chart-5: 40 8% 36%;
+
+    /* ── Architecture — squared corners only, never rounded ── */
+    --radius: 2px;
+    --radius-lg: 3px;
+    --radius-xl: 4px;
+    --shadow-color: 158 20% 8%;
   }
 
   * {
@@ -56,8 +95,9 @@
   }
 
   html {
-    scroll-behavior: auto;
+    scroll-behavior: smooth;
     color-scheme: light;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -79,7 +119,7 @@
     letter-spacing: -0.02em;
   }
 
-  /* ── Editorial type scale — massive serif headings ── */
+  /* ── Editorial type scale ── */
   .text-display-xl {
     font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
     font-size: clamp(4.5rem, 9vw, 8rem);
@@ -147,7 +187,7 @@
   }
 
   ::selection {
-    background: hsl(var(--primary) / 0.15);
+    background: hsl(var(--primary) / 0.16);
     color: hsl(var(--foreground));
   }
 
@@ -157,6 +197,9 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
@@ -287,6 +330,7 @@
     background: hsl(var(--foreground));
     transform: scaleX(0);
     transform-origin: left;
+    transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
   }
   .link-editorial:hover {
     color: hsl(var(--foreground));
@@ -313,7 +357,7 @@
     border: 1px solid transparent;
     border-radius: 2px;
     cursor: pointer;
-    transition: all 200ms ease;
+    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
   }
   .btn-base:active {
     transform: translateY(0.5px);
@@ -364,6 +408,19 @@
   .btn-ghost:hover {
     color: hsl(var(--foreground));
     background: hsl(var(--surface-hover));
+  }
+
+  /* Inverted — bone-on-forest, for dark panels */
+  .btn-invert {
+    @apply btn-base;
+    background: hsl(42 34% 96%);
+    color: hsl(158 32% 10%);
+    border-color: hsl(42 24% 82%);
+  }
+  .btn-invert:hover {
+    background: hsl(36 34% 68%);
+    border-color: hsl(36 30% 58%);
+    color: hsl(158 32% 8%);
   }
 
   .btn-icon {
@@ -463,6 +520,9 @@
     outline: none;
     border-color: hsl(36 32% 62%);
   }
+  .auth-input::placeholder {
+    color: hsl(42 12% 60% / 0.5);
+  }
   .auth-label {
     margin-bottom: 2px;
     font-family: 'JetBrains Mono', monospace;
@@ -494,17 +554,95 @@
   .tag-success { background: transparent; color: hsl(var(--primary)); border-color: hsl(var(--primary-border)); }
   .tag-muted { background: transparent; color: hsl(var(--muted-foreground)); border-color: hsl(var(--surface-border-strong)); }
   .tag-ink { background: hsl(var(--sidebar-background)); color: hsl(var(--sidebar-accent-foreground)); border-color: hsl(var(--sidebar-border)); }
+
+  /* ── Landing-page primitives ── */
+
+  .display-hero {
+    font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+    font-size: clamp(3.2rem, 7.2vw, 7rem);
+    font-weight: 200;
+    letter-spacing: -0.055em;
+    line-height: 0.86;
+  }
+
+  .display-section {
+    font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+    font-size: clamp(2.4rem, 4.6vw, 4.2rem);
+    font-weight: 300;
+    letter-spacing: -0.045em;
+    line-height: 0.94;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .eyebrow-brass {
+    color: hsl(var(--accent));
+  }
+
+  .ledger-row {
+    transition: background-color 180ms ease;
+  }
+  .ledger-row:hover {
+    background: hsl(var(--surface-hover));
+  }
+
+  .nav-link {
+    position: relative;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+    padding-block: 4px;
+    transition: color 160ms ease;
+  }
+  .nav-link:hover {
+    color: hsl(var(--foreground));
+  }
 }
 
 @layer utilities {
+  /* ── Technical grid — used as drafting paper, never as a decorative gradient ── */
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .bg-grid-fine {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .bg-grid-ink {
+    background-image:
+      linear-gradient(hsl(42 34% 92% / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(42 34% 92% / 0.05) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
   /* ── Paper grain — the only texture ── */
   .grain::after {
     content: '';
     position: fixed;
     inset: 0;
-    z-index: 50;
+    z-index: 60;
     pointer-events: none;
-    opacity: 0.04;
+    opacity: 0.038;
     mix-blend-mode: multiply;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
@@ -517,6 +655,25 @@
     border-radius: 2px;
   }
 
+  /* ── Scroll reveal — opt-in, disabled under reduced motion ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
   /* ── Motion — restrained, editorial ── */
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(6px); }
@@ -526,6 +683,10 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
   @keyframes typing-dot {
     0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
     40% { opacity: 1; transform: translateY(-1.5px); }
@@ -533,6 +694,7 @@
 
   .animate-fade-up { animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
   .animate-fade-in { animation: fade-in 0.3s ease-out both; }
+  .animate-pulse-soft { animation: pulse-soft 1.8s ease-in-out infinite; }
   .typing-dot { animation: typing-dot 1.4s ease-in-out infinite; }
   .typing-dot:nth-child(2) { animation-delay: 0.15s; }
   .typing-dot:nth-child(3) { animation-delay: 0.3s; }
@@ -546,6 +708,13 @@
   .container-narrow { margin: 0 auto; max-width: 34rem; padding: 0 1.25rem; }
   .container-wide { margin: 0 auto; max-width: 74rem; padding: 0 1.5rem; }
   .container-full { margin: 0 auto; max-width: 90rem; padding: 0 1.75rem; }
+  .container-editorial { margin: 0 auto; max-width: 82rem; padding-inline: 1.5rem; }
+  @media (min-width: 768px) {
+    .container-editorial { padding-inline: 2.5rem; }
+  }
+  @media (min-width: 1280px) {
+    .container-editorial { padding-inline: 3.5rem; }
+  }
 
   .divider-y > * + * {
     border-top: 1px solid hsl(var(--border));
@@ -554,9 +723,13 @@
   /* ── Misc ── */
   .clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
   .clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
   .scrollbar-none { scrollbar-width: none; }
   .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
 
   @media print { .no-print { display: none !important; } }
 }

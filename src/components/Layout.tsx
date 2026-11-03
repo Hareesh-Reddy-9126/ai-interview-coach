@@ -215,7 +215,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Desktop rail — dark forest member's rail */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[240px] flex-col border-r border-sidebar-border bg-sidebar md:flex">
         <div className="flex h-[68px] shrink-0 items-center border-b border-sidebar-border px-4">
-          <Link to="/" className="outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring">
+          <Link to="/dashboard" className="outline-none focus-visible:ring-1 focus-visible:ring-sidebar-ring">
             <Logo tone="inverse" />
           </Link>
         </div>
@@ -257,7 +257,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-sidebar md:hidden"
             >
               <div className="flex h-[68px] items-center justify-between border-b border-sidebar-border px-4">
-                <Link to="/" onClick={() => setMobileOpen(false)}>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
                   <Logo tone="inverse" />
                 </Link>
                 <button
