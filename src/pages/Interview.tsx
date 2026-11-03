@@ -646,6 +646,9 @@ export default function Interview() {
       ? Math.round(answeredTurns.reduce((a, t) => a + (t.score || 0), 0) / answeredTurns.length)
       : 0;
   const [reportSkillScores, setReportSkillScores] = useState<Record<string, number> | null>(null);
+  const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   useEffect(() => {
     if (phase !== "report" || !sessionId || !user) return;
@@ -698,6 +701,26 @@ export default function Interview() {
       if (timer) window.clearTimeout(timer);
     };
   }, [phase, sessionId, user, turns]);
+
+  const submitFeedback = async () => {
+    if (!sessionId || !feedbackRating) return;
+    setFeedbackSubmitted(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from("interview_feedback").insert({
+        session_id: sessionId,
+        turn_index: turns.length - 1,
+        user_id: user!.id,
+        rating: feedbackRating,
+        helpful: feedbackRating >= 4,
+        comment: feedbackComment || null,
+      });
+      toast.success("Feedback recorded — thank you.");
+    } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      toast.error(e.message || "Failed to send feedback.");
+      setFeedbackSubmitted(false);
+    }
+  };
 
   const setupComplete = Boolean(config.company && config.role && config.difficulty && config.experience);
 
@@ -1283,6 +1306,76 @@ export default function Interview() {
             </Link>
           </div>
         </div>
+
+          {/* ── Interview feedback (RLHF) ── */}
+          <section className="mt-9 border-t border-border pt-8" aria-label="Session feedback">
+            <div className="flex items-baseline justify-between border-b border-border pb-4">
+              <h2 className="text-headline text-foreground">Session feedback</h2>
+              <span className="mono-label">Help us improve the examiner</span>
+            </div>
+            <p className="mt-4 max-w-xl text-[12.5px] leading-[1.7] text-muted-foreground">
+              Rate the quality of this session&apos;s questions and feedback. Your ratings train
+              the next version of the interviewer — nothing is shared outside your account.
+            </p>
+            <div className="mt-6 flex items-center gap-3">
+              <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground/45">
+                Overall session
+              </span>
+              <div className="flex items-end gap-1.5">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    type="button"
+                    onClick={() => {
+                      setFeedbackRating(rating);
+                    }}
+                    disabled={feedbackSubmitted}
+                    className={cn(
+                      "h-10 w-10 rounded border font-display text-[20px] font-light leading-none transition-colors",
+                      feedbackRating === rating
+                        ? "border-accent bg-accent/[0.05] text-accent"
+                        : feedbackRating !== null && feedbackRating >= rating
+                          ? "border-accent/20 text-accent/60"
+                          : "border-border text-muted-foreground/30 hover:border-accent/50",
+                    )}
+                    aria-label={`Rate ${rating} of 5`}
+                  >
+                    {rating}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mt-5">
+              <label htmlFor="feedback-comment" className="label-base">
+                Comment (optional)
+              </label>
+              <textarea
+                id="feedback-comment"
+                value={feedbackComment}
+                onChange={(e) => setFeedbackComment(e.target.value)}
+                rows={3}
+                className="input-base w-full"
+                placeholder="What could the interviewer have done better?"
+              />
+            </div>
+            <div className="mt-4 flex items-end gap-2">
+              <button
+                type="button"
+                onClick={() => submitFeedback()}
+                disabled={!feedbackRating || feedbackSubmitted}
+                className="btn-primary gap-1.5"
+              >
+                {feedbackSubmitted ? (
+                  <span>Recorded — thank you</span>
+                ) : (
+                  <>
+                    <span>Send feedback</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </>
+                )}
+              </button>
+            </div>
+          </section>
       </div>
     );
   }

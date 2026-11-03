@@ -327,3 +327,93 @@ export function pickStrongestAndWeakest<T extends { score: number; label: string
     weakest: [...rows].sort((a, b) => a.score - b.score || tieBreak(a, b))[0],
   };
 }
+
+// ── Organization / RBAC / MFA domain types ──────────────────────────────────
+
+export const OrganizationRole = z.enum(["admin", "member", "interviewer"]);
+export type OrganizationRole = z.infer<typeof OrganizationRole>;
+
+export const MemberStatus = z.enum(["active", "invited", "suspended"]);
+export type MemberStatus = z.infer<typeof MemberStatus>;
+
+export const OrganizationSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  plan: z.string().min(1),
+  primary_color: z.string().default("#154630"),
+  logo_url: z.string().nullable(),
+  custom_domain: z.string().nullable(),
+  settings: z.record(z.string(), z.unknown()).default({}),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+export type Organization = z.infer<typeof OrganizationSchema>;
+
+export const OrganizationMemberSchema = z.object({
+  id: z.string().uuid(),
+  organization_id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  role: OrganizationRole,
+  status: MemberStatus,
+  invited_by: z.string().uuid().nullable(),
+  invited_at: z.string().datetime().nullable(),
+  joined_at: z.string().datetime().nullable(),
+  created_at: z.string().datetime(),
+});
+export type OrganizationMember = z.infer<typeof OrganizationMemberSchema>;
+
+export const MfaStatusSchema = z.object({
+  mfa_enabled: z.boolean(),
+  mfa_recovery_codes: z.array(z.string()),
+});
+export type MfaStatus = z.infer<typeof MfaStatusSchema>;
+
+export const OrgAnalyticsRowSchema = z.object({
+  organization_id: z.string().uuid(),
+  date: z.string().datetime(),
+  interviews_completed: z.number().int().nonnegative(),
+  avg_score: z.number().nonnegative(),
+  unique_users: z.number().int().nonnegative(),
+  ai_cost_usd: z.number().nonnegative(),
+});
+export type OrgAnalyticsRow = z.infer<typeof OrgAnalyticsRowSchema>;
+
+export const InterviewFeedbackSchema = z.object({
+  id: z.string().uuid(),
+  session_id: z.string().uuid(),
+  turn_index: z.number().int().nonnegative(),
+  user_id: z.string().uuid(),
+  rating: z.number().int().min(1).max(5),
+  helpful: z.boolean().nullable(),
+  comment: z.string().nullable(),
+  created_at: z.string().datetime(),
+});
+export type InterviewFeedback = z.infer<typeof InterviewFeedbackSchema>;
+
+export const SSOProviderConfigSchema = z.object({
+  id: z.string().uuid(),
+  organization_id: z.string().uuid(),
+  provider: z.enum(["oidc", "saml"]),
+  issuer_url: z.string().nullable(),
+  client_id: z.string().nullable(),
+  client_secret: z.string().nullable(),
+  metadata_url: z.string().nullable(),
+  acs_url: z.string().nullable(),
+  entity_id: z.string().nullable(),
+  is_active: z.boolean(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+export type SSOProviderConfig = z.infer<typeof SSOProviderConfigSchema>;
+
+// ── Org-scoped interview start ──────────────────────────────────────────────
+
+export const StartInterviewOrgRequest = StartInterviewRequest.extend({
+  organization_id: z.string().uuid().optional(),
+});
+export type StartInterviewOrgRequest = z.infer<typeof StartInterviewOrgRequest>;
+
+export function validateStartInterviewOrg(body: unknown): StartInterviewOrgRequest {
+  return StartInterviewOrgRequest.parse(body);
+}

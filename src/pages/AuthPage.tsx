@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Key, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,29 +20,53 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [mfaToken, setMfaToken] = useState("");
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const { signIn, signUp, verifyMFA, mfaRequired } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     if (isLogin) {
-      const { error } = await signIn(email, password);
-      if (error) toast.error(error.message);
-      else navigate("/");
+      const { error, mfaRequired: req } = await signIn(email, password);
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+      } else if (req) {
+        // MFA required — show verification step
+        setLoading(false);
+      } else {
+        navigate("/");
+        setLoading(false);
+      }
     } else {
       const { error, needsConfirmation } = await signUp(email, password, name);
       if (error) {
         toast.error(error.message);
+        setLoading(false);
       } else if (needsConfirmation) {
         toast.success("Account created. Confirm your email, then sign in.");
         setIsLogin(true);
         setPassword("");
+        setLoading(false);
       } else {
         navigate("/");
+        setLoading(false);
       }
     }
-    setLoading(false);
+  };
+
+  const handleMFAVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMfaLoading(true);
+    const { error } = await verifyMFA(mfaToken);
+    if (error) {
+      toast.error(error.message);
+      setMfaLoading(false);
+    } else {
+      navigate("/");
+    }
   };
 
   const switchMode = () => {
@@ -297,6 +321,62 @@ export default function AuthPage() {
                   )}
                 </button>
               </form>
+
+              {mfaRequired && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-9 space-y-4"
+                >
+                  <div className="mb-5 flex items-center gap-3">
+                    <span className="h-px w-7 bg-sidebar-primary/70" aria-hidden="true" />
+                    <span className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-sidebar-primary">
+                      Two-step verification
+                    </span>
+                  </div>
+                  <h2 className="font-display text-[clamp(2rem,2.5vw,2.4rem)] font-light leading-[0.98] tracking-[-0.04em] text-[hsl(var(--sidebar-accent-foreground))]">
+                    Verification code
+                  </h2>
+                  <p className="mt-4 max-w-[330px] text-[13px] leading-[1.7] text-sidebar-foreground/70">
+                    Enter the 6-digit code from your authenticator app.
+                  </p>
+                  <form onSubmit={handleMFAVerify} className="mt-6 space-y-4">
+                    <div>
+                      <label htmlFor="mfa-token" className="auth-label">
+                        Verification code
+                      </label>
+                      <input
+                        id="mfa-token"
+                        type="text"
+                        value={mfaToken}
+                        onChange={(e) => setMfaToken(e.target.value)}
+                        required
+                        maxLength={6}
+                        autoComplete="one-time-code"
+                        className="auth-input"
+                        placeholder="123456"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={mfaLoading || mfaToken.length !== 6}
+                      className="btn-invert btn-lg w-full gap-2"
+                    >
+                      {mfaLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Verifying…
+                        </>
+                      ) : (
+                        <>
+                          Verify & enter
+                          <Key className="h-4 w-4" strokeWidth={1.8} />
+                        </>
+                      )}
+                      </button>
+                    </form>
+                  </motion.div>
+              )}
 
               <div className="mt-9 flex items-center justify-between border-t border-sidebar-border pt-5">
                 <p className="text-[11.5px] text-sidebar-foreground/55">

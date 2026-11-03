@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { OrgProvider } from "@/hooks/useOrg";
 import Layout from "@/components/Layout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { lazy, Suspense } from "react";
@@ -11,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo";
 
 // Lazy load pages
+const OrgPageLazy = lazy(() => import("./pages/OrgPage"));
 const Index = lazy(() => import("./pages/Index"));
 const Interview = lazy(() => import("./pages/Interview"));
 const PracticeModes = lazy(() => import("./pages/PracticeModes"));
@@ -90,6 +92,7 @@ const AppRoutes = () => (
       <Route path="/history" element={<ProtectedRoute><Layout><InterviewHistory /></Layout></ProtectedRoute>} />
       <Route path="/usage" element={<ProtectedRoute><Layout><Usage /></Layout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Layout><SettingsPage /></Layout></ProtectedRoute>} />
+      <Route path="/org" element={<ProtectedRoute><Layout><OrgPageLazy /></Layout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </Suspense>
@@ -103,9 +106,11 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <ErrorBoundary>
-              <AppRoutes />
-            </ErrorBoundary>
+            <OrgProvider>
+              <ErrorBoundary>
+                <AppRoutes />
+              </ErrorBoundary>
+            </OrgProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

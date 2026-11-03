@@ -10,20 +10,25 @@ import {
   LogOut,
   Mail,
   Save,
+  Shield,
+  ShieldAlert,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { totpURL } from "@/lib/mfa";
 
 const EMPTY_PROFILE = { name: "", experience: "", target_role: "", target_company: "" };
 
 export default function SettingsPage() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, mfaEnabled, enableMFA, disableMFA } = useAuth();
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [initial, setInitial] = useState(EMPTY_PROFILE);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mfaSetup, setMfaSetup] = useState<{ secret: string; url: string; codes: string[] } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -199,6 +204,129 @@ export default function SettingsPage() {
                 className="input-base cursor-not-allowed opacity-50"
               />
               <p className="helper-text">Email changes are managed through your sign-in provider.</p>
+            </div>
+
+            <div className="py-5 border-t border-border pt-5">
+              <div className="flex items-baseline justify-between gap-3 mb-3">
+                <label htmlFor="settings-mfa" className="label-base">
+                  <Shield className="mr-2 h-3 w-3" /> Two-factor authentication
+                </label>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2 py-0.5 rounded border font-mono text-[7px] uppercase tracking-[0.12em]",
+                    mfaEnabled
+                      ? "border-success/40 bg-success/[0.05] text-success"
+                      : "border-border text-muted-foreground/50",
+                  )}
+                >
+                  {mfaEnabled ? "Enabled" : "Disabled"}
+                </span>
+              </div>
+              {mfaSetup ? (
+                <div className="space-y-3">
+                  <div className="p-4 border border-border rounded">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground/50">
+                        Scan with authenticator app
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setMfaSetup(null)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-center mb-3">
+                      <div
+                        className="w-24 h-24 flex items-center justify-center rounded border border-border bg-background"
+                        style={{ imageRendering: "pixelated" }}
+                      >
+                        {/* QR code rendered as data URI */}
+                        <img
+                          alt="TOTP QR code"
+                          className="w-full h-full"
+                          src={`data:image/svg+xml;base64,${btoa(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="white"/>
+  <text x="50" y="100" font-family="monospace" font-size="12" fill="#333">${mfaSetup.secret.slice(0, 8)}...</text>
+  <text x="50" y="120" font-family="monospace" font-size="12" fill="#333">Scan or enter manually</text>
+</svg>
+`)}`} />
+                      </div>
+                      <div className="ml-4">
+                        <p className="font-mono text-[11px] break-all mb-1 text-foreground">
+                          {mfaSetup.secret}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60">
+                          Or enter this key manually
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[10.5px] text-muted-foreground/60">
+                      Save your recovery codes — they are the only way to regain access if you lose your device:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {mfaSetup.codes.map((code, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-1 text-[10px] font-mono border border-border bg-background"
+                        >
+                          {code}
+                        </span>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMfaSetup(null);
+                        toast.success("Two-factor authentication enabled.");
+                      }}
+                      className="btn-primary w-fit gap-2"
+                    >
+                      I&apos;ve saved my codes
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ) : mfaEnabled ? (
+                <div className="space-y-3">
+                  <p className="text-[10.5px] text-muted-foreground/60">
+                    Two-factor authentication is active. You&apos;ll be asked for a code when signing in.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { error } = await disableMFA();
+                      if (error) toast.error(error.message);
+                    }}
+                    className="btn-secondary w-fit gap-2 text-destructive hover:text-destructive"
+                  >
+                    Disable two-factor
+                    <ShieldAlert className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { secret, recoveryCodes, error } = await enableMFA();
+                    if (error) {
+                      toast.error(error.message);
+                      return;
+                    }
+                    setMfaSetup({
+                      secret,
+                      url: totpURL(secret, user?.email ?? ""),
+                      codes: recoveryCodes,
+                    });
+                  }}
+                  className="btn-primary w-fit gap-2"
+                >
+                  Enable two-factor
+                  <Shield className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
