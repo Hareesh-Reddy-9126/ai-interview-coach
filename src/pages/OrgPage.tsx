@@ -302,7 +302,7 @@ export default function OrgPage() {
                     >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-border bg-card font-mono text-[10px] font-medium text-foreground">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-border bg-card font-mono text-[10px] font-medium text-foreground">
                             {member.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -346,7 +346,7 @@ export default function OrgPage() {
                       <td className="px-5 py-4">
                         <span
                           className={cn(
-                            "h-1.5 w-1.5 rounded-full",
+                            "h-1 w-1",
                             member.mfaEnabled ? "bg-success" : "bg-border",
                           )}
                           aria-label={

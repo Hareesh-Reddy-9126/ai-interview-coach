@@ -2,7 +2,6 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface SearchResultsDropdownProps {
   searchOpen: boolean;
@@ -30,7 +29,7 @@ export function SearchResultsDropdown({
         transition={{ duration: 0.15 }}
         className="absolute left-0 right-0 top-full mt-2 z-50"
       >
-        <div className={cn("card-base shadow-2xl shadow-black/30 overflow-hidden border-border/50")}>
+        <div className="overflow-hidden border border-[hsl(var(--surface-border))] bg-[hsl(var(--surface))]">
           {searchResults.length > 0 ? (
             searchResults.map((item) => (
               <button
@@ -38,7 +37,7 @@ export function SearchResultsDropdown({
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => { onSelect(item.to); onClose(); }}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-none border-t border-border/40 first:border-0 text-sm text-left text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
+                className="flex items-center gap-3 w-full px-4 py-3 border-t border-[hsl(var(--surface-border))/40] first:border-0 text-sm text-left text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--surface-hover))] transition-all"
               >
                 <span className="h-5 w-5 flex-shrink-0 flex items-center justify-center">
                   {item.icon}

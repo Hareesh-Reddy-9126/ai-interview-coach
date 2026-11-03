@@ -17,7 +17,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out",
+      "fixed inset-0 z-50 bg-[hsl(var(--foreground)/0.25)] data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out",
       className
     )}
     {...props}
@@ -43,7 +43,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 grid gap-4 bg-card border border-border/50 shadow-premium-xl rounded-2xl p-6",
+          "fixed z-50 grid gap-4 bg-[hsl(var(--surface))] border border-[hsl(var(--surface-border))] p-6",
           "data-[state=open]:animate-scale-in data-[state=closed]:animate-fade-out",
           sizes[size],
           className
@@ -51,7 +51,7 @@ const DialogContent = React.forwardRef<
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 btn-icon rounded-xl hover:bg-secondary/50">
+        <DialogPrimitive.Close className="absolute right-4 top-4 btn-icon">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>

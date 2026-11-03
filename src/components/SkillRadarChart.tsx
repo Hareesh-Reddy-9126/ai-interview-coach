@@ -31,7 +31,7 @@ export default function SkillRadarChart({ analytics, variant = "card" }: Props) 
     <div
       className={cn(
         "flex h-full flex-col",
-        !plain && "card-base",
+        !plain && "ruled",
       )}
     >
       <div

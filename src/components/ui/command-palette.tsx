@@ -154,7 +154,7 @@ export function CommandPalette({
           transition={{ duration: 0.14 }}
         >
           <div
-            className="absolute inset-0 bg-background/75 backdrop-blur-[6px]"
+            className="absolute inset-0 bg-[hsl(var(--foreground)/0.25)]"
             onClick={() => onOpenChange(false)}
             aria-hidden="true"
           />

@@ -3,7 +3,6 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/toaster";
 
 interface PageTransitionProps {
@@ -96,15 +95,15 @@ export function LoadingOverlay({ isLoading, children, message = "Loading..." }: 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center"
+            className="fixed inset-0 z-50 bg-[hsl(var(--foreground)/0.2)] flex items-center justify-center"
             transition={{ duration: 0.2 }}
           >
-            <Card className="shadow-premium-xl max-w-sm w-full mx-4 animate-scale-in">
-              <CardContent className="flex flex-col items-center gap-4 py-8 px-6 text-center">
+            <div className="max-w-sm w-full mx-4 animate-scale-in">
+              <div className="border border-[hsl(var(--surface-border))] bg-[hsl(var(--surface))] p-6 flex flex-col items-center gap-4 text-center">
                 <div className="relative">
-                  <div className="h-12 w-12 rounded-full border-3 border-primary/20" />
+                  <div className="h-10 w-10 border-2 border-primary/20" />
                   <motion.div
-                    className="absolute inset-0 h-12 w-12 rounded-full border-3 border-primary"
+                    className="absolute inset-0 h-10 w-10 border-2 border-primary"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     style={{ clipPath: "polygon(50% 0%, 100% 0%, 100% 50%, 50% 50%)" }}
@@ -119,8 +118,8 @@ export function LoadingOverlay({ isLoading, children, message = "Loading..." }: 
                   <span />
                   <span />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -130,16 +129,16 @@ export function LoadingOverlay({ isLoading, children, message = "Loading..." }: 
 
 export function SkeletonCard({ className, lines = 3, style }: { className?: string; lines?: number; style?: React.CSSProperties }) {
   return (
-    <Card className={cn("overflow-hidden", className)} style={style}>
-      <CardContent className="p-6 space-y-4">
-        <div className="h-6 w-1/4 skeleton rounded-lg" />
+    <div className={cn("border border-[hsl(var(--surface-border))] bg-[hsl(var(--surface))] overflow-hidden", className)} style={style}>
+      <div className="p-6 space-y-4">
+        <div className="h-6 w-1/4 skeleton" />
         <div className="space-y-3">
           {Array.from({ length: lines }).map((_, i) => (
-            <div key={i} className="h-4 w-full skeleton rounded" style={{ width: `${70 + Math.random() * 20}%` }} />
+            <div key={i} className="h-4 w-full skeleton" style={{ width: `${70 + Math.random() * 20}%` }} />
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -167,9 +166,9 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <Card className={cn("text-center py-12 px-6", className)}>
-      <CardContent className="flex flex-col items-center gap-4 max-w-sm mx-auto">
-        <div className="p-4 rounded-2xl bg-secondary/50 text-muted-foreground">
+    <section className={cn("ruled text-center py-12 px-6", className)}>
+      <div className="flex flex-col items-center gap-4 max-w-sm mx-auto">
+        <div className="p-4 border border-[hsl(var(--surface-border))] bg-[hsl(var(--surface-hover))]">
           {icon}
         </div>
         <div>
@@ -177,8 +176,8 @@ export function EmptyState({
           <p className="text-caption text-muted-foreground mt-2">{description}</p>
         </div>
         {action && <div className="mt-2">{action}</div>}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
@@ -194,9 +193,9 @@ export function ErrorState({
   className?: string;
 }) {
   return (
-    <Card className={cn("text-center py-12 px-6 border-destructive/20", className)}>
-      <CardContent className="flex flex-col items-center gap-4 max-w-sm mx-auto">
-        <div className="p-4 rounded-2xl bg-destructive/10 text-destructive">
+    <section className={cn("ruled text-center py-12 px-6 border border-[hsl(var(--destructive))/30]", className)}>
+      <div className="flex flex-col items-center gap-4 max-w-sm mx-auto">
+        <div className="p-4 border border-[hsl(var(--destructive))/30] bg-[hsl(var(--destructive))/5] text-destructive">
           <svg className="h-8 w-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -213,8 +212,8 @@ export function ErrorState({
             Try Again
           </button>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 

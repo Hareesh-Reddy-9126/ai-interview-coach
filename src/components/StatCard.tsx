@@ -19,10 +19,10 @@ const colorMap = {
 export default function StatCard({ icon: Icon, label, value, subtitle, color = "primary" }: StatCardProps) {
   const c = colorMap[color];
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card-base p-5 group hover:border-border/80 transition-all">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="ruled p-5 group hover:border-border/80 transition-all">
       <div className="flex items-start justify-between mb-4">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-        <div className={`p-2 rounded-lg ${c.bg} ring-1 ${c.ring}`}>
+        <div className={`p-2 ${c.bg} ring-1 ${c.ring}`}>
           <Icon className={`h-4 w-4 ${c.icon}`} />
         </div>
       </div>

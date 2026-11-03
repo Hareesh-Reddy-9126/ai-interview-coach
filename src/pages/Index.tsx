@@ -10,13 +10,12 @@ import {
   Map,
   Mic,
   Target,
-  TrendingUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { type UserAnalytics } from "@/lib/utils";
 import { pickStrongestAndWeakest, SKILLS } from "@/lib/skills";
-import { Metric, ScoreRing, Sparkline } from "@/components/ui/metric";
+import { ScoreRing, Sparkline } from "@/components/ui/metric";
 import { EmptyState } from "@/components/ui/empty-state";
 import SkillRadarChart from "@/components/SkillRadarChart";
 
@@ -25,6 +24,7 @@ interface RecentInterview {
   role: string;
   company: string;
   difficulty: string;
+  experience: string | null;
   overall_score: number | null;
   created_at: string;
   status: string;
@@ -136,52 +136,54 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-9">
-      {/* Header */}
-      <div className="flex flex-col gap-7 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="mb-4 flex items-center gap-3">
-            <span className="h-px w-7 bg-accent" aria-hidden="true" />
-            <time className="mono-label" dateTime={new Date().toISOString().split("T")[0]}>
-              {new Date().toLocaleDateString(undefined, {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
-            </time>
+      {/* Header — editorial briefing */}
+      <section className="ruled py-6 sm:py-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="mb-3 flex items-center gap-3">
+              <span className="h-[1px] w-6 bg-accent" aria-hidden="true" />
+              <time className="mono-label" dateTime={new Date().toISOString().split("T")[0]}>
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+            </div>
+            <h1 className="text-display-lg text-foreground">
+              {greeting()}, {firstName}.
+            </h1>
+            <p className="mt-3 max-w-2xl text-[13.5px] leading-[1.75] text-muted-foreground">
+              {hasHistory
+                ? `${derived.completed} ${derived.completed === 1 ? "session" : "sessions"} completed so far. ${
+                    focusSkill ? `Your clearest next gain is ${focusSkill.label.toLowerCase()}.` : ""
+                  }`
+                : "Start with a baseline interview to calibrate your readiness and unlock a personal plan."}
+            </p>
           </div>
-          <h1 className="text-display-lg text-foreground">
-            {greeting()}, {firstName}.
-          </h1>
-          <p className="mt-3.5 max-w-2xl text-body text-muted-foreground">
-            {hasHistory
-              ? `${derived.completed} ${derived.completed === 1 ? "session" : "sessions"} completed so far. ${
-                  focusSkill ? `Your clearest next gain is ${focusSkill.label.toLowerCase()}.` : ""
-                }`
-              : "Start with a baseline interview to calibrate your readiness and unlock a personal plan."}
-          </p>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link to="/analytics" className="btn-secondary btn-sm">
+              View analytics
+            </Link>
+            <Link to="/interview" className="btn-primary btn-sm gap-2">
+              New session
+              <ArrowRight className="h-3 w-3" strokeWidth={1.6} />
+            </Link>
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <Link to="/analytics" className="btn-secondary btn-sm">
-            View analytics
-          </Link>
-          <Link to="/interview" className="btn-primary btn-sm gap-2">
-            New session
-            <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.8} />
-          </Link>
-        </div>
-      </div>
+      </section>
 
-      {/* Readiness + focus */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+      {/* Readiness + focus — open ruled spreads */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="border border-border bg-transparent"
+          className="ruled-inset sm:px-6"
           aria-label="Interview readiness"
         >
-          <div className="flex items-center justify-between border-b border-border px-6 py-4">
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between border-b border-[hsl(var(--surface-border))] pb-4 px-6 sm:px-0">
+            <div className="flex items-center gap-2">
               <h2 className="text-headline text-foreground">Interview readiness</h2>
               <span className="tag-muted">{scoreTone(readiness)}</span>
             </div>
@@ -190,7 +192,7 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="flex flex-col gap-7 p-6 sm:flex-row sm:items-center sm:gap-10">
+          <div className="flex flex-col gap-6 px-6 sm:flex-row sm:items-center sm:gap-10 sm:px-0">
             <div className="flex shrink-0 flex-col items-center gap-4">
               <ScoreRing value={readiness} size={148} stroke={8} label="Overall" />
               <p className="mono-label text-center">
@@ -204,14 +206,14 @@ export default function Dashboard() {
               {derived.skills.map((skill) => (
                 <div key={skill.label}>
                   <div className="mb-2 flex items-center justify-between gap-4">
-                    <span className="text-[12.5px] font-medium text-secondary-foreground">{skill.label}</span>
-                    <span className="tabular text-[11.5px] text-muted-foreground">
+                    <span className="text-[12px] font-medium text-secondary-foreground">{skill.label}</span>
+                    <span className="tabular text-[11px] text-muted-foreground">
                       {skill.score > 0 ? skill.score : "—"}
                     </span>
                   </div>
-                  <div className="h-px bg-border">
+                  <div className="h-[1px] bg-[hsl(var(--surface-border))]">
                     <div
-                      className="h-px bg-primary/80 transition-[width] duration-900 ease-out-expo"
+                      className="h-[1px] bg-primary/80 transition-[width] duration-900 ease-out-expo"
                       style={{ width: `${Math.max(skill.score, skill.score > 0 ? 2 : 0)}%` }}
                     />
                   </div>
@@ -220,7 +222,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[hsl(var(--surface-border))] pt-4 px-6 sm:px-0">
             <p className="mono-label">
               {hasHistory
                 ? `Strongest area: ${derived.strongest?.label ?? "—"}`
@@ -239,25 +241,25 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-          className="panel-ink flex flex-col"
+          className="panel-ink flex flex-col sm:px-6"
           aria-label="Recommended next action"
         >
-          <div className="flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] px-6 py-4">
-            <h2 className="text-headline">Focus next</h2>
+          <div className="flex items-center justify-between border-b border-[hsl(var(--sidebar-border))] pb-4 px-6">
+            <h2 className="text-headline text-[hsl(var(--sidebar-accent-foreground))]">Focus next</h2>
             <span className="tag-accent">Recommended</span>
           </div>
 
-          <div className="flex flex-1 flex-col p-6">
+          <div className="flex flex-1 flex-col px-6 pt-6 pb-8">
             <div className="flex h-10 w-10 items-center justify-center border border-[hsl(36_32%_42%/0.3)] text-[hsl(var(--accent))]">
               <Target className="h-4 w-4" strokeWidth={1.8} />
             </div>
-            <h3 className="mt-5 font-display text-[22px] font-normal leading-[1.15]">
+            <h3 className="mt-5 font-display text-[22px] font-normal leading-[1.15] text-[hsl(var(--sidebar-accent-foreground))]">
               {focusSkill ? `Strengthen ${focusSkill.label}` : "Establish a baseline"}
             </h3>
-            <p className="mt-2 text-[13px] leading-[1.65] text-[hsl(42_12%_68%)]">
+            <p className="mt-2 text-[12.5px] leading-[1.65] text-[hsl(42_12%_68%)]">
               {focusSkill
-                ? `Your ${focusSkill.label.toLowerCase()} score is ${focusSkill.score}/100 — the lowest of the five dimensions. A focused 20-minute session will move it fastest.`
-                : "Run one full mock interview. We'll score five dimensions and build your first improvement plan from the results."}
+                ? `Your ${focusSkill.label.toLowerCase()} score is ${focusSkill.score}/100 — the lowest of the five dimensions.`
+                : "Run one full mock interview. We'll score five dimensions and build your first improvement plan."}
             </p>
 
             <div className="mt-auto pt-6">
@@ -270,25 +272,25 @@ export default function Dashboard() {
                 className="btn-invert btn-sm w-full gap-2"
               >
                 {focusSkill ? `Practice ${focusSkill.label}` : "Start baseline"}
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.8} />
+                <ArrowRight className="h-3 w-3" strokeWidth={1.6} />
               </Link>
-              <div className="mt-5 grid grid-cols-2 gap-4 border-t border-[hsl(var(--sidebar-border))] pt-5">
+              <div className="mt-5 grid grid-cols-2 gap-4 border-t border-[hsl(var(--sidebar-border))] pt-4">
                 <div>
-                  <p className="font-display text-[26px] leading-none tabular">
+                  <p className="font-display text-[26px] leading-none tabular text-[hsl(var(--sidebar-accent-foreground))]">
                     {analytics?.current_streak || 0}
-                    <span className="font-body text-[10px] text-[hsl(42_12%_68%)]">
+                    <span className="font-body text-[9px] text-[hsl(42_12%_68%)]">
                       {(analytics?.current_streak || 0) === 1 ? " day" : " days"}
                     </span>
                   </p>
-                  <p className="mt-2 flex items-center gap-1.5 mono-label text-[hsl(42_12%_68%)]">
+                  <p className="mt-1.5 flex items-center gap-1 mono-label text-[hsl(42_12%_68%)]">
                     <Flame className="h-2.5 w-2.5" strokeWidth={1.5} /> Current streak
                   </p>
                 </div>
                 <div>
-                  <p className="font-display text-[26px] leading-none tabular">
+                  <p className="font-display text-[26px] leading-none tabular text-[hsl(var(--sidebar-accent-foreground))]">
                     {derived.completed}
                   </p>
-                  <p className="mt-2 flex items-center gap-1.5 mono-label text-[hsl(42_12%_68%)]">
+                  <p className="mt-1.5 flex items-center gap-1 mono-label text-[hsl(42_12%_68%)]">
                     <Award className="h-2.5 w-2.5" strokeWidth={1.5} /> Sessions
                   </p>
                 </div>
@@ -298,65 +300,68 @@ export default function Dashboard() {
         </motion.section>
       </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-2 gap-px border-y border-border bg-border lg:grid-cols-4">
-        {loading ? (
-          Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="bg-background px-5 py-5 sm:px-6">
-              <div className="skeleton mb-5 h-2.5 w-20" />
-              <div className="skeleton mb-5 h-7 w-16" />
-              <div className="skeleton h-2.5 w-28" />
-            </div>
-          ))
-        ) : (
-          <>
-            <Metric
-              variant="bare"
-              label="Interviews"
-              value={derived.completed}
-              hint="Completed sessions"
-              icon={Mic}
-            />
-            <Metric
-              variant="bare"
-              label="Average score"
-              value={derived.average ? `${derived.average}%` : "—"}
-              hint="Last 8 sessions"
-              spark={derived.trend.length > 1 ? derived.trend : undefined}
-              icon={TrendingUp}
-            />
-            <Metric
-              variant="bare"
-              label="Focus area"
-              value={focusSkill ? focusSkill.label : "—"}
-              hint={focusSkill ? `${focusSkill.score}/100 currently` : "No scored session yet"}
-              icon={Target}
-            />
-            <Metric
-              variant="bare"
-              label="Streak"
-              value={`${analytics?.current_streak || 0}d`}
-              hint="Consecutive practice days"
-              icon={Flame}
-            />
-          </>
-        )}
-      </div>
+      {/* Metrics — ruled strip */}
+      <section className="ruled pt-6 pb-8 sm:px-6">
+        <div className="grid grid-cols-2 gap-[1px] border-y border-[hsl(var(--surface-border))] bg-[hsl(var(--surface-border))] lg:grid-cols-4">
+          {loading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="bg-[hsl(var(--surface))] px-5 py-5 sm:px-6">
+                <div className="skeleton mb-5 h-2.5 w-20" />
+                <div className="skeleton mb-5 h-7 w-16" />
+                <div className="skeleton h-2.5 w-28" />
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="bg-[hsl(var(--surface))] px-5 py-5 sm:px-6">
+                <p className="mono-label">Interviews</p>
+                <p className="mt-2 font-display text-[24px] font-normal leading-none tabular text-foreground">
+                  {derived.completed}
+                </p>
+                <p className="mt-1 text-[10px] mono-label text-muted-foreground">Completed sessions</p>
+              </div>
+              <div className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 sm:px-6">
+                <p className="mono-label">Average score</p>
+                <p className="mt-2 font-display text-[24px] font-normal leading-none tabular text-foreground">
+                  {derived.average ? `${derived.average}%` : "—"}
+                </p>
+                <p className="mt-1 text-[10px] mono-label text-muted-foreground">Last 8 sessions</p>
+              </div>
+              <div className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 sm:px-6">
+                <p className="mono-label">Focus area</p>
+                <p className="mt-2 font-display text-[20px] font-normal leading-none tabular text-foreground">
+                  {focusSkill ? focusSkill.label : "—"}
+                </p>
+                <p className="mt-1 text-[10px] mono-label text-muted-foreground">
+                  {focusSkill ? `${focusSkill.score}/100 currently` : "No scored session yet"}
+                </p>
+              </div>
+              <div className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 sm:px-6">
+                <p className="mono-label">Streak</p>
+                <p className="mt-2 font-display text-[20px] font-normal leading-none tabular text-foreground">
+                  {`${analytics?.current_streak || 0}d`}
+                </p>
+                <p className="mt-1 text-[10px] mono-label text-muted-foreground">Consecutive days</p>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
 
-      {/* Radar + recent */}
-      <div className="grid gap-5 lg:grid-cols-2">
+      {/* Radar + recent — ruled ledgers */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
         >
           {loading ? (
-            <div className="h-[360px] border border-border p-6">
-              <div className="skeleton mb-3 h-3.5 w-28" />
+            <div className="h-[360px] border border-[hsl(var(--surface-border))] px-6 sm:px-0">
+              <div className="skeleton mb-3 h-3 w-28" />
               <div className="skeleton h-[290px] w-full" />
             </div>
           ) : (
-            <div className="border border-border px-4 pb-2 pt-4">
+            <div className="border border-[hsl(var(--surface-border))] px-4 pb-2 pt-4 sm:px-0">
               <SkillRadarChart analytics={analytics} variant="plain" />
             </div>
           )}
@@ -366,10 +371,10 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.14, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col border border-border"
+          className="flex flex-col border border-[hsl(var(--surface-border))] sm:px-0"
           aria-label="Recent sessions"
         >
-          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between border-b border-[hsl(var(--surface-border))] pb-3 px-6 sm:px-0">
             <h2 className="text-headline text-foreground">Recent sessions</h2>
             <Link
               to="/history"
@@ -379,67 +384,67 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 border-t border-[hsl(var(--surface-border))]">
             {loading ? (
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-[hsl(var(--surface-border))]">
                 {Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="flex items-center gap-4 px-6 py-4">
-                    <div className="skeleton h-10 w-10" />
-                    <div className="flex-1 space-y-2.5">
-                      <div className="skeleton h-3.5 w-36" />
-                      <div className="skeleton h-2.5 w-24" />
+                  <div key={index} className="flex items-center gap-3 px-4 py-4 sm:px-0">
+                    <div className="skeleton h-9 w-9" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-3 w-32" />
+                      <div className="skeleton h-2 w-20" />
                     </div>
-                    <div className="skeleton h-6 w-12" />
+                    <div className="skeleton h-6 w-10" />
                   </div>
                 ))}
               </div>
             ) : recentInterviews.length === 0 ? (
               <EmptyState
                 compact
-                icon={<Mic className="h-6 w-6" strokeWidth={1.7} />}
+                icon={<Mic className="h-5 w-5" strokeWidth={1.7} />}
                 title="No sessions yet"
                 description="Your first scored interview will appear here with a full breakdown."
                 action={
                   <Link to="/interview" className="btn-primary btn-sm gap-2">
                     Start interview
-                    <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.8} />
+                    <ArrowRight className="h-3 w-3" strokeWidth={1.6} />
                   </Link>
                 }
-                className="border-0 bg-transparent shadow-none"
+                className="border-0 bg-transparent"
               />
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="divide-y divide-[hsl(var(--surface-border))]">
                 {recentInterviews.slice(0, 5).map((session) => (
                   <li key={session.id}>
                     <Link
                       to="/history"
-                      className="group flex items-center gap-4 px-6 py-4 transition-colors hover:bg-surface-2/40"
+                      className="group flex items-center gap-3 px-4 py-4 transition-colors hover:bg-[hsl(var(--surface-hover))] sm:px-0"
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border/60 bg-surface-2 text-muted-foreground/60 transition-colors group-hover:border-border-strong group-hover:text-foreground">
-                        <Mic className="h-4 w-4" strokeWidth={1.8} />
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-[hsl(var(--surface-border-strong))] text-muted-foreground/50 transition-colors group-hover:border-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary))]">
+                        <Mic className="h-3.5 w-3.5" strokeWidth={1.6} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-medium text-foreground">
+                        <span className="block truncate text-[12.5px] font-medium text-foreground">
                           {session.role}
                         </span>
-                        <span className="mt-0.5 block truncate mono-label text-muted-foreground/55">
+                        <span className="mt-0.5 block truncate mono-label text-muted-foreground/45">
                           {session.company} · {session.difficulty} · {formatDate(session.created_at)}
                         </span>
                       </span>
                       {session.overall_score ? (
-                        <span className="flex shrink-0 items-center gap-3">
-                          <span className="hidden h-px w-16 overflow-hidden bg-border sm:block">
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="hidden h-[1px] w-16 overflow-hidden bg-[hsl(var(--surface-border))] sm:block">
                             <span
-                              className="block h-px bg-primary/70"
+                              className="block h-[1px] bg-primary/70"
                               style={{ width: `${session.overall_score}%` }}
                             />
                           </span>
-                          <span className="tabular w-9 text-right font-display text-[16px] font-medium text-foreground">
+                          <span className="tabular w-8 text-right font-display text-[15px] font-medium text-foreground">
                             {session.overall_score}
                           </span>
                         </span>
                       ) : (
-                        <span className="tag-warning shrink-0 capitalize">{session.status}</span>
+                        <span className="tag-muted shrink-0 capitalize">{session.status}</span>
                       )}
                     </Link>
                   </li>
@@ -450,62 +455,61 @@ export default function Dashboard() {
         </motion.section>
       </div>
 
-      {/* Practice paths */}
+      {/* Practice paths — ruled index */}
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
         aria-label="Practice paths"
-        className="border-t border-border pt-6"
+        className="border-t border-[hsl(var(--surface-border))] pt-6 sm:px-0"
       >
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex items-baseline gap-4">
-            <span className="font-mono text-[8px] uppercase tracking-[0.16em] text-accent">Index</span>
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[hsl(var(--surface-border))] pb-3 sm:flex-row sm:items-end sm:justify-between sm:px-0">
+          <div className="flex items-baseline gap-3">
+            <span className="mono-accent">Index</span>
             <h2 className="text-headline text-foreground">Practice paths</h2>
           </div>
           <Link to="/practice" className="link-editorial">
             Explore all
-            <ArrowRight className="h-3 w-3" strokeWidth={1.8} />
+            <ArrowRight className="h-3 w-3" strokeWidth={1.6} />
           </Link>
         </div>
-        <div className="mt-5 grid grid-cols-1 gap-px border-y border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid grid-cols-1 gap-[1px] border-y border-[hsl(var(--surface-border))] bg-[hsl(var(--surface-border))] sm:grid-cols-2 lg:grid-cols-4">
           {PRACTICE_PATHS.map((path, index) => (
-            <Link
+            <div
               key={path.to}
-              to={path.to}
-              className="group flex flex-col bg-background px-5 py-5 transition-colors hover:bg-surface-2/40 lg:px-6"
+              className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 sm:px-6 last:border-l-0 sm:last:border-l-0 lg:last:border-l-0"
             >
               <span className="flex items-center justify-between">
-                <span className="font-mono text-[8px] tracking-[0.12em] text-accent">
+                <span className="font-mono text-[7.5px] tracking-[0.12em] text-accent">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <path.icon
-                  className="h-4 w-4 text-muted-foreground/35 transition-colors group-hover:text-primary"
-                  strokeWidth={1.7}
+                  className="h-3.5 w-3.5 text-muted-foreground/30 transition-colors group-hover:text-[hsl(var(--primary))]"
+                  strokeWidth={1.6}
                 />
               </span>
-              <span className="mt-5 font-display text-[20px] leading-none tracking-[-0.025em] text-foreground">
+              <span className="mt-4 font-display text-[19px] leading-none tracking-[-0.02em] text-foreground">
                 {path.label}
               </span>
-              <span className="mt-2 flex-1 text-[11.5px] leading-[1.6] text-muted-foreground">
+              <span className="mt-2 flex-1 text-[11px] leading-[1.6] text-muted-foreground">
                 {path.description}
               </span>
-              <span className="mt-5 inline-flex items-center gap-1.5 font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/50 transition-colors group-hover:text-foreground">
+              <span className="mt-5 inline-flex items-center gap-1 font-mono text-[7px] uppercase tracking-[0.14em] text-muted-foreground/40">
                 Begin
-                <ArrowRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.8} />
+                <ArrowRight className="h-2 w-2 transition-transform group-hover:translate-x-0.5" strokeWidth={1.6} />
               </span>
-            </Link>
+            </div>
           ))}
         </div>
       </motion.section>
 
       {derived.trend.length > 1 && (
-        <div className="hidden items-center justify-between border border-border/50 bg-surface-2/30 px-5 py-3 md:flex">
-          <p className="mono-label">
-            Score trend, last {derived.trend.length} sessions
-          </p>
-          <Sparkline data={derived.trend} width={160} height={24} />
-        </div>
+        <section className="ruled py-6 sm:px-6">
+          <div className="flex items-center justify-between gap-4 border-b border-[hsl(var(--surface-border))] pb-3">
+            <p className="mono-label">Score trend, last {derived.trend.length} sessions</p>
+            <Sparkline data={derived.trend} width={160} height={20} />
+          </div>
+        </section>
       )}
     </div>
   );

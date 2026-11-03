@@ -1646,7 +1646,7 @@ export default function Interview() {
                     type="button"
                     onClick={() => (speech.isListening ? speech.stopListening() : speech.startListening())}
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-full transition-all",
+                      "flex h-9 w-9 items-center justify-center transition-all border border-transparent",
                       speech.isListening
                         ? "animate-recording bg-destructive text-destructive-foreground"
                         : "bg-sidebar-primary text-sidebar-primary-foreground",
