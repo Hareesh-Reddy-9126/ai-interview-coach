@@ -3,7 +3,6 @@ import {
   AiProviderError,
   buildSystemPrompt,
   buildMessages,
-  chatCompletionStream,
   checkRateLimit,
   corsHeaders,
   createRequestLogger,
@@ -11,7 +10,6 @@ import {
   jsonResponse,
   optionsResponse,
   recordRequest,
-  type ChatMessage,
 } from "../_shared/nvidia.ts";
 
 const RATE_LIMIT = 20;
@@ -84,11 +82,48 @@ function normalizeEvaluation(value: unknown): InterviewEvaluation | null {
 }
 
 /**
+ * Chunk a finished string into word-sized SSE deltas. The evaluation already
+ * contains the next question, so re-prompting the model just to animate text
+ * would double the cost and could stream a different question than the one
+ * that was scored.
+ */
+function questionChunks(question: string): string[] {
+  const parts = question.match(/\S+\s*/g) ?? [question];
+  const chunks: string[] = [];
+  for (let index = 0; index < parts.length; index += 2) {
+    chunks.push(parts.slice(index, index + 2).join(""));
+  }
+  return chunks;
+}
+
+/**
+ * Simple deterministic hash (FNV-1a), identical to the non-streaming endpoint
+ * so both paths share the same cache entries.
+ */
+function simpleHash(input: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = (hash * 16777619) >>> 0;
+  }
+  return hash.toString(16);
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * SSE stream endpoint for the interview AI.
  *
  * Instead of making the user wait 5-30s for a full AI response, this streams
  * tokens back as they're generated. The frontend renders them as they arrive,
  * giving an immediate "the interviewer is thinking" feeling.
+ *
+ * Cost model: one structured model call per turn, cached for 24 hours and
+ * shared with the non-streaming endpoint. On a cache hit no model call is made
+ * at all. The next question is sent as word deltas so the client keeps its
+ * typing effect without a second generation.
  *
  * Protocol (text/event-stream):
  *   event: evaluation  data: { score, feedback, strengths, improvements }   (once, complete)
@@ -163,84 +198,117 @@ Deno.serve(async (req) => {
 
     const messages = buildMessages(systemPrompt, conversation);
 
+    // ── Shared semantic cache ──
+    // Same key shape as the non-streaming endpoint, so a turn evaluated by
+    // either path is reused by the other.
+    const cachePrompt = `${systemPrompt}||${conversation.at(-1)?.answer || conversation.at(-1)?.question || ""}`;
+    const cacheHash = simpleHash(cachePrompt);
+
+    const { data: cached } = await adminClient
+      .from("ai_response_cache")
+      .select("response")
+      .eq("prompt_hash", cacheHash)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
     await recordRequest(adminClient, user.id, "interview-ai-stream");
-    log.info(`Streaming NVIDIA NIM, turns: ${conversation.length}`);
 
-    // First, get a complete structured evaluation (non-streaming, with tools)
-    // so we have scores + feedback immediately.
-    // Then stream the nextQuestion text for the typing effect.
+    let parsed = cached?.response ? normalizeEvaluation(cached.response) : null;
+    if (parsed) {
+      log.info("Cache hit, skipping NVIDIA call");
+    } else {
+      log.info(`Calling NVIDIA NIM, turns: ${conversation.length}`);
 
-    // We can't import chatCompletion (non-streaming) from shared without
-    // duplicating logic, so we do a direct non-streaming fetch here for the
-    // evaluation, then stream the question text.
-    const { chatCompletion } = await import("../_shared/nvidia.ts");
+      const { chatCompletion, extractStructured } = await import(
+        "../_shared/nvidia.ts"
+      );
 
-    const evaluationCompletion = await chatCompletion({
-      messages,
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "evaluate_interview_turn",
-            description:
-              "Evaluate the candidate's interview answer and provide the next question",
-            parameters: {
-              type: "object",
-              properties: {
-                score: {
-                  type: "number",
-                  description:
-                    "Score from 0-100. Omit for opening question.",
+      const evaluationCompletion = await chatCompletion({
+        messages,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "evaluate_interview_turn",
+              description:
+                "Evaluate the candidate's interview answer and provide the next question",
+              parameters: {
+                type: "object",
+                properties: {
+                  score: {
+                    type: "number",
+                    description:
+                      "Score from 0-100. Omit for opening question.",
+                  },
+                  feedback: {
+                    type: "string",
+                    description: "Evaluation feedback. Omit for opening question.",
+                  },
+                  strengths: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "2-4 specific strengths.",
+                  },
+                  improvements: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "2-4 specific improvements.",
+                  },
+                  nextQuestion: {
+                    type: "string",
+                    description: "The next interview question.",
+                  },
                 },
-                feedback: {
-                  type: "string",
-                  description: "Evaluation feedback. Omit for opening question.",
-                },
-                strengths: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "2-4 specific strengths.",
-                },
-                improvements: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "2-4 specific improvements.",
-                },
-                nextQuestion: {
-                  type: "string",
-                  description: "The next interview question.",
-                },
+                required: ["strengths", "improvements", "nextQuestion"],
+                additionalProperties: false,
               },
-              required: ["strengths", "improvements", "nextQuestion"],
-              additionalProperties: false,
             },
           },
+        ],
+        toolChoice: {
+          type: "function",
+          function: { name: "evaluate_interview_turn" },
         },
-      ],
-      toolChoice: {
-        type: "function",
-        function: { name: "evaluate_interview_turn" },
-      },
-      temperature: 0.6,
-      maxTokens: 2048,
-      timeoutMs: 45_000,
-      thinking: false,
-    });
+        temperature: 0.6,
+        maxTokens: 2048,
+        timeoutMs: 45_000,
+        thinking: false,
+      });
 
-    const { extractStructured } = await import("../_shared/nvidia.ts");
-    const parsed = normalizeEvaluation(extractStructured(evaluationCompletion));
+      parsed = normalizeEvaluation(extractStructured(evaluationCompletion));
 
-    if (!parsed) {
-      return jsonResponse(
-        { error: "AI returned an invalid response. Please try again." },
-        502,
-        req,
-      );
+      if (!parsed) {
+        return jsonResponse(
+          { error: "AI returned an invalid response. Please try again." },
+          502,
+          req,
+        );
+      }
+
+      // Non-fatal cache write: a failure only costs a future model call.
+      try {
+        const expiresAt = new Date(
+          Date.now() + 24 * 60 * 60 * 1000,
+        ).toISOString();
+        await adminClient.from("ai_response_cache").upsert(
+          {
+            prompt_hash: cacheHash,
+            prompt_text: cachePrompt.slice(0, 1000),
+            response: parsed,
+            expires_at: expiresAt,
+          },
+          { onConflict: "prompt_hash" },
+        );
+      } catch {
+        // Ignore
+      }
     }
+
+    const evaluation = parsed;
 
     // Build an SSE stream:
     // 1. Send evaluation data immediately
-    // 2. Stream nextQuestion tokens
+    // 2. Emit the next question as word deltas for the typing effect
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -251,42 +319,19 @@ Deno.serve(async (req) => {
         };
 
         try {
-          // Send evaluation first
           send("evaluation", {
-            score: parsed.score,
-            feedback: parsed.feedback,
-            strengths: parsed.strengths,
-            improvements: parsed.improvements,
+            score: evaluation.score,
+            feedback: evaluation.feedback,
+            strengths: evaluation.strengths,
+            improvements: evaluation.improvements,
           });
 
-          // Now stream the nextQuestion text.
-          // We re-prompt the model without tools to get natural language output
-          // that we can stream token by token.
-          const streamMessages: ChatMessage[] = [
-            { role: "system", content: systemPrompt },
-            ...messages.slice(1), // skip the system prompt (already included)
-            {
-              role: "user",
-              content:
-                "Output ONLY the next interview question as plain text. No JSON, no markdown, no labels. Just the question.",
-            },
-          ];
-
-          const streamGen = chatCompletionStream({
-            messages: streamMessages,
-            temperature: 0.7,
-            maxTokens: 1024,
-            timeoutMs: 45_000,
-            thinking: false,
-          });
-
-          let fullQuestion = "";
-          for await (const delta of streamGen) {
-            fullQuestion += delta;
-            send("token", { delta });
+          for (const chunk of questionChunks(evaluation.nextQuestion)) {
+            send("token", { delta: chunk });
+            await sleep(18);
           }
 
-          send("done", { nextQuestion: fullQuestion.trim() || parsed.nextQuestion });
+          send("done", { nextQuestion: evaluation.nextQuestion });
           controller.close();
         } catch (error) {
           if (error instanceof AiProviderError) {

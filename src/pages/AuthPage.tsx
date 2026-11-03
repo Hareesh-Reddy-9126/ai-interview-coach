@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Eye, EyeOff, Key, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +24,10 @@ export default function AuthPage() {
   const [mfaLoading, setMfaLoading] = useState(false);
   const { signIn, signUp, verifyMFA, mfaRequired } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Sign in — Interview Lab";
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,6 +228,7 @@ export default function AuthPage() {
                 </AnimatePresence>
               </div>
 
+              {!mfaRequired && (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <AnimatePresence initial={false}>
                   {!isLogin && (
@@ -321,6 +326,7 @@ export default function AuthPage() {
                   )}
                 </button>
               </form>
+              )}
 
               {mfaRequired && (
                 <motion.div

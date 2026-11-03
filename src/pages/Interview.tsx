@@ -21,6 +21,7 @@ import {
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrg } from "@/hooks/useOrg";
 import { toast } from "sonner";
 import SkillRadarChart from "@/components/SkillRadarChart";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
@@ -228,6 +229,7 @@ function OptionGroup({
 
 export default function Interview() {
   const { user } = useAuth();
+  const { organization } = useOrg();
   const [searchParams] = useSearchParams();
   const isResumeMode = searchParams.get("mode") === "resume";
   const focusParam = searchParams.get("focus") ?? "";
@@ -519,6 +521,7 @@ export default function Interview() {
           company: config.company,
           difficulty: config.difficulty,
           experience: config.experience,
+          organization_id: organization?.id ?? null,
           ...(focus ? { focus } : {}),
         })
         .select()

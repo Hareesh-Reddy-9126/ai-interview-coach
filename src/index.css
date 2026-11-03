@@ -388,6 +388,28 @@
     background: hsl(var(--surface-hover));
   }
 
+  .btn-outline {
+    @apply btn-base;
+    border: 1px solid hsl(var(--border));
+    background: transparent;
+    color: hsl(var(--secondary-foreground));
+  }
+  .btn-outline:hover {
+    border-color: hsl(var(--border-strong));
+    background: hsl(var(--surface-hover));
+  }
+
+  .btn-destructive {
+    @apply btn-base;
+    background: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+    border-color: hsl(var(--destructive));
+  }
+  .btn-destructive:hover {
+    background: hsl(0 48% 30%);
+    border-color: hsl(0 48% 30%);
+  }
+
   .btn-ghost {
     display: inline-flex;
     align-items: center;
@@ -441,7 +463,6 @@
   }
 
   .btn-sm {
-    @apply btn-base;
     height: 32px;
     padding-inline: 14px;
     font-size: 8.5px;
@@ -449,11 +470,20 @@
   }
 
   .btn-lg {
-    @apply btn-base;
     height: 48px;
     padding-inline: 24px;
     font-size: 10px;
     letter-spacing: 0.13em;
+  }
+
+  .btn-icon-sm {
+    height: 28px;
+    width: 28px;
+  }
+
+  .btn-icon-lg {
+    height: 44px;
+    width: 44px;
   }
 
   /* ── Forms — ruled, squared ── */
@@ -679,6 +709,22 @@
   }
 
   /* ── Motion — restrained, editorial ── */
+  /* Page entry is fail-open: without a running animation the content stays
+     visible, so a headless browser, reduced-motion setting or JS hiccup can
+     never leave a route blank. */
+  @keyframes page-enter {
+    from { transform: translateY(6px); }
+    to { transform: translateY(0); }
+  }
+  .page-enter {
+    animation: page-enter 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter {
+      animation: none;
+    }
+  }
+
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }

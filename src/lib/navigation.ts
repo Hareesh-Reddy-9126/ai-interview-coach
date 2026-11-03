@@ -9,6 +9,7 @@ import {
   Settings,
   History,
   Code2,
+  Building2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -99,6 +100,13 @@ export const navGroups: NavGroup[] = [
   {
     label: "Account",
     items: [
+      {
+        to: "/org",
+        icon: Building2,
+        label: "Organization",
+        description: "Team workspace and access control",
+        keywords: ["team", "workspace", "members", "admin"],
+      },
       {
         to: "/usage",
         icon: Gauge,

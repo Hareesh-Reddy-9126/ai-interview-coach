@@ -100,6 +100,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     setProfileOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    document.title = currentPage ? `${currentPage.label} — Interview Lab` : "Interview Lab";
+  }, [currentPage]);
+
   const openPalette = useCallback(() => setPaletteOpen(true), []);
 
   useEffect(() => {
@@ -426,14 +430,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           id="main-content"
           className="relative mx-auto w-full max-w-[96rem] px-4 pb-24 pt-8 md:px-6 md:pt-10"
         >
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          >
+          <div key={location.pathname} className="page-enter">
             {children}
-          </motion.div>
+          </div>
         </main>
       </div>
 

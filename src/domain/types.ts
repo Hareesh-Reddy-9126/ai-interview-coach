@@ -353,7 +353,8 @@ export type Organization = z.infer<typeof OrganizationSchema>;
 export const OrganizationMemberSchema = z.object({
   id: z.string().uuid(),
   organization_id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  user_id: z.string().uuid().nullable(),
+  invited_email: z.string().email().nullable(),
   role: OrganizationRole,
   status: MemberStatus,
   invited_by: z.string().uuid().nullable(),
@@ -365,7 +366,7 @@ export type OrganizationMember = z.infer<typeof OrganizationMemberSchema>;
 
 export const MfaStatusSchema = z.object({
   mfa_enabled: z.boolean(),
-  mfa_recovery_codes: z.array(z.string()),
+  verified_factors: z.number().int().nonnegative(),
 });
 export type MfaStatus = z.infer<typeof MfaStatusSchema>;
 

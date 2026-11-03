@@ -6,111 +6,118 @@
  * time. Interview sessions, analytics, and billing all scope to the active org.
  */
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { orgApi } from "@/lib/org-api";
 import { type Organization } from "@/domain/types";
+
+interface Membership {
+  role: string;
+  status: string;
+  organization_id: string;
+  user_id: string;
+}
 
 interface OrgContextType {
   organization: Organization | null;
-  membership: { role: string; status: string; organization_id: string; user_id: string } | null;
+  membership: Membership | null;
   loading: boolean;
   role: string | null;
   isAdmin: boolean;
   isMember: boolean;
   setOrganization: (org: Organization | null) => void;
   refreshMembership: () => Promise<void>;
+  createOrganization: (
+    name: string,
+  ) => Promise<{ error: Error | null; organization?: Organization }>;
 }
 
 const OrgContext = createContext<OrgContextType | undefined>(undefined);
 
 export function OrgProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [membership, setMembership] = useState<{ role: string; status: string; organization_id: string; user_id: string } | null>(null);
+  const [membership, setMembership] = useState<Membership | null>(null);
   const [loading, setLoading] = useState(true);
 
   const role = membership?.role ?? null;
   const isAdmin = role === "admin";
   const isMember = membership != null && membership.status === "active";
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadMembership = useCallback(async () => {
+    if (!user) {
+      setMembership(null);
+      setOrganization(null);
+      setLoading(false);
+      return;
+    }
 
-    const loadMembership = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || cancelled) return;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: members, error } = await (supabase as any)
-          .from("organization_members")
-          .select(`
-            *,
-            organization: organizations(*)
-          `)
-          .eq("user_id", user.id)
-          .eq("status", "active")
-          .order("created_at", { ascending: false });
-
-        if (error || cancelled) return;
-
-        if (members && members.length > 0) {
-          const member = members[0];
-          setMembership({
-            role: member.role,
-            status: member.status,
-            organization_id: member.organization_id,
-            user_id: member.user_id,
-          });
-          setOrganization(member.organization as Organization);
-        } else {
-          setMembership(null);
-          setOrganization(null);
-        }
-      } catch {
-        setMembership(null);
-        setOrganization(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    loadMembership();
-    return () => { cancelled = true; };
-  }, []);
-
-  const setOrganizationCtx = (org: Organization | null) => {
-    setOrganization(org);
-  };
-
-  const refreshMembership = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: members } = await (supabase as any)
-        .from("organization_members")
-        .select(`
-          *,
-          organization: organizations(*)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .order("created_at", { ascending: false });
+      // Pending invitations are addressed to an email. Claim them before
+      // reading membership so an invited teammate lands in the right workspace.
+      await orgApi.claimInvitations();
 
-      if (members && members.length > 0) {
-        const member = members[0];
+      const { data, error } = await orgApi.myMemberships(user.id);
+      if (error) throw error;
+
+      const member = data?.[0];
+      if (member?.organization) {
         setMembership({
           role: member.role,
           status: member.status,
           organization_id: member.organization_id,
           user_id: member.user_id,
         });
-        setOrganization(member.organization as Organization);
+        setOrganization(member.organization);
+      } else {
+        setMembership(null);
+        setOrganization(null);
       }
+    } catch {
+      setMembership(null);
+      setOrganization(null);
     } finally {
       setLoading(false);
     }
+  }, [user]);
+
+  useEffect(() => {
+    void loadMembership();
+  }, [loadMembership]);
+
+  const setOrganizationCtx = (org: Organization | null) => {
+    setOrganization(org);
+  };
+
+  const refreshMembership = async () => {
+    await loadMembership();
+  };
+
+  const createOrganization = async (name: string) => {
+    if (!user) {
+      return { error: new Error("Not authenticated") as Error };
+    }
+
+    const { data, error } = await orgApi.createOrganization(name);
+    if (error) return { error: error as Error };
+    if (!data) return { error: new Error("Organization was not created") as Error };
+
+    setOrganization(data);
+    setMembership({
+      role: "admin",
+      status: "active",
+      organization_id: data.id,
+      user_id: user.id,
+    });
+    return { error: null, organization: data };
   };
 
   return (
@@ -124,6 +131,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         isMember,
         setOrganization: setOrganizationCtx,
         refreshMembership,
+        createOrganization,
       }}
     >
       {children}

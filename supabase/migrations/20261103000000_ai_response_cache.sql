@@ -1,6 +1,9 @@
--- AI response cache: semantic caching for NVIDIA NIM responses to cut
--- repeated model calls and reduce cost on duplicate/similar prompts.
--- Enabled via pg_cron cleanup of expired rows.
+-- AI response cache for NVIDIA NIM calls made by edge functions.
+--
+-- Security model: this table is server-only. The edge functions use the
+-- service-role key, which bypasses RLS. Browser clients must never be able to
+-- read cached model output or poison it with arbitrary rows, so RLS is enabled
+-- with no policies and table privileges are revoked from anon/authenticated.
 
 CREATE TABLE IF NOT EXISTS public.ai_response_cache (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -14,28 +17,16 @@ CREATE TABLE IF NOT EXISTS public.ai_response_cache (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_response_cache_prompt_hash
   ON public.ai_response_cache (prompt_hash);
 
--- Allow the app (anon) to read/write cache entries.
--- Cache entries are not user-specific, so no RLS row filter needed.
+CREATE INDEX IF NOT EXISTS idx_ai_response_cache_expires
+  ON public.ai_response_cache (expires_at);
+
 ALTER TABLE public.ai_response_cache ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Anyone can read cache" ON public.ai_response_cache;
-CREATE POLICY "Anyone can read cache"
-  ON public.ai_response_cache FOR SELECT
-  TO anon, authenticated
-  USING (true);
-
 DROP POLICY IF EXISTS "Anyone can insert cache" ON public.ai_response_cache;
-CREATE POLICY "Anyone can insert cache"
-  ON public.ai_response_cache FOR INSERT
-  TO anon, authenticated
-  WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Anyone can upsert cache" ON public.ai_response_cache;
-CREATE POLICY "Anyone can upsert cache"
-  ON public.ai_response_cache FOR UPDATE
-  TO anon, authenticated
-  USING (true)
-  WITH CHECK (true);
+
+REVOKE ALL ON TABLE public.ai_response_cache FROM anon, authenticated;
 
 -- Cleanup expired cache entries daily at 04:00 UTC.
 DO $$

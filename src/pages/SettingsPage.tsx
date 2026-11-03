@@ -18,17 +18,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { totpURL } from "@/lib/mfa";
 
 const EMPTY_PROFILE = { name: "", experience: "", target_role: "", target_company: "" };
 
 export default function SettingsPage() {
-  const { user, signOut, mfaEnabled, enableMFA, disableMFA } = useAuth();
+  const {
+    user,
+    signOut,
+    mfaEnabled,
+    enableMFA,
+    verifyMFASetup,
+    cancelMFAEnrollment,
+    disableMFA,
+  } = useAuth();
   const [profile, setProfile] = useState(EMPTY_PROFILE);
   const [initial, setInitial] = useState(EMPTY_PROFILE);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [mfaSetup, setMfaSetup] = useState<{ secret: string; url: string; codes: string[] } | null>(null);
+  const [mfaSetup, setMfaSetup] = useState<{
+    factorId: string;
+    qrCode: string;
+    secret: string;
+  } | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaBusy, setMfaBusy] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -70,6 +83,84 @@ export default function SettingsPage() {
       toast.success("Profile saved.");
     }
     setSaving(false);
+  };
+
+  const handleEnableMFA = async () => {
+    setMfaBusy(true);
+    try {
+      const { enrollment, error } = await enableMFA();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      if (!enrollment) {
+        toast.error("Could not start authenticator enrollment.");
+        return;
+      }
+      setMfaCode("");
+      setMfaSetup({
+        factorId: enrollment.factorId,
+        qrCode: enrollment.qrCode,
+        secret: enrollment.secret,
+      });
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
+  const handleVerifyMfaSetup = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!mfaSetup) return;
+    const code = mfaCode.replace(/\D/g, "").slice(0, 6);
+    if (code.length !== 6) {
+      toast.error("Enter the 6-digit code from your authenticator.");
+      return;
+    }
+
+    setMfaBusy(true);
+    try {
+      const { error } = await verifyMFASetup(mfaSetup.factorId, code);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      setMfaSetup(null);
+      setMfaCode("");
+      toast.success("Two-factor authentication enabled.");
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
+  const handleCancelMfaSetup = async () => {
+    if (!mfaSetup) return;
+    setMfaBusy(true);
+    try {
+      const { error } = await cancelMFAEnrollment(mfaSetup.factorId);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      setMfaSetup(null);
+      setMfaCode("");
+      toast.success("Enrollment cancelled.");
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
+  const handleDisableMFA = async () => {
+    setMfaBusy(true);
+    try {
+      const { error } = await disableMFA();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Two-factor authentication disabled.");
+    } finally {
+      setMfaBusy(false);
+    }
   };
 
   const rawName = profile.name?.trim();
@@ -223,109 +314,133 @@ export default function SettingsPage() {
                 </span>
               </div>
               {mfaSetup ? (
-                <div className="space-y-3">
-                  <div className="p-4 border border-border rounded">
-                    <div className="flex items-center justify-between mb-3">
+                <form onSubmit={handleVerifyMfaSetup} className="space-y-4">
+                  <div className="border border-border p-4">
+                    <div className="mb-4 flex items-center justify-between gap-3">
                       <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground/50">
-                        Scan with authenticator app
+                        Step 1 · Scan with an authenticator
                       </span>
                       <button
                         type="button"
-                        onClick={() => setMfaSetup(null)}
-                        className="text-[10px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                        onClick={() => void handleCancelMfaSetup()}
+                        disabled={mfaBusy}
+                        className="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-40"
                       >
                         Cancel
                       </button>
                     </div>
-                    <div className="flex items-center justify-center mb-3">
-                      <div
-                        className="w-24 h-24 flex items-center justify-center rounded border border-border bg-background"
-                        style={{ imageRendering: "pixelated" }}
-                      >
-                        {/* QR code rendered as data URI */}
+
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                      <div className="flex h-[132px] w-[132px] shrink-0 items-center justify-center border border-border bg-white p-1.5">
                         <img
-                          alt="TOTP QR code"
-                          className="w-full h-full"
-                          src={`data:image/svg+xml;base64,${btoa(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-  <rect width="200" height="200" fill="white"/>
-  <text x="50" y="100" font-family="monospace" font-size="12" fill="#333">${mfaSetup.secret.slice(0, 8)}...</text>
-  <text x="50" y="120" font-family="monospace" font-size="12" fill="#333">Scan or enter manually</text>
-</svg>
-`)}`} />
+                          src={mfaSetup.qrCode}
+                          alt="Authenticator QR code"
+                          className="h-full w-full"
+                        />
                       </div>
-                      <div className="ml-4">
-                        <p className="font-mono text-[11px] break-all mb-1 text-foreground">
-                          {mfaSetup.secret}
+                      <div className="min-w-0">
+                        <p className="text-[11.5px] leading-[1.7] text-muted-foreground">
+                          Open 1Password, Google Authenticator, Authy or any TOTP app and
+                          scan the code. If scanning is not possible, enter the key
+                          manually.
                         </p>
-                        <p className="text-[10px] text-muted-foreground/60">
-                          Or enter this key manually
-                        </p>
+                        <div className="mt-3 flex items-center gap-2">
+                          <code className="min-w-0 break-all border border-border bg-surface-2 px-2 py-1 font-mono text-[10px] tracking-[0.04em] text-foreground">
+                            {mfaSetup.secret}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(mfaSetup.secret);
+                              toast.success("Setup key copied.");
+                            }}
+                            className="shrink-0 text-[9.5px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                          >
+                            Copy
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-[10.5px] text-muted-foreground/60">
-                      Save your recovery codes — they are the only way to regain access if you lose your device:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {mfaSetup.codes.map((code, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-1 text-[10px] font-mono border border-border bg-background"
-                        >
-                          {code}
-                        </span>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMfaSetup(null);
-                        toast.success("Two-factor authentication enabled.");
-                      }}
-                      className="btn-primary w-fit gap-2"
-                    >
-                      I&apos;ve saved my codes
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
                   </div>
-                </div>
+
+                  <div className="border border-border p-4">
+                    <label htmlFor="mfa-verify-code" className="label-base">
+                      Step 2 · Confirm the 6-digit code
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        id="mfa-verify-code"
+                        value={mfaCode}
+                        onChange={(event) =>
+                          setMfaCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+                        }
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        pattern="[0-9]{6}"
+                        maxLength={6}
+                        placeholder="000000"
+                        className="input-base h-10 w-[150px] text-center font-mono text-[16px] tracking-[0.34em]"
+                        autoFocus
+                      />
+                      <button
+                        type="submit"
+                        disabled={mfaBusy || mfaCode.length !== 6}
+                        className="btn-primary h-10 gap-2"
+                      >
+                        {mfaBusy ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Shield className="h-3.5 w-3.5" strokeWidth={1.6} />
+                        )}
+                        Verify and enable
+                      </button>
+                    </div>
+                    <p className="helper-text">
+                      The code changes every 30 seconds. Two-factor is only active after
+                      a valid code is confirmed — this step proves the authenticator works.
+                    </p>
+                  </div>
+                </form>
               ) : mfaEnabled ? (
                 <div className="space-y-3">
-                  <p className="text-[10.5px] text-muted-foreground/60">
-                    Two-factor authentication is active. You&apos;ll be asked for a code when signing in.
+                  <p className="text-[10.5px] leading-[1.7] text-muted-foreground/60">
+                    Two-factor authentication is active. You&apos;ll be asked for a code
+                    from your authenticator after your password at sign-in.
                   </p>
                   <button
                     type="button"
-                    onClick={async () => {
-                      const { error } = await disableMFA();
-                      if (error) toast.error(error.message);
-                    }}
+                    onClick={() => void handleDisableMFA()}
+                    disabled={mfaBusy}
                     className="btn-secondary w-fit gap-2 text-destructive hover:text-destructive"
                   >
+                    {mfaBusy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ShieldAlert className="h-3.5 w-3.5" strokeWidth={1.6} />
+                    )}
                     Disable two-factor
-                    <ShieldAlert className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const { secret, recoveryCodes, error } = await enableMFA();
-                    if (error) {
-                      toast.error(error.message);
-                      return;
-                    }
-                    setMfaSetup({
-                      secret,
-                      url: totpURL(secret, user?.email ?? ""),
-                      codes: recoveryCodes,
-                    });
-                  }}
-                  className="btn-primary w-fit gap-2"
-                >
-                  Enable two-factor
-                  <Shield className="h-3.5 w-3.5" />
-                </button>
+                <div className="space-y-3">
+                  <p className="text-[10.5px] leading-[1.7] text-muted-foreground/60">
+                    Add a second factor to your account. Enrollment uses Supabase&apos;s
+                    native TOTP — the secret never touches this app&apos;s database.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void handleEnableMFA()}
+                    disabled={mfaBusy}
+                    className="btn-primary w-fit gap-2"
+                  >
+                    {mfaBusy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Shield className="h-3.5 w-3.5" strokeWidth={1.6} />
+                    )}
+                    Enable two-factor
+                  </button>
+                </div>
               )}
             </div>
           </div>

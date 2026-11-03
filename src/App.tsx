@@ -54,7 +54,7 @@ function PageLoader() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, mfaRequired } = useAuth();
   if (loading) return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-background">
       <LogoMark size={34} className="animate-pulse-soft" />
@@ -64,18 +64,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user || mfaRequired) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, mfaRequired } = useAuth();
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <LogoMark size={32} className="animate-pulse-soft" />
     </div>
   );
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user && !mfaRequired) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 

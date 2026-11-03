@@ -8,6 +8,7 @@ export default function NotFound() {
 
   useEffect(() => {
     console.error("404:", location.pathname);
+    document.title = "Page not found — Interview Lab";
   }, [location.pathname]);
 
   return (
