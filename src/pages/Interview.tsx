@@ -197,6 +197,14 @@ export default function Interview() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [streaming, setStreaming] = useState<"idle" | "streaming" | "complete">("idle");
+  const [streamedQuestion, setStreamedQuestion] = useState("");
+  const [currentEvaluation, setCurrentEvaluation] = useState<{
+    score: number | null;
+    feedback: string | null;
+    strengths: string[];
+    improvements: string[];
+  } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [resumeContext, setResumeContext] = useState<ResumeContext | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -207,6 +215,7 @@ export default function Interview() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const speech = useSpeechRecognition();
+  const streamControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (isResumeMode) {
@@ -271,6 +280,148 @@ export default function Interview() {
     [config, focus, resumeContext],
   );
 
+  /**
+   * Submit an answer via SSE streaming. The stream emits:
+   *   event: evaluation  (complete score/feedback immediately)
+   *   event: token       (streaming deltas for the next question)
+   *   event: done        (final nextQuestion)
+   *
+   * Falls back to the non-streaming endpoint if the stream endpoint is
+   * unavailable or the browser lacks ReadableStream support.
+   */
+  const streamAnswer = useCallback(
+    async (conversation: Turn[]): Promise<InterviewAiResponse> => {
+      if (typeof ReadableStream === "undefined") {
+        return callAI(conversation);
+      }
+
+      const controller = new AbortController();
+      streamControllerRef.current = controller;
+      setStreaming("streaming");
+      setStreamedQuestion("");
+      setCurrentEvaluation(null);
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/interview-ai-stream`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token ?? ""}`,
+            },
+            body: JSON.stringify({
+              role: config.role,
+              company: config.company,
+              experience: config.experience,
+              difficulty: config.difficulty,
+              ...(focus ? { focus } : {}),
+              conversation,
+              resume_context: resumeContext,
+            }),
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          throw new Error(errorText || `Stream failed (${response.status})`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("No response body");
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let evaluation: InterviewAiResponse | null = null;
+        let nextQuestionTokens = "";
+
+        try {
+          while (true) {
+            if (controller.signal.aborted) break;
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed || trimmed === ":") continue;
+              if (!trimmed.startsWith("data:")) continue;
+              const data = trimmed.slice(5).trimStart();
+
+              try {
+                const parsed = JSON.parse(data) as {
+                  score: number | null;
+                  feedback: string | null;
+                  strengths: string[];
+                  improvements: string[];
+                  delta?: string;
+                  nextQuestion?: string;
+                };
+
+                if (trimmed.startsWith("event: evaluation") || parsed.score !== undefined) {
+                  evaluation = {
+                    score: parsed.score,
+                    feedback: parsed.feedback,
+                    strengths: parsed.strengths,
+                    improvements: parsed.improvements,
+                    nextQuestion: "",
+                  } as InterviewAiResponse;
+                  setCurrentEvaluation(evaluation);
+                }
+
+                if (parsed.delta) {
+                  nextQuestionTokens += parsed.delta;
+                  setStreamedQuestion(nextQuestionTokens);
+                }
+
+                if (parsed.nextQuestion) {
+                  evaluation = {
+                    score: null,
+                    feedback: null,
+                    strengths: [],
+                    improvements: [],
+                    ...evaluation,
+                    nextQuestion: String(parsed.nextQuestion),
+                  } as InterviewAiResponse;
+                  setStreaming("complete");
+                }
+              } catch {
+                // malformed SSE data — skip
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+          streamControllerRef.current = null;
+        }
+
+        setStreaming("complete");
+
+        if (!evaluation) {
+          throw new Error("No evaluation received from stream");
+        }
+
+        return {
+          score: evaluation.score,
+          feedback: evaluation.feedback,
+          strengths: evaluation.strengths,
+          improvements: evaluation.improvements,
+          nextQuestion: evaluation.nextQuestion || nextQuestionTokens || "",
+        };
+      } catch (e) {
+        streamControllerRef.current = null;
+        setStreaming("idle");
+        // Fall back to non-streaming on any error
+        return callAI(conversation);
+      }
+    },
+    [config, focus, resumeContext, callAI],
+  );
+
   const startInterview = async () => {
     setIsEvaluating(true);
     setAiError(null);
@@ -313,7 +464,7 @@ export default function Interview() {
       const conversationSoFar = turns.map((t, i) =>
         i === currentTurnIndex ? { ...t, answer: currentAnswer } : t,
       );
-      const aiResponse = await callAI(conversationSoFar);
+      const aiResponse = await streamAnswer(conversationSoFar);
       const updatedTurns = [...turns];
       updatedTurns[currentTurnIndex] = {
         ...updatedTurns[currentTurnIndex],
@@ -342,6 +493,9 @@ export default function Interview() {
       }
       setTurns(updatedTurns);
       setCurrentAnswer("");
+      setStreaming("idle");
+      setStreamedQuestion("");
+      setCurrentEvaluation(null);
       const answeredTurns = updatedTurns.filter((t) => t.answer);
       if (answeredTurns.length >= 5) {
         const avgScore = Math.round(
@@ -363,8 +517,9 @@ export default function Interview() {
       toast.error(message);
     } finally {
       setIsEvaluating(false);
+      setStreaming("idle");
     }
-  }, [currentAnswer, sessionId, turns, isEvaluating, callAI]);
+  }, [currentAnswer, sessionId, turns, isEvaluating, streamAnswer]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -1095,18 +1250,82 @@ export default function Interview() {
             ))}
           </div>
 
-          {isEvaluating && (
+          {currentEvaluation && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="ml-[46px] mt-7 flex items-start gap-3 panel-ink p-4"
+            >
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-accent bg-accent/[0.05] text-accent">
+                <span className="typing-dot" />
+                <span className="typing-dot" style={{ animationDelay: "150ms" }} />
+                <span className="typing-dot" style={{ animationDelay: "300ms" }} />
+              </span>
+              <div className="min-w-0">
+                {currentEvaluation.score != null && (
+                  <div className="flex items-baseline gap-1.5 mb-1">
+                    <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground/45">
+                      Score
+                    </span>
+                    <span className="font-display text-[20px] font-light leading-none tracking-[-0.02em] tabular text-foreground">
+                      {currentEvaluation.score}%
+                    </span>
+                  </div>
+                )}
+                {currentEvaluation.feedback && (
+                  <p className="text-[12.5px] leading-[1.6] text-secondary-foreground">
+                    {currentEvaluation.feedback}
+                  </p>
+                )}
+                {(currentEvaluation.strengths?.length ?? 0) > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {currentEvaluation.strengths.slice(0, 2).map((strength, strengthIndex) => (
+                      <span key={`s-${strengthIndex}`} className="tag-success">
+                        {strength}
+                      </span>
+                    ))}
+                    {currentEvaluation.improvements?.slice(0, 2).map((improvement, improvementIndex) => (
+                      <span key={`i-${improvementIndex}`} className="tag-warning">
+                        {improvement}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {streaming === "streaming" && !currentEvaluation && (
             <div className="ml-[46px] mt-7 flex items-center gap-3">
               <span className="flex items-center gap-1" aria-hidden="true">
                 <span className="h-1 w-1 bg-accent typing-dot" />
-                <span className="h-1 w-1 bg-accent typing-dot" />
-                <span className="h-1 w-1 bg-accent typing-dot" />
+                <span className="h-1 w-1 bg-accent typing-dot" style={{ animationDelay: "150ms" }} />
+                <span className="h-1 w-1 bg-accent typing-dot" style={{ animationDelay: "300ms" }} />
               </span>
-              <span className="mono-label">The examiner is reading your answer</span>
+              <span className="mono-label">The examiner is composing your next question</span>
             </div>
           )}
 
-          {currentTurn && !currentTurn.answer && !isEvaluating && (
+          {(streaming === "streaming" || streaming === "complete") && streamedQuestion && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="panel-ink mt-9 overflow-hidden"
+            >
+              <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-2.5">
+                <p className="font-mono text-[7.5px] uppercase tracking-[0.12em] text-sidebar-foreground/40">
+                  Next question
+                </p>
+              </div>
+              <div className="p-4">
+                <p className="font-display text-[clamp(1.25rem,2vw,1.55rem)] font-light leading-[1.4] tracking-[-0.018em] text-foreground">
+                  {streamedQuestion}<span className="animate-pulse" aria-hidden="true">▋</span>
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {currentTurn && !currentTurn.answer && !isEvaluating && streaming === "idle" && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}

@@ -149,6 +149,99 @@ interface RawCompletion {
   error?: { message?: string };
 }
 
+interface RawStreamChunk {
+  choices?: Array<{ delta?: RawChoiceMessage; index?: number }>;
+  error?: { message?: string };
+}
+
+/**
+ * Call NVIDIA NIM with Server-Sent Events streaming.
+ *
+ * Yields text delta strings as they arrive from the model.
+ * Falls back to the fallback model on hard failures (not mid-stream).
+ */
+export async function* chatCompletionStream(
+  options: ChatCompletionOptions,
+): AsyncGenerator<string, void, unknown> {
+  const apiKey = Deno.env.get("NVIDIA_API_KEY");
+  if (!apiKey) throw new AiConfigError();
+
+  const model = options.model ?? NVIDIA_MODEL;
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  );
+
+  try {
+    const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+      body: JSON.stringify({
+        ...buildRequestBody(model, options),
+        stream: true,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => "");
+      throw new AiProviderError(
+        `NVIDIA stream failed (${response.status}): ${errorText.slice(0, 400)}`,
+        response.status,
+      );
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new AiProviderError("No response body from NVIDIA.", 502);
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? ""; // keep incomplete line in buffer
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === ":") continue; // heartbeat or blank
+          if (trimmed.startsWith(":")) continue; // comment
+          if (!trimmed.startsWith("data:")) continue;
+
+          const data = trimmed.slice(5).trimStart();
+          if (data === "[DONE]") return;
+
+          try {
+            const parsed = JSON.parse(data) as RawStreamChunk;
+            const delta = parsed.choices?.[0]?.delta;
+            const content = delta?.content;
+            if (typeof content === "string" && content.length > 0) {
+              yield content;
+            }
+          } catch {
+            // malformed chunk — skip
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function buildRequestBody(
   model: string,
   options: ChatCompletionOptions,

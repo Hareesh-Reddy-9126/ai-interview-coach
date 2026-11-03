@@ -15,31 +15,57 @@ describe("invokeFunction", () => {
   });
 
   it("returns the parsed response on success", async () => {
-    invoke.mockResolvedValue({ data: { nextQuestion: "Tell me about yourself" }, error: null });
+    invoke.mockResolvedValue({
+      data: {
+        score: 85,
+        feedback: "Great answer.",
+        strengths: ["clear structure"],
+        improvements: ["add complexity analysis"],
+        next_question: "Tell me about yourself.",
+        is_complete: false,
+      },
+      error: null,
+    });
 
-    const result = await invokeFunction<{ nextQuestion: string }>("interview-ai", {
+    const result = await invokeFunction<{
+      score: number;
+      feedback: string;
+      strengths: string[];
+      improvements: string[];
+      next_question: string;
+      is_complete: boolean;
+    }>("interview-ai", {
       body: { role: "Engineer" },
     });
 
-    expect(result.nextQuestion).toBe("Tell me about yourself");
-    expect(invoke).toHaveBeenCalledWith("interview-ai", { body: { role: "Engineer" } });
+    expect(result.score).toBe(85);
+    expect(result.next_question).toBe("Tell me about yourself.");
+    expect(invoke).toHaveBeenCalledWith("interview-ai", {
+      body: { role: "Engineer" },
+    });
   });
 
   it("surfaces the JSON error body returned by the function", async () => {
     invoke.mockResolvedValue({
       data: null,
       error: new FunctionsHttpError(
-        new Response(JSON.stringify({ error: "Rate limit exceeded." }), { status: 429 }),
+        new Response(JSON.stringify({ error: "Rate limit exceeded." }), {
+          status: 429,
+        }),
       ),
     });
 
-    await expect(invokeFunction("interview-ai")).rejects.toThrow("Rate limit exceeded.");
+    await expect(invokeFunction("interview-ai")).rejects.toThrow(
+      "Rate limit exceeded.",
+    );
   });
 
   it("falls back when the error body is not JSON", async () => {
     invoke.mockResolvedValue({
       data: null,
-      error: new FunctionsHttpError(new Response("gateway error", { status: 502 })),
+      error: new FunctionsHttpError(new Response("gateway error", {
+        status: 502,
+      })),
     });
 
     await expect(
@@ -50,11 +76,20 @@ describe("invokeFunction", () => {
   it("throws when the response payload contains an error field", async () => {
     invoke.mockResolvedValue({ data: { error: "Session not found" }, error: null });
 
-    await expect(invokeFunction("compute-analytics")).rejects.toThrow("Session not found");
+    await expect(
+      invokeFunction("compute-analytics"),
+    ).rejects.toThrow("Session not found");
   });
 
   it("omits the body when none is provided", async () => {
-    invoke.mockResolvedValue({ data: { weeks: [] }, error: null });
+    invoke.mockResolvedValue({
+      data: {
+        weeks: [],
+        summary: "test summary",
+        priority_skill: "Technical",
+      },
+      error: null,
+    });
 
     await invokeFunction("generate-roadmap");
 

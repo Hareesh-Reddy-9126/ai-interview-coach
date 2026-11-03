@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-03T00:00:00Z",
+  "description": "Golden set for interview AI eval. Each case: prompt context, candidate answer, expected dimension scores (0-100), and rubric notes.",
+  "cases": [
+    {
+      "id": "gold-001",
+      "company": "Google",
+      "role": "Backend Engineer",
+      "difficulty": "Easy",
+      "experience": "Mid (2-5 yrs)",
+      "focus": "Coding",
+      "question": "Given an array of integers representing daily temperatures, return an array where each element is the number of days you would have to wait until a warmer temperature.",
+      "answer": "I would use a monotonic decreasing stack that stores indices. I iterate through the temperatures once, and while the stack is non-empty and the current temperature is greater than the temperature at the index on top of the stack, I pop that index and record the difference in days. Then I push the current index. Any indices left on the stack get 0. This gives O(n) time and O(n) space.",
+      "expected_scores": {
+        "communication_score": 82,
+        "technical_score": 90,
+        "system_design_score": 70,
+        "problem_solving_score": 85,
+        "confidence_score": 80
+      },
+      "rubric_notes": "Optimal monotonic stack approach identified. Clear explanation of iteration logic, popping condition, and complexity. Confident delivery."
+    },
+    {
+      "id": "gold-002",
+      "company": "Amazon",
+      "role": "Frontend Engineer",
+      "difficulty": "Medium",
+      "experience": "Senior (5+ yrs)",
+      "focus": "Behavioral",
+      "question": "Tell me about a time you disagreed with a teammate on a technical decision. How did you resolve it?",
+      "answer": "We were choosing between a custom React hook library and a well-maintained open-source one. I advocated for the custom hook because of our specific accessibility requirements, but my teammate preferred the library for faster delivery. I proposed a spike: we'd prototype both over two days, then compare bundle size, a11y audit results, and maintainability. The data showed the library met 90% of our needs and the remaining 10% could be wrapped. We went with the library, I wrote the wrapper, and we shipped on time.",
+      "expected_scores": {
+        "communication_score": 88,
+        "technical_score": 75,
+        "system_design_score": 70,
+        "problem_solving_score": 82,
+        "confidence_score": 85
+      },
+      "rubric_notes": "STAR structure clear. Quantified impact (90%, shipped on time). Shows collaboration, data-driven decision making, and conflict resolution."
+    },
+    {
+      "id": "gold-003",
+      "company": "Meta",
+      "role": "System Design focus",
+      "difficulty": "Hard",
+      "experience": "Senior (5+ yrs)",
+      "focus": "System Design",
+      "question": "Design a global temperature monitoring service that answers 'how many days until warmer?' for billions of sensor readings.",
+      "answer": "I'd ingest readings into Kafka, process with Flink to compute warmer-day offsets per sensor, store results in Cassandra keyed by sensor_id+timestamp, and serve queries through a Go API with Redis caching for hot keys. For global scale I'd replicate regions with active-active Cassandra and route via GeoDNS. Trade-offs: eventual consistency vs latency, cache invalidation complexity, operational overhead of Flink.",
+      "expected_scores": {
+        "communication_score": 80,
+        "technical_score": 78,
+        "system_design_score": 85,
+        "problem_solving_score": 82,
+        "confidence_score": 78
+      },
+      "rubric_notes": "Covers ingestion, processing, storage, API, caching, global replication. Mentions trade-offs. Missing: capacity estimates (QPS, storage GB), failure handling details."
+    },
+    {
+      "id": "gold-004",
+      "company": "Startup",
+      "role": "Full Stack Engineer",
+      "difficulty": "Easy",
+      "experience": "Junior (0-2 yrs)",
+      "focus": "Coding",
+      "question": "Write a function that checks if a string is a palindrome.",
+      "answer": "Um, I think you just reverse the string and compare. Like return str === str.split('').reverse().join(''). That should work for most cases.",
+      "expected_scores": {
+        "communication_score": 55,
+        "technical_score": 50,
+        "system_design_score": 40,
+        "problem_solving_score": 45,
+        "confidence_score": 40
+      },
+      "rubric_notes": "Correct but terse. No edge case discussion (case sensitivity, spaces, unicode). Hesitant delivery ('um, I think'). No complexity analysis."
+    },
+    {
+      "id": "gold-005",
+      "company": "Microsoft",
+      "role": "ML Engineer",
+      "difficulty": "Medium",
+      "experience": "Mid (2-5 yrs)",
+      "focus": "Coding",
+      "question": "Implement a function to find the k most frequent elements in an array.",
+      "answer": "I'd use a hash map to count frequencies in O(n), then use a min-heap of size k to keep the top k elements while iterating through the map entries. Each heap operation is O(log k), so total is O(n log k). Alternatively, bucket sort by frequency gives O(n) if the max frequency is bounded by n.",
+      "expected_scores": {
+        "communication_score": 78,
+        "technical_score": 85,
+        "system_design_score": 60,
+        "problem_solving_score": 82,
+        "confidence_score": 75
+      },
+      "rubric_notes": "Two valid approaches with complexity trade-offs. Clear explanation. Could improve on heap implementation details and tie-breaking."
+    },
+    {
+      "id": "gold-006",
+      "company": "Apple",
+      "role": "Frontend Engineer",
+      "difficulty": "Medium",
+      "experience": "Mid (2-5 yrs)",
+      "focus": "Behavioral",
+      "question": "Describe a situation where you had to ship under a tight deadline. What did you prioritize?",
+      "answer": "We had a launch in two weeks. I prioritized the core user flow — authentication, product listing, checkout — and deferred 'nice to have' features like wishlists and recommendations. I communicated daily with PM, cut scope on the admin dashboard, and we launched on time with a follow-up sprint for deferred items.",
+      "expected_scores": {
+        "communication_score": 82,
+        "technical_score": 60,
+        "system_design_score": 55,
+        "problem_solving_score": 75,
+        "confidence_score": 80
+      },
+      "rubric_notes": "Good scope management, stakeholder communication, delivery focus. Strong behavioral answer."
+    },
+    {
+      "id": "gold-007",
+      "company": "NVIDIA",
+      "role": "ML Engineer",
+      "difficulty": "Hard",
+      "experience": "Senior (5+ yrs)",
+      "focus": "System Design",
+      "question": "Design a distributed training platform for large language models.",
+      "answer": "I'd use data parallelism across GPU nodes with NCCL for all-reduce gradient synchronization, model parallelism for layers that don't fit on one GPU, and pipeline parallelism across stages. Checkpoint to object storage every N steps. Use a parameter server or ring-allreduce depending on cluster topology. Monitor GPU utilization and gradient staleness.",
+      "expected_scores": {
+        "communication_score": 75,
+        "technical_score": 82,
+        "system_design_score": 88,
+        "problem_solving_score": 80,
+        "confidence_score": 82
+      },
+      "rubric_notes": "Strong domain knowledge (NCCL, all-reduce, pipeline parallelism, checkpointing). Missing: fault tolerance details, heterogenous cluster handling, cost optimization."
+    },
+    {
+      "id": "gold-008",
+      "company": "OpenAI",
+      "role": "Backend Engineer",
+      "difficulty": "Medium",
+      "experience": "Mid (2-5 yrs)",
+      "focus": "Coding",
+      "question": "Design a rate limiter for an API serving millions of requests.",
+      "answer": "Token bucket algorithm per API key. Use Redis with Lua scripts for atomic increment-and-check. Distributed counters with sliding window log for accuracy. Fallback to local memory if Redis is down. Return 429 with Retry-After header.",
+      "expected_scores": {
+        "communication_score": 78,
+        "technical_score": 80,
+        "system_design_score": 82,
+        "problem_solving_score": 78,
+        "confidence_score": 75
+      },
+      "rubric_notes": "Solid distributed systems answer. Atomic Redis operations, fallback strategy, proper HTTP semantics. Good balance."
+    }
+  ]
+}

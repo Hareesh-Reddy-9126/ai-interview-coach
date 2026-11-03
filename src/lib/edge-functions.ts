@@ -1,5 +1,13 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  log,
+  error as logError,
+  metrics,
+} from "@/domain/logger";
+import {
+  CircuitOpenError,
+  invokeFunction as domainInvoke,
+} from "@/domain/client";
 
 /**
  * Extract a human-readable message from a Supabase Functions error.
@@ -33,6 +41,12 @@ async function resolveErrorMessage(
 /**
  * Invoke a Supabase Edge Function and return its parsed response.
  *
+ * Now routes through the domain layer which adds:
+ *   • Circuit breaker per function (fast-fail on degraded NVIDIA)
+ *   • Request coalescing (dedupe identical in-flight calls)
+ *   • Zod contract validation on AI responses
+ *   • Structured logging + Prometheus metrics
+ *
  * Throws an `Error` with the server-provided message on failure so callers can
  * surface something actionable to the user.
  */
@@ -40,18 +54,45 @@ export async function invokeFunction<T>(
   name: string,
   options: { body?: Record<string, unknown>; fallbackMessage?: string } = {},
 ): Promise<T> {
+  const start = Date.now();
   const fallback = options.fallbackMessage ?? "Something went wrong. Please try again.";
 
-  const { data, error } = await supabase.functions.invoke(name, {
-    body: options.body,
-  });
+  try {
+    const result = await domainInvoke<T>(name, {
+      ...options,
+      cooldownMs: 250, // dedupe identical calls within 250ms
+    });
 
-  if (error) throw new Error(await resolveErrorMessage(error, fallback));
+    metrics.aiRequestsTotal.increment({ function: name, status: "success" });
+    metrics.aiLatencyMs.observe(Date.now() - start, { function: name });
 
-  if (data && typeof data === "object" && "error" in data) {
-    const message = (data as { error?: unknown }).error;
-    if (typeof message === "string" && message.trim()) throw new Error(message);
+    log("info", "edge_function.success", {
+      function: name,
+      latency_ms: Date.now() - start,
+    });
+
+    return result;
+  } catch (err) {
+    const isCircuitOpen = err instanceof CircuitOpenError;
+    metrics.aiErrorsTotal.increment({
+      function: name,
+      status: isCircuitOpen ? "circuit_open" : "error",
+    });
+    metrics.aiLatencyMs.observe(Date.now() - start, { function: name });
+
+    logError("edge_function.error", {
+      function: name,
+      latency_ms: Date.now() - start,
+      circuit_open: isCircuitOpen,
+      message: err instanceof Error ? err.message : String(err),
+    });
+
+    if (isCircuitOpen) {
+      throw new Error(
+        "The AI interviewer is momentarily overloaded. Please try again in a few seconds.",
+      );
+    }
+
+    throw new Error(await resolveErrorMessage(err, fallback));
   }
-
-  return data as T;
 }
