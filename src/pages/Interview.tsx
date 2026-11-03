@@ -27,6 +27,43 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { invokeFunction } from "@/lib/edge-functions";
 import { cn, getErrorMessage, type ResumeContext, type UserAnalytics } from "@/lib/utils";
 import { pickStrongestAndWeakest } from "@/lib/skills";
+import { getQuestions, getQuestionById } from "@/lib/questions";
+import { type Company, type Role, type Difficulty, type Experience } from "@/domain/types";
+
+const SESSION_STORAGE_KEY = "interview-lab:active-session";
+
+interface PersistedSession {
+  config: {
+    company: string;
+    role: string;
+    difficulty: string;
+    experience: string;
+    focus?: string;
+  };
+  turns: Turn[];
+  sessionId: string;
+  startedAt: number;
+}
+
+function loadPersistedSession(): PersistedSession | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as PersistedSession;
+  } catch {
+    return null;
+  }
+}
+
+function savePersistedSession(data: PersistedSession | null) {
+  if (typeof window === "undefined") return;
+  if (data) {
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
+  } else {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  }
+}
 
 function deriveSkillScoresFromTurns(turns: Turn[], avgScore: number): Record<string, number> {
   const skills: Record<string, number[]> = {
@@ -74,7 +111,17 @@ function deriveSkillScoresFromTurns(turns: Turn[], avgScore: number): Record<str
   };
 }
 
-const companies = ["Google", "Amazon", "Meta", "Microsoft", "Netflix", "Apple", "Startup"];
+const companies = [
+  "Google",
+  "Amazon",
+  "Meta",
+  "Microsoft",
+  "Netflix",
+  "Apple",
+  "NVIDIA",
+  "OpenAI",
+  "Startup",
+];
 const roles = ["Frontend Engineer", "Backend Engineer", "Full Stack Engineer", "ML Engineer", "DevOps Engineer"];
 const difficulties = ["Easy", "Medium", "Hard"];
 const experiences = ["Junior (0-2 yrs)", "Mid (2-5 yrs)", "Senior (5+ yrs)"];
@@ -194,6 +241,19 @@ export default function Interview() {
     difficulty: difficulties.includes(difficultyParam) ? difficultyParam : "",
     experience: "",
   });
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+
+  const availableQuestions = getQuestions({
+    company: (config.company || undefined) as Company | undefined,
+    role: (config.role || undefined) as Role | undefined,
+    difficulty: (config.difficulty || undefined) as Difficulty | undefined,
+    experience: (config.experience || undefined) as Experience | undefined,
+    limit: 6,
+  });
+
+  const selectedQuestion = selectedQuestionId
+    ? getQuestionById(selectedQuestionId)
+    : null;
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -216,6 +276,30 @@ export default function Interview() {
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const speech = useSpeechRecognition();
   const streamControllerRef = useRef<AbortController | null>(null);
+  const [resumableSession, setResumableSession] = useState<PersistedSession | null>(null);
+
+  // Restore an in-progress interview from sessionStorage on mount.
+  useEffect(() => {
+    const persisted = loadPersistedSession();
+    if (persisted) setResumableSession(persisted);
+  }, []);
+
+  // Persist turns + session state on every change so a tab close doesn't lose progress.
+  useEffect(() => {
+    if (phase !== "interview" || !sessionId) return;
+    savePersistedSession({
+      config: {
+        company: config.company,
+        role: config.role,
+        difficulty: config.difficulty,
+        experience: config.experience,
+        ...(focus ? { focus } : {}),
+      },
+      turns,
+      sessionId,
+      startedAt: startedAtRef.current ?? Date.now(),
+    });
+  }, [phase, sessionId, config, focus, turns]);
 
   useEffect(() => {
     if (isResumeMode) {
@@ -272,12 +356,13 @@ export default function Interview() {
           experience: config.experience,
           difficulty: config.difficulty,
           ...(focus ? { focus } : {}),
+          ...(selectedQuestion ? { question: selectedQuestion.question } : {}),
           conversation,
           resume_context: resumeContext,
         },
         fallbackMessage: "Failed to reach the AI interviewer. Please try again.",
       }),
-    [config, focus, resumeContext],
+    [config, focus, resumeContext, selectedQuestion],
   );
 
   /**
@@ -434,11 +519,13 @@ export default function Interview() {
           company: config.company,
           difficulty: config.difficulty,
           experience: config.experience,
+          ...(focus ? { focus } : {}),
         })
         .select()
         .single();
       if (sessionError) throw sessionError;
       setSessionId(session.id);
+      savePersistedSession(null); // clear any stale persisted session
       const aiResponse = await callAI([]);
       const firstQuestion = aiResponse.nextQuestion || "Tell me about yourself and your experience.";
       await supabase
@@ -448,6 +535,29 @@ export default function Interview() {
       setPhase("interview");
     } catch (e) {
       const message = getErrorMessage(e, "Failed to start interview");
+      setAiError(message);
+      toast.error(message);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+
+  const resumeInterview = async (persisted: PersistedSession) => {
+    setIsEvaluating(true);
+    setAiError(null);
+    try {
+      setSessionId(persisted.sessionId);
+      // Restore config from persisted session
+      setConfig({
+        company: persisted.config.company,
+        role: persisted.config.role,
+        difficulty: persisted.config.difficulty,
+        experience: persisted.config.experience,
+      });
+      setTurns(persisted.turns);
+      setPhase("interview");
+    } catch (e) {
+      const message = getErrorMessage(e, "Failed to resume interview");
       setAiError(message);
       toast.error(message);
     } finally {
@@ -509,6 +619,7 @@ export default function Interview() {
           body: { session_id: sessionId },
           fallbackMessage: "Analytics update failed.",
         }).catch((analyticsError) => console.error("[compute-analytics]", analyticsError));
+        savePersistedSession(null);
         setPhase("report");
       }
     } catch (e) {
@@ -688,6 +799,49 @@ export default function Interview() {
                 value={config.experience}
                 onChange={(value) => setConfig((prev) => ({ ...prev, experience: value }))}
               />
+
+              {availableQuestions.length > 0 && (
+                <div className="mt-6 border border-border rounded-t border-b-0">
+                  <div className="flex items-baseline justify-between border-b border-border px-5 py-3">
+                    <h2 className="text-headline text-foreground">Curated questions</h2>
+                    <span className="mono-label">
+                      {availableQuestions.length} available
+                    </span>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {availableQuestions.map((q) => {
+                      const isSelected = selectedQuestionId === q.id;
+                      return (
+                        <button
+                          key={q.id}
+                          type="button"
+                          onClick={() =>
+                            setSelectedQuestionId(isSelected ? null : q.id)
+                          }
+                          className={cn(
+                            "flex w-full items-center gap-3 border-b border-border py-3 px-5 text-left transition-colors last:border-b-0",
+                            isSelected
+                              ? "bg-accent/[0.05] text-foreground border-accent/20"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <div className="min-w-0">
+                            <span className="block truncate font-display text-[13px] leading-none tracking-[-0.02em]">
+                              {q.question}
+                            </span>
+                            <span className="mt-1 block font-mono text-[7px] uppercase tracking-[0.12em] text-muted-foreground/45">
+                              {q.focus} · {q.difficulty}
+                            </span>
+                          </div>
+                          <span className="shrink-0 font-mono text-[7px] uppercase tracking-[0.12em]">
+                            {isSelected ? "Selected" : "Select"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex items-start gap-2.5 pt-5">
@@ -765,6 +919,21 @@ export default function Interview() {
                     ))}
                   </div>
                 </div>
+
+                {resumableSession && (
+                  <button
+                    type="button"
+                    onClick={() => resumeInterview(resumableSession)}
+                    disabled={isEvaluating}
+                    className="btn-secondary btn-sm w-full gap-2 mb-3"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Resume saved interview
+                    <span className="ml-auto font-mono text-[7px] uppercase tracking-[0.12em]">
+                      {resumableSession.config.company} · {resumableSession.config.role}
+                    </span>
+                  </button>
+                )}
 
                 <button
                   type="button"

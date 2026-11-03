@@ -55,6 +55,8 @@ export const Company = z.enum([
   "Netflix",
   "Apple",
   "Startup",
+  "NVIDIA",
+  "OpenAI",
 ]);
 export type Company = z.infer<typeof Company>;
 
