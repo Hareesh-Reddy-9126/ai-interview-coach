@@ -195,9 +195,7 @@ export default function LearningRoadmap() {
                 <Map className="h-4 w-4" strokeWidth={1.7} />
               </span>
               <h2 className="mt-6 font-display text-[28px] font-light leading-[1.05] tracking-[-0.035em] text-foreground">
-                A plan built from
-                <br />
-                your own answers.
+                A plan built from your own answers.
               </h2>
               <p className="mt-3 max-w-sm text-[12.5px] leading-[1.7] text-muted-foreground">
                 We use your interview analytics to pick one priority skill, then lay out four weeks

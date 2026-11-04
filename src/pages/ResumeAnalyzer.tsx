@@ -338,7 +338,7 @@ export default function ResumeAnalyzer() {
                   <Upload className="h-4 w-4" strokeWidth={1.7} />
                 )}
               </span>
-              <h2 className="mt-6 font-display text-[26px] font-light leading-none tracking-[-0.03em] text-foreground">
+              <h2 className="mt-6 font-display text-[24px] font-light leading-[1.08] tracking-[-0.03em] text-foreground sm:text-[26px]">
                 {uploading
                   ? "Uploading your resume…"
                   : dragActive

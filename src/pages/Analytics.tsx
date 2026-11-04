@@ -160,17 +160,17 @@ export default function Analytics() {
                 : "Complete interviews to unlock score trends, skill balance, and the gaps worth your time."}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center">
             <button
               type="button"
               onClick={fetchData}
               disabled={loading}
-              className="btn-secondary btn-sm gap-1.5"
+              className="btn-secondary btn-sm justify-center gap-1.5"
             >
               <RefreshCw className={loading ? "h-3 w-3 animate-spin" : "h-3 w-3"} strokeWidth={1.6} />
               Refresh
             </button>
-            <Link to="/interview" className="btn-primary btn-sm gap-1.5">
+            <Link to="/interview" className="btn-primary btn-sm justify-center gap-1.5">
               New session
               <ArrowRight className="h-3 w-3" strokeWidth={1.6} />
             </Link>
@@ -240,9 +240,9 @@ export default function Analytics() {
                   Across scored sessions
                 </p>
               </div>
-              <div className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 sm:px-6">
+              <div className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 [&:nth-child(3)]:border-l-0 sm:px-6 lg:[&:nth-child(3)]:border-l">
                 <p className="mono-label">Strongest</p>
-                <p className="mt-2 font-display text-[20px] font-normal leading-none tabular text-foreground">
+                <p className="mt-2 break-words font-display text-[18px] font-normal leading-[1.05] text-foreground sm:text-[20px]">
                   {strongest?.area || "—"}
                 </p>
                 <p className="mt-1 text-[10px] mono-label text-muted-foreground">
@@ -251,7 +251,7 @@ export default function Analytics() {
               </div>
               <div className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 sm:px-6">
                 <p className="mono-label">Focus area</p>
-                <p className="mt-2 font-display text-[20px] font-normal leading-none tabular text-foreground">
+                <p className="mt-2 break-words font-display text-[18px] font-normal leading-[1.05] text-foreground sm:text-[20px]">
                   {weakest?.area || "—"}
                 </p>
                 <p className="mt-1 text-[10px] mono-label text-muted-foreground">

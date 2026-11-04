@@ -182,6 +182,7 @@
     font-family: 'Newsreader', 'Iowan Old Style', Georgia, serif;
     font-weight: 400;
     letter-spacing: -0.02em;
+    overflow-wrap: break-word;
   }
 
   /* ── Editorial type scale (clamped, responsive) ── */
@@ -727,6 +728,16 @@
     font-weight: 400;
     letter-spacing: -0.03em;
     line-height: 0.95;
+  }
+
+  /* Small phones: keep the display scale inside a 320px viewport. */
+  @media (max-width: 479px) {
+    .display-hero {
+      font-size: clamp(2.1rem, 10.5vw, 3.5rem);
+    }
+    .display-section {
+      font-size: clamp(2rem, 8.5vw, 2.5rem);
+    }
   }
 
   .eyebrow {

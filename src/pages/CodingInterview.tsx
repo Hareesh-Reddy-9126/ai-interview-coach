@@ -308,7 +308,7 @@ export default function CodingInterview() {
                   <button
                     type="button"
                     onClick={() => startCoding(problem)}
-                    className="group grid w-full grid-cols-[34px_minmax(0,1fr)_auto_auto] items-center gap-4 border-b border-border py-5 text-left transition-colors last:border-b-0 hover:bg-surface-2/25 sm:gap-5"
+                    className="group grid w-full grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border py-5 text-left transition-colors last:border-b-0 hover:bg-surface-2/25 sm:grid-cols-[34px_minmax(0,1fr)_auto_auto] sm:gap-5"
                   >
                     <span className="font-display text-[24px] font-light leading-none tracking-[-0.03em] tabular text-muted-foreground/30">
                       {String(index + 1).padStart(2, "0")}
@@ -319,11 +319,12 @@ export default function CodingInterview() {
                       </span>
                       <span className="mt-2 block font-mono text-[7.5px] uppercase tracking-[0.12em] text-muted-foreground/45">
                         {problem.testCases.length} test cases
+                        <span className="sm:hidden"> · {problem.difficulty}</span>
                       </span>
                     </span>
                     <span
                       className={cn(
-                        "font-mono text-[7.5px] uppercase tracking-[0.13em]",
+                        "hidden font-mono text-[7.5px] uppercase tracking-[0.13em] sm:block",
                         difficultyTone(problem.difficulty),
                       )}
                     >
@@ -442,7 +443,7 @@ export default function CodingInterview() {
           ].map((metric) => (
             <div key={metric.label} className="bg-background px-5 py-5">
               <p className="mono-label">{metric.label}</p>
-              <p className="mt-3 font-display text-[30px] font-normal leading-none tracking-[-0.035em] text-foreground tabular">
+              <p className="mt-3 font-display text-[26px] font-normal leading-none tracking-[-0.035em] text-foreground tabular sm:text-[30px]">
                 {metric.value}
               </p>
               {metric.bar !== null ? (
@@ -619,7 +620,7 @@ export default function CodingInterview() {
 
       <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-8">
         {/* Problem panel */}
-        <section className="flex max-h-[calc(100vh-190px)] min-h-[420px] flex-col border border-border bg-card/40 lg:max-h-[calc(100vh-170px)]">
+        <section className="flex max-h-[calc(100vh-190px)] min-h-[320px] flex-col border border-border bg-card/40 sm:min-h-[420px] lg:max-h-[calc(100vh-170px)]">
           <div className="flex items-baseline justify-between border-b border-border px-4 py-3">
             <div className="flex items-baseline gap-2.5">
               <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-accent">
@@ -738,7 +739,7 @@ export default function CodingInterview() {
             </span>
           </div>
 
-          <div className="h-[420px] lg:h-auto lg:flex-1">
+          <div className="h-[58vh] min-h-[300px] max-h-[420px] lg:h-auto lg:max-h-none lg:flex-1">
             <Editor
               height="100%"
               language={selectedLang.id}

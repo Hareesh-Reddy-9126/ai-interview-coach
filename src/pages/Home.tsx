@@ -474,7 +474,7 @@ export default function Home() {
                   </span>
                 </figcaption>
 
-                <div className="flex items-center gap-6 border-b border-border px-5 py-5">
+                <div className="flex flex-col gap-4 border-b border-border px-5 py-5 xs:flex-row xs:items-center xs:gap-6">
                   <ScoreRing value={82} size={116} stroke={5} label="Overall" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -702,29 +702,31 @@ export default function Home() {
             </div>
 
             {/* Tabs */}
-            <div className="mt-12 flex items-center gap-0 border-b border-sidebar-border">
-              {(
-                [
-                  ["interview", "Live interview"],
-                  ["coding", "Coding lab"],
-                  ["analytics", "Analytics"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setTab(key)}
-                  className={cn(
-                    "relative -mb-px border-b px-5 py-3 font-mono text-[8px] uppercase tracking-[0.16em] transition-colors",
-                    tab === key
-                      ? "border-sidebar-primary text-sidebar-primary"
-                      : "border-transparent text-sidebar-foreground/50 hover:text-sidebar-foreground/85",
-                  )}
-                  aria-pressed={tab === key}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="mt-12 overflow-x-auto border-b border-sidebar-border">
+              <div className="flex w-max items-center gap-0">
+                {(
+                  [
+                    ["interview", "Live interview"],
+                    ["coding", "Coding lab"],
+                    ["analytics", "Analytics"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTab(key)}
+                    className={cn(
+                      "relative -mb-px shrink-0 border-b px-4 py-3 font-mono text-[8px] uppercase tracking-[0.16em] transition-colors sm:px-5",
+                      tab === key
+                        ? "border-sidebar-primary text-sidebar-primary"
+                        : "border-transparent text-sidebar-foreground/50 hover:text-sidebar-foreground/85",
+                    )}
+                    aria-pressed={tab === key}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="reveal grid gap-8 pt-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:gap-12">
@@ -732,14 +734,14 @@ export default function Home() {
               <div className="min-w-0 border border-sidebar-border bg-[hsl(158_28%_10%)]">
                 {tab === "interview" && (
                   <div>
-                    <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className="h-1.5 w-1.5 animate-pulse-soft bg-sidebar-primary" />
-                        <span className="font-mono text-[7.5px] uppercase tracking-[0.18em] text-sidebar-foreground/70">
+                    <div className="flex items-center justify-between gap-3 border-b border-sidebar-border px-5 py-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="h-1.5 w-1.5 shrink-0 animate-pulse-soft bg-sidebar-primary" />
+                        <span className="truncate font-mono text-[7.5px] uppercase tracking-[0.18em] text-sidebar-foreground/70">
                           Live · Backend Engineer · Google
                         </span>
                       </div>
-                      <span className="font-mono text-[8px] tabular tracking-[0.12em] text-sidebar-foreground/50">
+                      <span className="shrink-0 font-mono text-[8px] tabular tracking-[0.12em] text-sidebar-foreground/50">
                         14:32
                       </span>
                     </div>
@@ -780,7 +782,7 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-px bg-sidebar-border">
+                    <div className="grid grid-cols-1 gap-px bg-sidebar-border xs:grid-cols-3">
                       {[
                         ["Communication", "78", "+6"],
                         ["System design", "72", "+11"],
@@ -815,11 +817,11 @@ export default function Home() {
 
                 {tab === "coding" && (
                   <div>
-                    <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-3">
-                      <span className="font-mono text-[7.5px] uppercase tracking-[0.18em] text-sidebar-foreground/70">
+                    <div className="flex items-center justify-between gap-3 border-b border-sidebar-border px-5 py-3">
+                      <span className="truncate font-mono text-[7.5px] uppercase tracking-[0.18em] text-sidebar-foreground/70">
                         Coding lab · Two-sum variant · 22 min
                       </span>
-                      <span className="tag tag-accent">Medium</span>
+                      <span className="tag tag-accent shrink-0">Medium</span>
                     </div>
 
                     <div className="border-b border-sidebar-border px-5 py-5 md:px-7">
@@ -830,28 +832,30 @@ export default function Home() {
                     </div>
 
                     <div className="border-b border-sidebar-border bg-[hsl(158_30%_6%)] px-5 py-5 font-mono text-[11px] leading-[1.9] md:px-7">
-                      {[
-                        ["1", "function twoSum(nums, target) {"],
-                        ["2", "  const seen = new Map();"],
-                        ["3", "  for (let i = 0; i < nums.length; i++) {"],
-                        ["4", "    const need = target - nums[i];"],
-                        ["5", "    if (seen.has(need)) return [seen.get(need), i];"],
-                        ["6", "    seen.set(nums[i], i);"],
-                        ["7", "  }"],
-                        ["8", "}"],
-                      ].map(([line, code]) => (
-                        <div key={line} className="flex gap-5">
-                          <span className="w-4 shrink-0 select-none text-right text-sidebar-foreground/20">
-                            {line}
-                          </span>
-                          <span className="whitespace-pre text-sidebar-foreground/80">
-                            {code}
-                          </span>
-                        </div>
-                      ))}
+                      <div className="overflow-x-auto">
+                        {[
+                          ["1", "function twoSum(nums, target) {"],
+                          ["2", "  const seen = new Map();"],
+                          ["3", "  for (let i = 0; i < nums.length; i++) {"],
+                          ["4", "    const need = target - nums[i];"],
+                          ["5", "    if (seen.has(need)) return [seen.get(need), i];"],
+                          ["6", "    seen.set(nums[i], i);"],
+                          ["7", "  }"],
+                          ["8", "}"],
+                        ].map(([line, code]) => (
+                          <div key={line} className="flex w-max min-w-full gap-5">
+                            <span className="w-4 shrink-0 select-none text-right text-sidebar-foreground/20">
+                              {line}
+                            </span>
+                            <span className="whitespace-pre text-sidebar-foreground/80">
+                              {code}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-px bg-sidebar-border">
+                    <div className="grid grid-cols-1 gap-px bg-sidebar-border xs:grid-cols-3">
                       {[
                         ["Tests", "4 / 4"],
                         ["Time", "O(n)"],
@@ -904,7 +908,7 @@ export default function Home() {
                         </div>
                         <svg
                           viewBox="0 0 260 64"
-                          className="h-16 w-full max-w-[260px]"
+                          className="h-16 w-full min-w-0 max-w-[260px]"
                           aria-hidden="true"
                           preserveAspectRatio="none"
                         >
@@ -1388,8 +1392,7 @@ export default function Home() {
                 <span className="h-px w-10 bg-sidebar-primary/60" aria-hidden="true" />
               </div>
               <h2 className="display-hero text-[hsl(var(--sidebar-accent-foreground))]">
-                Find out what
-                <br />
+                Find out what{" "}
                 <em className="text-sidebar-primary">you actually sound like.</em>
               </h2>
               <p className="mx-auto mt-8 max-w-[38rem] text-pretty text-[13.5px] leading-[1.8] text-sidebar-foreground/65">

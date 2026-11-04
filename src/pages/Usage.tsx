@@ -78,7 +78,7 @@ export default function Usage() {
             </span>
           </div>
 
-          <p className="mt-7 font-display text-[clamp(3rem,6vw,4.2rem)] font-light leading-[0.85] tracking-[-0.055em] text-foreground">
+          <p className="mt-7 break-words font-display text-[clamp(2.5rem,6vw,4.2rem)] font-light leading-[0.9] tracking-[-0.055em] text-foreground">
             Full access.
           </p>
           <p className="mt-5 max-w-lg text-[13.5px] leading-[1.8] text-muted-foreground">

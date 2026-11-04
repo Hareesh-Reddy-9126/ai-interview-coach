@@ -955,7 +955,7 @@ export default function Interview() {
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
                     Resume saved interview
-                    <span className="ml-auto font-mono text-[7px] uppercase tracking-[0.12em]">
+                    <span className="ml-auto hidden font-mono text-[7px] uppercase tracking-[0.12em] xs:inline">
                       {resumableSession.config.company} · {resumableSession.config.role}
                     </span>
                   </button>
@@ -1069,11 +1069,11 @@ export default function Interview() {
                 <span>{answered.length} answers</span>
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Link to="/analytics" className="btn-secondary btn-sm">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center">
+              <Link to="/analytics" className="btn-secondary btn-sm justify-center">
                 Full analytics
               </Link>
-              <button type="button" onClick={resetInterview} className="btn-primary btn-sm gap-1.5">
+              <button type="button" onClick={resetInterview} className="btn-primary btn-sm justify-center gap-1.5">
                 <RotateCcw className="h-3.5 w-3.5" />
                 New interview
               </button>
@@ -1089,11 +1089,11 @@ export default function Interview() {
           aria-label="Overall performance"
         >
           <div>
-            <div className="flex items-end gap-6">
-              <p className="font-display text-[clamp(6.5rem,11vw,9rem)] font-light leading-[0.68] tracking-[-0.075em] tabular text-foreground">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-6">
+              <p className="font-display text-[clamp(5rem,11vw,9rem)] font-light leading-[0.68] tracking-[-0.075em] tabular text-foreground">
                 {avgScore}
               </p>
-              <div className="pb-2">
+              <div className="pb-0 sm:pb-2">
                 <p className="mono-label">Overall index</p>
                 <p className="mt-2 font-mono text-[8.5px] uppercase tracking-[0.16em] text-accent">
                   {avgScore >= 85 ? "Interview ready" : avgScore >= 70 ? "Developing well" : "Baseline set"}
@@ -1240,7 +1240,7 @@ export default function Interview() {
                 transition={{ delay: 0.1 + index * 0.04 }}
                 className="group border-b border-border"
               >
-                <summary className="grid cursor-pointer list-none grid-cols-[34px_minmax(0,1fr)_auto] items-start gap-4 py-5 transition-colors hover:bg-surface-2/25 [&::-webkit-details-marker]:hidden">
+                <summary className="grid cursor-pointer list-none grid-cols-[24px_minmax(0,1fr)_auto] items-start gap-3 py-4 transition-colors hover:bg-surface-2/25 sm:grid-cols-[34px_minmax(0,1fr)_auto] sm:gap-4 sm:py-5 [&::-webkit-details-marker]:hidden">
                   <span className="pt-0.5 font-mono text-[9px] tracking-[0.1em] text-accent">
                     {String(index + 1).padStart(2, "0")}
                   </span>
@@ -1258,7 +1258,7 @@ export default function Interview() {
                   </span>
                 </summary>
 
-                <div className="ml-[50px] space-y-5 border-l border-border pb-6 pl-5">
+                <div className="ml-[36px] space-y-4 border-l border-border pb-6 pl-4 sm:ml-[50px] sm:space-y-5 sm:pl-5">
                   <div>
                     <p className="mono-label mb-2">Your answer</p>
                     <p className="whitespace-pre-wrap text-[13px] leading-[1.75] text-secondary-foreground">
@@ -1298,12 +1298,12 @@ export default function Interview() {
           <p className="font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/45">
             Analytics update within a few seconds of completion
           </p>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={resetInterview} className="btn-secondary btn-sm gap-1.5">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <button type="button" onClick={resetInterview} className="btn-secondary btn-sm justify-center gap-1.5">
               <RotateCcw className="h-3.5 w-3.5" />
               Start over
             </button>
-            <Link to="/roadmap" className="btn-primary btn-sm gap-1.5">
+            <Link to="/roadmap" className="btn-primary btn-sm justify-center gap-1.5">
               Build my roadmap
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -1312,7 +1312,7 @@ export default function Interview() {
 
           {/* ── Interview feedback (RLHF) ── */}
           <section className="mt-9 border-t border-border pt-8" aria-label="Session feedback">
-            <div className="flex items-baseline justify-between border-b border-border pb-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-4">
               <h2 className="text-headline text-foreground">Session feedback</h2>
               <span className="mono-label">Help us improve the examiner</span>
             </div>
@@ -1320,7 +1320,7 @@ export default function Interview() {
               Rate the quality of this session&apos;s questions and feedback. Your ratings train
               the next version of the interviewer — nothing is shared outside your account.
             </p>
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3">
               <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-muted-foreground/45">
                 Overall session
               </span>
@@ -1334,7 +1334,7 @@ export default function Interview() {
                     }}
                     disabled={feedbackSubmitted}
                     className={cn(
-                      "h-10 w-10 rounded border font-display text-[20px] font-light leading-none transition-colors",
+                      "h-9 w-9 rounded border font-display text-[20px] font-light leading-none transition-colors sm:h-10 sm:w-10",
                       feedbackRating === rating
                         ? "border-accent bg-accent/[0.05] text-accent"
                         : feedbackRating !== null && feedbackRating >= rating
@@ -1475,7 +1475,7 @@ export default function Interview() {
                   <motion.div
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="ml-[46px] mt-5 space-y-5"
+                    className="ml-3 mt-5 space-y-5 sm:ml-[46px]"
                   >
                     <div className="border-l border-border pl-5">
                       <p className="mono-label mb-2">Your answer</p>
@@ -1519,7 +1519,7 @@ export default function Interview() {
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="ml-[46px] mt-7 flex items-start gap-3 panel-ink p-4"
+              className="ml-0 mt-7 flex items-start gap-3 panel-ink p-4 sm:ml-[46px]"
               aria-live="polite"
               aria-atomic="true"
             >
@@ -1563,7 +1563,7 @@ export default function Interview() {
           )}
 
           {streaming === "streaming" && !currentEvaluation && (
-            <div className="ml-[46px] mt-7 flex items-center gap-3">
+            <div className="ml-0 mt-7 flex items-center gap-3 sm:ml-[46px]">
               <span className="flex items-center gap-1" aria-hidden="true">
                 <span className="h-1 w-1 bg-accent typing-dot" />
                 <span className="h-1 w-1 bg-accent typing-dot" style={{ animationDelay: "150ms" }} />
@@ -1638,7 +1638,7 @@ export default function Interview() {
                     <AudioLines className="h-3 w-3" /> Voice
                   </button>
                 </div>
-                <span className="font-mono text-[7.5px] uppercase tracking-[0.12em] text-sidebar-foreground/40">
+                <span className="hidden font-mono text-[7.5px] uppercase tracking-[0.12em] text-sidebar-foreground/40 sm:inline">
                   {inputMode === "voice" ? "Speech to text" : "⌘/Ctrl + Enter to submit"}
                 </span>
               </div>

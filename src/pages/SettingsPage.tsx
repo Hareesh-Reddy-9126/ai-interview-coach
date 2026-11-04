@@ -367,7 +367,7 @@ export default function SettingsPage() {
                     <label htmlFor="mfa-verify-code" className="label-base">
                       Step 2 · Confirm the 6-digit code
                     </label>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                       <input
                         id="mfa-verify-code"
                         value={mfaCode}
@@ -379,13 +379,13 @@ export default function SettingsPage() {
                         pattern="[0-9]{6}"
                         maxLength={6}
                         placeholder="000000"
-                        className="input-base h-10 w-[150px] text-center font-mono text-[16px] tracking-[0.34em]"
+                        className="input-base h-10 w-full text-center font-mono text-[16px] tracking-[0.34em] sm:w-[150px]"
                         autoFocus
                       />
                       <button
                         type="submit"
                         disabled={mfaBusy || mfaCode.length !== 6}
-                        className="btn-primary h-10 gap-2"
+                        className="btn-primary h-10 w-full justify-center gap-2 sm:w-auto"
                       >
                         {mfaBusy ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />

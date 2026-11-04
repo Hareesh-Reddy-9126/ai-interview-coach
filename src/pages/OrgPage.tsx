@@ -296,18 +296,18 @@ export default function OrgPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-4">
-        <div className="space-y-6 lg:col-span-1">
+        <div className="grid grid-cols-2 gap-3 lg:col-span-1 lg:grid-cols-1 lg:gap-6">
           {[
             ["Active seats", overview.active_members, "Members with access"],
             ["Pending invites", overview.pending_invites, "Activate on sign-in"],
             ["Interviews", overview.interviews_completed, "Completed sessions"],
             ["Team average", `${overview.avg_score}%`, "Across completed sessions"],
           ].map(([label, value, note]) => (
-            <div key={label} className="border border-border p-5">
+            <div key={label} className="border border-border p-4 lg:p-5">
               <p className="font-mono text-[7.5px] uppercase tracking-[0.14em] text-muted-foreground/45">
                 {label}
               </p>
-              <p className="mt-1 font-display text-[32px] font-light leading-none tracking-[-0.03em] text-foreground">
+              <p className="mt-1 font-display text-[28px] font-light leading-none tracking-[-0.03em] text-foreground lg:text-[32px]">
                 {value}
               </p>
               <p className="mt-2 text-[11px] text-muted-foreground/60">{note}</p>
@@ -328,8 +328,8 @@ export default function OrgPage() {
               </div>
 
               {isAdmin && (
-                <form onSubmit={inviteMember} className="flex flex-wrap items-end gap-2">
-                  <div>
+                <form onSubmit={inviteMember} className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-end">
+                  <div className="col-span-2 sm:col-span-1">
                     <label htmlFor="invite-email" className="sr-only">
                       Teammate email
                     </label>
@@ -339,7 +339,7 @@ export default function OrgPage() {
                       value={newMemberEmail}
                       onChange={(event) => setNewMemberEmail(event.target.value)}
                       placeholder="email@company.com"
-                      className="input-base h-9 w-[210px]"
+                      className="input-base h-9 w-full sm:w-[210px]"
                       autoComplete="email"
                     />
                   </div>
@@ -351,7 +351,7 @@ export default function OrgPage() {
                       id="invite-role"
                       value={newMemberRole}
                       onChange={(event) => setNewMemberRole(event.target.value)}
-                      className="input-base h-9 w-[125px]"
+                      className="input-base h-9 w-full sm:w-[125px]"
                     >
                       <option value="member">Member</option>
                       <option value="admin">Admin</option>
@@ -361,7 +361,7 @@ export default function OrgPage() {
                   <button
                     type="submit"
                     disabled={inviteLoading || !newMemberEmail.trim()}
-                    className="btn-secondary btn-sm gap-1.5"
+                    className="btn-secondary btn-sm h-9 w-full justify-center gap-1.5 sm:w-auto"
                   >
                     {inviteLoading ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -374,49 +374,52 @@ export default function OrgPage() {
               )}
             </div>
 
-            <div className="overflow-hidden border border-border">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-border">
-                    {["Member", "Role", "MFA", "Actions"].map((label) => (
-                      <th
-                        key={label}
-                        className={cn(
-                          "px-5 py-3.5 font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground/45",
-                          label === "Actions" && "text-right",
-                        )}
-                      >
-                        {label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {members.map((member) => {
-                    const displayName = member.name || member.email || "Invited member";
-                    return (
-                      <tr key={member.id} className="transition-colors hover:bg-surface-2/40">
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-border bg-card font-mono text-[10px] font-medium text-foreground">
-                              {initials(displayName)}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-[11px] font-medium text-foreground">
-                                {displayName}
-                              </p>
-                              <p className="w-[180px] truncate text-[9.5px] text-muted-foreground/50">
-                                {member.email || member.invited_email || "—"}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4">
+            <div className="border border-border">
+              <div className="hidden grid-cols-[minmax(0,1fr)_110px_56px_150px] items-center gap-4 border-b border-border px-5 py-3 md:grid">
+                {["Member", "Role", "MFA", "Actions"].map((label) => (
+                  <span
+                    key={label}
+                    className={cn(
+                      "font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground/45",
+                      label === "Actions" && "text-right",
+                    )}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <ul className="divide-y divide-border">
+                {members.map((member) => {
+                  const displayName = member.name || member.email || "Invited member";
+                  return (
+                    <li
+                      key={member.id}
+                      className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-surface-2/40 md:grid md:grid-cols-[minmax(0,1fr)_110px_56px_150px] md:items-center md:gap-4 md:px-5 md:py-4"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center border border-border bg-card font-mono text-[10px] font-medium text-foreground">
+                          {initials(displayName)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[11px] font-medium text-foreground">
+                            {displayName}
+                          </p>
+                          <p className="truncate text-[9.5px] text-muted-foreground/50">
+                            {member.email || member.invited_email || "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pl-11 md:contents">
+                        <div className="flex items-center gap-2 md:block">
+                          <span className="font-mono text-[7px] uppercase tracking-[0.12em] text-muted-foreground/40 md:hidden">
+                            Role
+                          </span>
                           {editingRole === member.id ? (
                             <select
                               value={member.role}
                               onChange={(event) => updateMemberRole(member.id, event.target.value)}
-                              className="bg-transparent font-mono text-[9px] text-foreground"
+                              className="border border-border bg-background px-2 py-1 font-mono text-[9px] text-foreground"
                               autoFocus
                             >
                               <option value="admin">Admin</option>
@@ -439,26 +442,31 @@ export default function OrgPage() {
                               {member.status === "invited" ? "Invited" : roleLabel(member.role)}
                             </span>
                           )}
-                        </td>
-                        <td className="px-5 py-4">
+                        </div>
+
+                        <div className="flex items-center gap-2 md:block">
+                          <span className="font-mono text-[7px] uppercase tracking-[0.12em] text-muted-foreground/40 md:hidden">
+                            MFA
+                          </span>
                           <span
                             className={cn(
-                              "inline-block h-1.5 w-1.5",
+                              "inline-block h-2 w-2",
                               member.mfa_enabled ? "bg-success" : "bg-border",
                             )}
                             aria-label={member.mfa_enabled ? "MFA enabled" : "MFA disabled"}
                           />
-                        </td>
-                        <td className="px-5 py-4 text-right">
+                        </div>
+
+                        <div className="ml-auto flex items-center gap-3 md:ml-0 md:justify-end">
                           {member.user_id === user?.id ? (
                             <span className="text-[9.5px] text-muted-foreground/40">You</span>
                           ) : isAdmin ? (
-                            <div className="flex items-center justify-end gap-3">
+                            <>
                               {editingRole === member.id ? (
                                 <button
                                   type="button"
                                   onClick={() => setEditingRole(null)}
-                                  className="text-[9px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                                  className="py-1 text-[9px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
                                 >
                                   Cancel
                                 </button>
@@ -466,7 +474,7 @@ export default function OrgPage() {
                                 <button
                                   type="button"
                                   onClick={() => setEditingRole(member.id)}
-                                  className="text-[9px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                                  className="py-1 text-[9px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
                                 >
                                   Change role
                                 </button>
@@ -474,25 +482,23 @@ export default function OrgPage() {
                               <button
                                 type="button"
                                 onClick={() => removeMember(member)}
-                                className="text-[9px] text-destructive underline-offset-2 hover:underline"
+                                className="py-1 text-[9px] text-destructive underline-offset-2 hover:underline"
                               >
                                 {member.status === "invited" ? "Revoke" : "Remove"}
                               </button>
-                            </div>
+                            </>
                           ) : null}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {members.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground/40">
-                        {memberLoading ? "Loading members…" : "No members yet."}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+                {members.length === 0 && (
+                  <li className="px-5 py-10 text-center text-muted-foreground/40">
+                    {memberLoading ? "Loading members…" : "No members yet."}
+                  </li>
+                )}
+              </ul>
             </div>
 
             <p className="font-mono text-[7.5px] uppercase leading-[1.8] tracking-[0.12em] text-muted-foreground/40">

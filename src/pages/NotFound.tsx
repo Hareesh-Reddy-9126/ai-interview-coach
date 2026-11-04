@@ -33,9 +33,7 @@ export default function NotFound() {
               4<span className="italic text-muted-foreground/35">0</span>4
             </p>
             <h1 className="mt-9 max-w-xl font-display text-[clamp(2rem,3.4vw,3rem)] font-light leading-[1.02] tracking-[-0.04em] text-foreground">
-              This page left the
-              <br />
-              atelier.
+              This page left the atelier.
             </h1>
             <p className="mt-5 max-w-md text-[14px] leading-[1.75] text-muted-foreground">
               The address{" "}
@@ -94,7 +92,7 @@ export default function NotFound() {
         </div>
       </main>
 
-      <footer className="relative z-10 flex items-center justify-between border-t border-border px-6 py-5 md:px-10">
+      <footer className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-t border-border px-6 py-5 md:px-10">
         <p className="mono-label text-muted-foreground/40">Interview Lab · Practice atelier</p>
         <p className="mono-label text-muted-foreground/40">Powered by NVIDIA Nemotron</p>
       </footer>

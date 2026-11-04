@@ -310,6 +310,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   {firstName}&apos;s atelier
                 </p>
               </div>
+              <Link
+                to="/interview"
+                onClick={() => setMobileOpen(false)}
+                className="btn-primary btn-sm mx-4 mt-4 shrink-0 justify-center gap-2"
+              >
+                <Plus className="h-3 w-3" strokeWidth={1.8} />
+                New session
+              </Link>
               {nav()}
               {sidebarFooter}
             </motion.aside>
@@ -322,7 +330,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="-ml-1 flex h-6 w-6 items-center justify-center text-foreground md:hidden"
+            className="-ml-1 flex h-8 w-8 items-center justify-center text-foreground md:hidden"
             aria-label="Open menu"
           >
             <Menu className="h-[16px] w-[16px]" strokeWidth={1.4} />
@@ -355,7 +363,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={openPalette}
-              className="flex h-6 w-6 items-center justify-center text-muted-foreground sm:hidden"
+              className="flex h-8 w-8 items-center justify-center text-muted-foreground sm:hidden"
               aria-label="Search"
             >
               <Search className="h-3 w-3" strokeWidth={1.4} />
@@ -369,6 +377,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               New session
             </Link>
 
+            <Link
+              to="/interview"
+              aria-label="New session"
+              className="flex h-8 w-8 items-center justify-center border border-border text-foreground xs:hidden"
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={1.6} />
+            </Link>
+
             <div className="hidden h-[10px] w-[1px] bg-border sm:block" aria-hidden="true" />
 
             <div className="relative">
@@ -376,7 +392,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={() => setProfileOpen((open) => !open)}
                 className={cn(
-                  "flex h-6 items-center gap-2 border border-transparent pl-1 pr-1 transition-colors hover:border-border",
+                  "flex h-8 items-center gap-2 border border-transparent pl-1 pr-1 transition-colors hover:border-border sm:h-6",
                   profileOpen && "border-border bg-surface-hover",
                 )}
                 aria-label="Account menu"

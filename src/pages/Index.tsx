@@ -161,11 +161,11 @@ export default function Dashboard() {
                 : "Start with a baseline interview to calibrate your readiness and unlock a personal plan."}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <Link to="/analytics" className="btn-secondary btn-sm">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:shrink-0 sm:items-center">
+            <Link to="/analytics" className="btn-secondary btn-sm justify-center">
               View analytics
             </Link>
-            <Link to="/interview" className="btn-primary btn-sm gap-2">
+            <Link to="/interview" className="btn-primary btn-sm justify-center gap-2">
               New session
               <ArrowRight className="h-3 w-3" strokeWidth={1.6} />
             </Link>
@@ -327,9 +327,9 @@ export default function Dashboard() {
                 </p>
                 <p className="mt-1 text-[10px] mono-label text-muted-foreground">Last 8 sessions</p>
               </div>
-              <div className="bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 sm:px-6">
+              <div className="min-w-0 bg-[hsl(var(--surface))] border-l border-[hsl(var(--surface-border))] px-5 py-5 [&:nth-child(3)]:border-l-0 sm:px-6 lg:[&:nth-child(3)]:border-l">
                 <p className="mono-label">Focus area</p>
-                <p className="mt-2 font-display text-[20px] font-normal leading-none tabular text-foreground">
+                <p className="mt-2 break-words font-display text-[17px] font-normal leading-[1.05] text-foreground sm:text-[20px]">
                   {focusSkill ? focusSkill.label : "—"}
                 </p>
                 <p className="mt-1 text-[10px] mono-label text-muted-foreground">
