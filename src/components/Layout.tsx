@@ -18,6 +18,24 @@ import { Logo } from "@/components/ui/logo";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { cn } from "@/lib/utils";
 
+const PRODUCT_ROUTES = [
+  "/dashboard",
+  "/interview",
+  "/coding",
+  "/practice",
+  "/analytics",
+  "/history",
+  "/roadmap",
+  "/resume",
+  "/usage",
+  "/settings",
+  "/org",
+];
+
+function isProductRoute(pathname: string) {
+  return PRODUCT_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"));
+}
+
 function useWorkspaceSummary(userId?: string) {
   const [summary, setSummary] = useState<{ interviews: number; streak: number } | null>(null);
 
@@ -90,6 +108,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const summary = useWorkspaceSummary(user?.id);
 
   const currentPage = useMemo(() => findNavItem(location.pathname), [location.pathname]);
+  const isProduct = useMemo(() => isProductRoute(location.pathname), [location.pathname]);
+
+  // Toggle dark mode on document root for product routes
+  useEffect(() => {
+    if (isProduct) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    return () => document.documentElement.classList.remove("dark");
+  }, [isProduct]);
 
   const userName = user?.user_metadata?.name || user?.email?.split("@")[0] || "User";
   const userInitial = (user?.user_metadata?.name?.[0] || user?.email?.[0] || "U").toUpperCase();

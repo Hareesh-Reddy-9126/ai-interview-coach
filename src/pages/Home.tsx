@@ -401,10 +401,10 @@ export default function Home() {
 
       <main id="main-content">
         {/* ── Hero ─────────────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden border-b border-border pt-[68px]">
+        <section className="relative overflow-hidden border-b border-border section-padding-lg">
           <div className="pointer-events-none absolute inset-0 bg-grid opacity-50" aria-hidden="true" />
 
-          <div className="container-editorial relative grid gap-14 pb-20 pt-14 md:pb-24 md:pt-20 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center lg:gap-16 lg:pb-28 lg:pt-24">
+          <div className="container-editorial relative grid gap-14 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center lg:gap-16">
             {/* Copy */}
             <div>
               <div className="mb-8 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -414,7 +414,7 @@ export default function Home() {
                 <span className="eyebrow">Est. 2026</span>
               </div>
 
-              <h1 className="font-display text-[clamp(3.1rem,6vw,5.9rem)] font-light leading-[0.88] tracking-[-0.055em] text-foreground">
+              <h1 className="display-hero text-foreground">
                 Interviews are
                 <br />
                 a skill.
@@ -582,7 +582,7 @@ export default function Home() {
                 <MicroRule />
                 <span className="eyebrow">01 — The premise</span>
               </div>
-              <h2 className="display-section max-w-[12ch] text-foreground">
+              <h2 className="display-section max-w-[12ch] text-foreground reveal stagger-1">
                 Most preparation is rehearsal without a scorecard.
               </h2>
             </div>
@@ -623,7 +623,7 @@ export default function Home() {
         </section>
 
         {/* ── Method ───────────────────────────────────────────────────── */}
-        <section className="border-b border-border bg-[hsl(var(--surface))] py-20 md:py-28">
+        <section className="border-b border-border bg-surface section-padding-lg">
           <div className="container-editorial">
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div>
@@ -631,7 +631,7 @@ export default function Home() {
                   <MicroRule />
                   <span className="eyebrow">02 — The method</span>
                 </div>
-                <h2 className="display-section max-w-[15ch] text-foreground">
+                <h2 className="display-section max-w-[15ch] text-foreground reveal stagger-2">
                   Three acts. No theatre.
                 </h2>
               </div>
@@ -691,7 +691,7 @@ export default function Home() {
                   <span className="h-px w-8 bg-accent" aria-hidden="true" />
                   <span className="eyebrow eyebrow-brass">03 — Inside the room</span>
                 </div>
-                <h2 className="display-section max-w-[16ch] text-[hsl(var(--sidebar-accent-foreground))]">
+                <h2 className="display-section max-w-[16ch] text-[hsl(var(--sidebar-accent-foreground))] reveal stagger-3">
                   A scorecard, not a chat window.
                 </h2>
               </div>
@@ -1003,7 +1003,7 @@ export default function Home() {
                 <MicroRule />
                 <span className="eyebrow">04 — The scorecard</span>
               </div>
-              <h2 className="display-section max-w-[11ch] text-foreground">
+              <h2 className="display-section max-w-[11ch] text-foreground reveal stagger-4">
                 Five dimensions. Written anchors.
               </h2>
               <p className="mt-6 max-w-[30rem] text-[13.5px] leading-[1.8] text-muted-foreground">
@@ -1065,7 +1065,7 @@ export default function Home() {
         </section>
 
         {/* ── Capabilities + question bank ─────────────────────────────── */}
-        <section className="border-b border-border bg-[hsl(var(--surface))] py-20 md:py-28">
+        <section className="border-b border-border bg-surface section-padding-lg">
           <div className="container-editorial">
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div>
@@ -1073,7 +1073,7 @@ export default function Home() {
                   <MicroRule />
                   <span className="eyebrow">05 — The instruments</span>
                 </div>
-                <h2 className="display-section max-w-[14ch] text-foreground">
+                <h2 className="display-section max-w-[14ch] text-foreground reveal stagger-5">
                   Six tools. One record.
                 </h2>
               </div>
@@ -1165,7 +1165,7 @@ export default function Home() {
                 <MicroRule />
                 <span className="eyebrow">06 — Trust</span>
               </div>
-              <h2 className="display-section max-w-[12ch] text-foreground">
+              <h2 className="display-section max-w-[12ch] text-foreground reveal stagger-1">
                 Private by default. Scoped by policy.
               </h2>
               <p className="mt-6 max-w-[32rem] text-[13.5px] leading-[1.8] text-muted-foreground">
@@ -1223,7 +1223,7 @@ export default function Home() {
                   <MicroRule />
                   <span className="eyebrow">07 — Access</span>
                 </div>
-                <h2 className="display-section max-w-[14ch] text-foreground">
+                <h2 className="display-section max-w-[14ch] text-foreground reveal stagger-5">
                   Free while in preview.
                 </h2>
               </div>
@@ -1335,14 +1335,14 @@ export default function Home() {
         </section>
 
         {/* ── FAQ ──────────────────────────────────────────────────────── */}
-        <section className="border-b border-border py-20 md:py-28">
+        <section className="border-b border-border section-padding-lg">
           <div className="container-editorial grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-4">
               <div className="mb-7 flex items-center gap-4">
                 <MicroRule />
                 <span className="eyebrow">08 — Questions</span>
               </div>
-              <h2 className="display-section max-w-[10ch] text-foreground">
+              <h2 className="display-section max-w-[10ch] text-foreground reveal stagger-1">
                 Asked before entering.
               </h2>
               <p className="mt-6 max-w-[26rem] text-[13px] leading-[1.75] text-muted-foreground">
@@ -1376,7 +1376,7 @@ export default function Home() {
         </section>
 
         {/* ── Closing ──────────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden border-b border-sidebar-border bg-sidebar py-24 text-sidebar-accent-foreground md:py-32">
+        <section className="relative overflow-hidden border-b border-sidebar-border bg-sidebar section-padding text-sidebar-accent-foreground">
           <div className="pointer-events-none absolute inset-0 bg-grid-ink opacity-60" aria-hidden="true" />
           <div className="container-editorial relative">
             <div className="reveal mx-auto max-w-[52rem] text-center">
@@ -1387,7 +1387,7 @@ export default function Home() {
                 </span>
                 <span className="h-px w-10 bg-sidebar-primary/60" aria-hidden="true" />
               </div>
-              <h2 className="font-display text-[clamp(3rem,6.4vw,6rem)] font-light leading-[0.9] tracking-[-0.055em] text-[hsl(var(--sidebar-accent-foreground))]">
+              <h2 className="display-hero text-[hsl(var(--sidebar-accent-foreground))]">
                 Find out what
                 <br />
                 <em className="text-sidebar-primary">you actually sound like.</em>
