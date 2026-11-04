@@ -242,7 +242,7 @@ export default function LearningRoadmap() {
                 },
               ].map((step, index) => (
                 <li key={step.title} className="flex gap-4 py-5">
-                  <span className="font-display text-[22px] font-light leading-none tracking-[-0.03em] tabular text-border-strong/60">
+                  <span className="font-display text-[22px] font-light leading-none tracking-[-0.03em] tabular text-muted-foreground/30">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
@@ -304,7 +304,7 @@ export default function LearningRoadmap() {
                   className="grid grid-cols-[52px_minmax(0,1fr)] gap-5 py-7 sm:grid-cols-[84px_minmax(0,1fr)] sm:gap-8"
                 >
                   <div>
-                    <span className="font-display text-[40px] font-light leading-[0.7] tracking-[-0.05em] tabular text-border-strong/55">
+                    <span className="font-display text-[40px] font-light leading-[0.7] tracking-[-0.05em] tabular text-muted-foreground/30">
                       {String(week.week).padStart(2, "0")}
                     </span>
                     <span className="mt-2 block font-mono text-[7px] uppercase tracking-[0.14em] text-muted-foreground/35">
@@ -418,7 +418,7 @@ export default function LearningRoadmap() {
                 <ol className="mt-3 space-y-3">
                   {roadmap.weeks.map((week) => (
                     <li key={week.week} className="flex items-start gap-3">
-                      <span className="mt-px font-mono text-[8px] tabular text-accent/60">
+                      <span className="mt-px font-mono text-[8px] tabular text-accent/85">
                         {String(week.week).padStart(2, "0")}
                       </span>
                       <span className="text-[10.5px] leading-[1.5] text-muted-foreground">

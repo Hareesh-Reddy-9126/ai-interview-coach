@@ -392,7 +392,7 @@ export default function ResumeAnalyzer() {
                 },
               ].map((step, index) => (
                 <li key={step.title} className="flex gap-4 py-5">
-                  <span className="font-display text-[22px] font-light leading-none tracking-[-0.03em] tabular text-border-strong/60">
+                  <span className="font-display text-[22px] font-light leading-none tracking-[-0.03em] tabular text-muted-foreground/30">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
@@ -615,7 +615,7 @@ export default function ResumeAnalyzer() {
                   <ol className="divide-y divide-border border-b border-border">
                     {resume.interview_questions.map((question, index) => (
                       <li key={index} className="flex gap-5 py-4">
-                        <span className="pt-0.5 font-mono text-[8.5px] tracking-[0.1em] text-accent/70">
+                        <span className="pt-0.5 font-mono text-[8.5px] tracking-[0.1em] text-accent/85">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         <p className="font-display text-[17px] font-light leading-[1.5] tracking-[-0.015em] text-secondary-foreground">

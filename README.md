@@ -8,7 +8,8 @@ NIM.
 ## Features
 
 - **AI Interview Simulator** — Multi-turn mock interviews with per-answer scoring,
-  company-specific interviewer personas, and STAR-style feedback.
+  company-specific interviewer personas, and STAR-style feedback. Answers stream
+  token-by-token and repeat prompts are served from a semantic cache.
 - **Coding Lab** — Solve interview problems in a Monaco editor with AI-judged test
   cases, complexity analysis, and an optimal reference solution.
 - **Resume Analyzer** — Upload a PDF; the backend extracts real text (PDF.js via
@@ -20,6 +21,12 @@ NIM.
   actual performance data.
 - **Resume-based Interviews** — Interviews personalized from your uploaded
   resume.
+- **Enterprise Workspace** — Organizations with admin/member roles, email
+  invitations claimed on first sign-in, and a shared readiness dashboard.
+- **Native MFA** — Supabase TOTP enrollment, verification, and an AAL2 gate on
+  sign-in; no custom secret storage.
+- **Evaluation Harness** — Golden-case tests for prompt/rubric behavior, plus the
+  question-bank DSL and typed edge-function client.
 
 ## Architecture
 
@@ -36,14 +43,18 @@ NIM.
 │                                                            │
 │  PostgreSQL + RLS     Edge Functions (Deno)                │
 │  · profiles           · interview-ai                       │
-│  · interview_sessions · compute-analytics                  │
-│  · interview_turns    · analyze-resume                     │
-│  · user_analytics     · generate-roadmap                   │
-│  · user_resumes       · evaluate-code                      │
-│  · learning_roadmaps                                       │
-│  · rate_limits                                             │
+│  · interview_sessions · interview-ai-stream (SSE)          │
+│  · interview_turns    · compute-analytics                  │
+│  · user_analytics     · analyze-resume                     │
+│  · user_resumes       · generate-roadmap                   │
+│  · learning_roadmaps  · evaluate-code                      │
+│  · organizations      · rate_limits                        │
+│  · organization_members                                    │
+│  · organization_invitations                                │
+│  · ai_response_cache (service-role only)                   │
 │                                                            │
-│  Auth (email/password)   Storage (private `resumes` bucket)│
+│  Auth (email/password + native TOTP MFA)                    │
+│  Storage (private `resumes` bucket)                         │
 └───────────────────────────┬────────────────────────────────┘
                             │ OpenAI-compatible Chat Completions
                             ▼
@@ -67,12 +78,41 @@ with a request ID, the selected model, latency, and the fallback path when used.
 
 ## Design system
 
-The interface uses a restrained enterprise theme defined in `src/index.css`:
-warm near-black surfaces, a single emerald accent, Inter Tight for display type,
-Inter for body copy, and JetBrains Mono for code and numeric data. Reusable
-surface, button, form, and tag classes live in Tailwind's `@layer components` so
-utility classes can override them predictably. New UI should compose those
-classes instead of introducing ad-hoc colors, radii, or shadows.
+The interface is a **refined editorial atelier**: warm bone paper for the public
+marketing site, deep forest ink for the authenticated product. Tokens and
+component classes live in `src/index.css`; new UI should compose them instead of
+introducing ad-hoc colors, radii, or shadows.
+
+| Role | Typeface | Usage |
+|---|---|---|
+| Display | **Gambarino** | Hero and section headlines, large metrics |
+| Editorial | **Newsreader** | Long-form body serif, italic accents |
+| UI | **Inter** | Controls, tables, forms, body copy |
+| Technical | **JetBrains Mono** | Labels, scores, code, keyboard hints |
+
+- **Theme split.** Marketing routes stay light (`--background: 42 33% 96.5%`).
+  Routes in `PRODUCT_ROUTES` (`src/components/Layout.tsx`) add `.dark` to
+  `<html>`, switching to the deep-forest palette. The class is added/removed in
+  an effect so `body` and portalled overlays inherit it.
+- **Radius scale.** `6 / 8 / 10 / 12 / 16 / 24 / 32 / 999px` exposed as
+  `--radius-sm … --radius-full`; Tailwind's `rounded-*` maps onto the same scale.
+- **Motion.** Shared easing `cubic-bezier(0.44, 0, 0.56, 1)`, 380ms page enter,
+  700ms scroll reveals. Every animation fails open: content is visible without
+  JavaScript or with reduced motion enabled.
+- **Spacing.** `section-padding` 100px, `section-padding-lg` 160px on desktop,
+  stepping down to 60/100px on mobile.
+- **Components.** `.surface`, `.surface-elevated`, `.surface-card`,
+  `.surface-panel`, `.input-base`, `.input-borderless`, `.select-base`,
+  `.btn-accent`, `.tag-*`, `.eyebrow`, `.display-hero`, `.display-section`.
+- **Contrast.** Opacity-based micro-type is lifted on both surfaces (dark-mode
+  floors and light-mode floors in `@layer utilities`). Semantic text colors get a
+  lighter step in dark mode while filled buttons keep their deeper background.
+  Product routes currently pass an automated AA contrast audit; marketing
+  micro-labels stay subdued but legible.
+
+Tailwind cannot see classes that only exist in CSS, and `@apply` of custom
+classes inside `@layer components` is unreliable. Prefer explicit CSS
+declarations for new component classes.
 
 ## Tech stack
 
@@ -90,14 +130,18 @@ classes instead of introducing ad-hoc colors, radii, or shadows.
 
 ```
 src/                       React application
+  components/Layout.tsx    Member rail, product-route dark-mode switch
+  index.css                Design tokens, component classes, contrast floors
   lib/edge-functions.ts    Typed edge-function client with real error messages
   integrations/supabase/   Supabase client + generated DB types
+  evals/                   Golden-case prompt / rubric evaluation suite
 supabase/
   config.toml              Function JWT settings
   migrations/              SQL schema, RLS, storage, indexes, hardening
   functions/
-    _shared/nvidia.ts      Shared NVIDIA client, CORS, auth, rate limits, logging
-    interview-ai/
+    _shared/nvidia.ts      Shared prompts, NVIDIA client, CORS, auth, rate limits
+    interview-ai/          Structured evaluation + next question
+    interview-ai-stream/   SSE variant, shares cache keys with interview-ai
     compute-analytics/
     analyze-resume/
     generate-roadmap/
@@ -206,6 +250,10 @@ automatically by the Supabase runtime.
 | `user_analytics` | Aggregated skill scores, interview count, streak |
 | `user_resumes` | Resume metadata, extracted text, parsed sections, questions |
 | `learning_roadmaps` | Generated 4-week plan (JSONB) |
+| `organizations` | Workspace name, slug, and settings |
+| `organization_members` | Membership and role (`admin` / `member`) |
+| `organization_invitations` | Pending email invitations, claimed on sign-in |
+| `ai_response_cache` | Service-role-only semantic cache for AI responses |
 | `rate_limits` | Per-user request windows for AI endpoints (service-role only) |
 
 Every table has Row-Level Security enabled and user-scoped policies. Resume files
@@ -216,6 +264,7 @@ live in a **private** `resumes` bucket under `{user_id}/...` paths.
 | Function | Auth | Rate limit | Notes |
 |---|---|---|---|
 | `interview-ai` | JWT | 20 / hour | Company personas, tool-call structured output |
+| `interview-ai-stream` | JWT | 20 / hour | SSE question streaming; shares prompt + cache with `interview-ai` |
 | `compute-analytics` | JWT | — | Verifies session ownership; heuristic fallback |
 | `analyze-resume` | JWT | 5 / day | Ownership + path checks, real PDF extraction |
 | `generate-roadmap` | JWT | 5 / day | In-place update, deterministic fallback plan |
@@ -232,10 +281,14 @@ All functions:
 
 ## Security model
 
-- **Authentication** — Email/password with confirmation; all AI endpoints require
-  a signed-in user.
+- **Authentication** — Email/password with confirmation; native Supabase TOTP MFA
+  with an AAL2 gate; all AI endpoints require a signed-in user.
 - **Authorization** — RLS on every table plus explicit ownership checks in
-  functions (defense in depth against IDOR).
+  functions (defense in depth against IDOR). Organization membership and role
+  checks use `SECURITY DEFINER` helpers with a fixed `search_path`.
+- **AI cache** — `ai_response_cache` has no browser policy; only the service role
+  can read or write it. Cache keys are built from the same centralized prompt
+  module used by both AI endpoints.
 - **Storage** — Private bucket; object paths must start with the caller's user ID.
 - **Secrets** — `NVIDIA_API_KEY` and the service-role key live only in Supabase
   secrets. `.env` is git-ignored.
@@ -266,6 +319,16 @@ npx supabase functions deploy
 
 Add a SPA rewrite so client-side routes resolve: all paths → `/index.html`
 (`vercel.json` is included).
+
+Production deploys are run from the repository root with:
+
+```sh
+npm run build
+npx vercel --prod --yes
+```
+
+Pushing to GitHub only auto-deploys when the Vercel Git integration is enabled;
+otherwise use the command above.
 
 ## Health checks
 

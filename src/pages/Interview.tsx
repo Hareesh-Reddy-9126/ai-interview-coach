@@ -1338,7 +1338,7 @@ export default function Interview() {
                       feedbackRating === rating
                         ? "border-accent bg-accent/[0.05] text-accent"
                         : feedbackRating !== null && feedbackRating >= rating
-                          ? "border-accent/20 text-accent/60"
+                          ? "border-accent/20 text-accent/85"
                           : "border-border text-muted-foreground/30 hover:border-accent/50",
                     )}
                     aria-label={`Rate ${rating} of 5`}

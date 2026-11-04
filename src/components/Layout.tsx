@@ -75,7 +75,7 @@ function NavItemRow({
           "group flex h-9 items-center gap-3 border-l border-transparent pl-3 pr-2 text-[11.5px] font-medium tracking-[0.005em]",
           isActive
             ? "border-[hsl(var(--sidebar-primary))] bg-[hsl(var(--sidebar-accent))]/50 text-[hsl(var(--sidebar-accent-foreground))]"
-            : "text-sidebar-foreground/65 hover:text-sidebar-accent-foreground",
+            : "text-sidebar-foreground/85 hover:text-sidebar-accent-foreground",
         )
       }
     >
@@ -86,7 +86,7 @@ function NavItemRow({
               "h-[12px] w-[12px] shrink-0 transition-colors",
               isActive
                 ? "text-[hsl(var(--sidebar-primary))]"
-                : "text-sidebar-foreground/35 group-hover:text-sidebar-foreground/75",
+                : "text-sidebar-foreground/55 group-hover:text-sidebar-foreground/90",
             )}
             strokeWidth={1.4}
           />
@@ -154,7 +154,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <nav className="flex-1 overflow-y-auto px-3 pb-6 pt-6 scrollbar-none" aria-label="Primary">
       {navGroups.map((group, groupIndex) => (
         <div key={group.label} className="mb-7 last:mb-0">
-          <p className="mb-2 flex items-center gap-2 px-3 font-mono text-[7px] font-medium uppercase tracking-[0.22em] text-sidebar-foreground/30">
+          <p className="mb-2 flex items-center gap-2 px-3 font-mono text-[7px] font-medium uppercase tracking-[0.22em] text-sidebar-foreground/45">
             <span className="w-[14px] text-sidebar-primary/50">0{groupIndex + 1}</span>
             <span className="h-[1px] w-[14px] bg-sidebar-border" />
             {group.label}
@@ -178,7 +178,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </p>
           <Link
             to="/analytics"
-            className="font-mono text-[7px] uppercase tracking-[0.12em] text-sidebar-primary/70 transition-colors hover:text-sidebar-primary"
+            className="font-mono text-[7px] uppercase tracking-[0.12em] text-sidebar-primary transition-colors hover:text-sidebar-primary"
           >
             Details
           </Link>
@@ -230,7 +230,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      <p className="px-4 pb-3 font-mono text-[6px] uppercase tracking-[0.2em] text-sidebar-foreground/20">
+      <p className="px-4 pb-3 font-mono text-[6px] uppercase tracking-[0.2em] text-sidebar-foreground/45">
         NVIDIA Nemotron · Private by default
       </p>
     </div>
@@ -254,7 +254,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="border-b border-sidebar-border px-4 py-4">
-          <p className="font-mono text-[6.5px] font-medium uppercase tracking-[0.22em] text-sidebar-foreground/30">
+          <p className="font-mono text-[6.5px] font-medium uppercase tracking-[0.22em] text-sidebar-foreground/45">
             Private workspace
           </p>
           <div className="mt-1.5 flex items-baseline justify-between gap-2">
@@ -303,7 +303,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
               <div className="border-b border-sidebar-border px-4 py-3">
-                <p className="font-mono text-[6px] uppercase tracking-[0.2em] text-sidebar-foreground/30">
+                <p className="font-mono text-[6px] uppercase tracking-[0.2em] text-sidebar-foreground/45">
                   Private workspace
                 </p>
                 <p className="mt-1 truncate font-display text-[17px] leading-none text-[hsl(var(--sidebar-accent-foreground))]">

@@ -37,7 +37,7 @@
     --secondary-foreground: 158 20% 13%;
     --secondary-hover: 42 24% 88%;
     --muted: 42 20% 92%;
-    --muted-foreground: 158 6% 42%;
+    --muted-foreground: 158 8% 30%;
     --destructive: 0 48% 36%;
     --destructive-foreground: 42 34% 97%;
     --destructive-muted: 0 34% 88%;
@@ -113,7 +113,7 @@
     --secondary-foreground: 42 12% 92%;
     --secondary-hover: 158 18% 18%;
     --muted: 158 18% 14%;
-    --muted-foreground: 42 6% 60%;
+    --muted-foreground: 42 8% 68%;
     --destructive: 0 48% 48%;
     --destructive-foreground: 42 34% 97%;
     --destructive-muted: 0 34% 18%;
@@ -134,6 +134,9 @@
     --card-border: 158 14% 18%;
     --popover: 158 22% 9%;
     --popover-foreground: 42 12% 92%;
+
+    /* Member rail micro-type — lifted for dark-surface legibility */
+    --sidebar-foreground: 42 10% 64%;
 
     --shadow-color: 158 30% 2%;
   }
@@ -742,6 +745,10 @@
     color: hsl(var(--accent));
   }
 
+  .eyebrow-brass {
+    color: hsl(var(--accent));
+  }
+
   .ledger-row {
     transition: background-color 180ms ease;
   }
@@ -766,6 +773,61 @@
 }
 
 @layer utilities {
+  /* ── Light-surface legibility floor ─────────────────────────────────────
+     The editorial marketing pages soften micro-type with opacity. On bone
+     paper that drops some labels to ~1.8:1, so compress the low range while
+     preserving the relative order of the hierarchy. */
+  html:not(.dark) .text-muted-foreground\/25 { color: hsl(var(--muted-foreground) / 0.62); }
+  html:not(.dark) .text-muted-foreground\/30 { color: hsl(var(--muted-foreground) / 0.65); }
+  html:not(.dark) .text-muted-foreground\/35 { color: hsl(var(--muted-foreground) / 0.68); }
+  html:not(.dark) .text-muted-foreground\/40 { color: hsl(var(--muted-foreground) / 0.72); }
+  html:not(.dark) .text-muted-foreground\/45 { color: hsl(var(--muted-foreground) / 0.76); }
+  html:not(.dark) .text-muted-foreground\/50 { color: hsl(var(--muted-foreground) / 0.8); }
+  html:not(.dark) .text-muted-foreground\/55 { color: hsl(var(--muted-foreground) / 0.84); }
+  html:not(.dark) .text-muted-foreground\/60 { color: hsl(var(--muted-foreground) / 0.87); }
+  html:not(.dark) .text-muted-foreground\/65 { color: hsl(var(--muted-foreground) / 0.9); }
+  html:not(.dark) .text-muted-foreground\/70 { color: hsl(var(--muted-foreground) / 0.93); }
+  html:not(.dark) .text-muted-foreground\/75 { color: hsl(var(--muted-foreground) / 0.95); }
+
+  /* ── Dark-surface legibility floor ──────────────────────────────────────
+     Micro-labels authored at 25–45% opacity read as ~2:1 contrast on the
+     deep-forest product surfaces. Lift those steps in dark mode only, so
+     the light marketing pages keep their original, softer hierarchy. */
+  .dark .text-muted-foreground\/25 { color: hsl(var(--muted-foreground) / 0.75); }
+  .dark .text-muted-foreground\/30 { color: hsl(var(--muted-foreground) / 0.78); }
+  .dark .text-muted-foreground\/35 { color: hsl(var(--muted-foreground) / 0.81); }
+  .dark .text-muted-foreground\/40 { color: hsl(var(--muted-foreground) / 0.84); }
+  .dark .text-muted-foreground\/45 { color: hsl(var(--muted-foreground) / 0.87); }
+  .dark .text-muted-foreground\/50 { color: hsl(var(--muted-foreground) / 0.9); }
+  .dark .text-muted-foreground\/55 { color: hsl(var(--muted-foreground) / 0.92); }
+  .dark .text-muted-foreground\/60 { color: hsl(var(--muted-foreground) / 0.93); }
+  .dark .text-muted-foreground\/65 { color: hsl(var(--muted-foreground) / 0.94); }
+  .dark .text-muted-foreground\/70 { color: hsl(var(--muted-foreground) / 0.95); }
+  .dark .text-muted-foreground\/75 { color: hsl(var(--muted-foreground) / 0.96); }
+  /* The member rail and ink panels are always dark, in both themes. */
+  .text-sidebar-foreground\/20 { color: hsl(var(--sidebar-foreground) / 0.7); }
+  .text-sidebar-foreground\/25 { color: hsl(var(--sidebar-foreground) / 0.72); }
+  .text-sidebar-foreground\/30 { color: hsl(var(--sidebar-foreground) / 0.78); }
+  .text-sidebar-foreground\/35 { color: hsl(var(--sidebar-foreground) / 0.8); }
+  .text-sidebar-foreground\/40 { color: hsl(var(--sidebar-foreground) / 0.82); }
+  .text-sidebar-foreground\/45 { color: hsl(var(--sidebar-foreground) / 0.84); }
+  .text-sidebar-foreground\/50 { color: hsl(var(--sidebar-foreground) / 0.86); }
+  .text-sidebar-foreground\/55 { color: hsl(var(--sidebar-foreground) / 0.88); }
+  .text-sidebar-foreground\/60 { color: hsl(var(--sidebar-foreground) / 0.89); }
+  .text-sidebar-foreground\/65 { color: hsl(var(--sidebar-foreground) / 0.9); }
+  .text-sidebar-foreground\/70 { color: hsl(var(--sidebar-foreground) / 0.91); }
+  .text-sidebar-foreground\/75 { color: hsl(var(--sidebar-foreground) / 0.92); }
+  .placeholder\:text-sidebar-foreground\/25::placeholder {
+    color: hsl(var(--sidebar-foreground) / 0.72);
+  }
+
+  /* Semantic accents need a lighter step on dark surfaces; the background
+     variants keep the deeper tone so filled buttons retain cream-on-red text. */
+  .dark .text-destructive { color: hsl(0 66% 70%); }
+  .dark .text-warning { color: hsl(36 62% 64%); }
+  .dark .text-success { color: hsl(158 42% 58%); }
+  .dark .text-info { color: hsl(200 48% 64%); }
+
   /* ── Technical grid — drafting paper ── */
   .bg-grid {
     background-image:

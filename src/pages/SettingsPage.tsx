@@ -538,7 +538,7 @@ export default function SettingsPage() {
                   to={link.to}
                   className="group flex items-center gap-4 py-4 transition-colors hover:bg-surface-2/25"
                 >
-                  <span className="font-mono text-[8px] tracking-[0.1em] text-accent/60">
+                  <span className="font-mono text-[8px] tracking-[0.1em] text-accent/85">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="flex-1">

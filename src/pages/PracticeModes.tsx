@@ -73,7 +73,7 @@ export default function PracticeModes() {
               to={mode.to}
               className="group grid grid-cols-[44px_minmax(0,1fr)_auto] items-start gap-5 border-b border-border py-7 transition-colors hover:bg-surface-2/25 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:gap-8"
             >
-              <span className="font-display text-[34px] font-light leading-[0.75] tracking-[-0.04em] tabular text-border-strong/45 transition-colors group-hover:text-accent/60 sm:text-[44px]">
+              <span className="font-display text-[34px] font-light leading-[0.75] tracking-[-0.04em] tabular text-muted-foreground/30 transition-colors group-hover:text-accent/80 sm:text-[44px]">
                 {String(index + 1).padStart(2, "0")}
               </span>
               <div className="min-w-0">
@@ -116,7 +116,7 @@ export default function PracticeModes() {
               className="group flex items-center justify-between gap-4 bg-background px-5 py-4 transition-colors hover:bg-surface-2/40"
             >
               <span className="flex min-w-0 items-baseline gap-3">
-                <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-accent/70">
+                <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-accent/85">
                   {company[0]}
                 </span>
                 <span className="truncate font-display text-[19px] leading-none tracking-[-0.02em] text-foreground/90">

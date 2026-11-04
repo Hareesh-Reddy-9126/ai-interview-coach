@@ -310,7 +310,7 @@ export default function CodingInterview() {
                     onClick={() => startCoding(problem)}
                     className="group grid w-full grid-cols-[34px_minmax(0,1fr)_auto_auto] items-center gap-4 border-b border-border py-5 text-left transition-colors last:border-b-0 hover:bg-surface-2/25 sm:gap-5"
                   >
-                    <span className="font-display text-[24px] font-light leading-none tracking-[-0.03em] tabular text-border-strong/55">
+                    <span className="font-display text-[24px] font-light leading-none tracking-[-0.03em] tabular text-muted-foreground/30">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                     <span className="min-w-0">
@@ -383,7 +383,7 @@ export default function CodingInterview() {
                 {["Write your solution", "Run the provided tests", "Submit for AI review"].map(
                   (step, index) => (
                     <li key={step} className="flex items-start gap-3 py-3">
-                      <span className="font-mono text-[8px] text-accent/65">
+                      <span className="font-mono text-[8px] text-accent/85">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <span className="text-[11px] leading-[1.6] text-muted-foreground/75">
@@ -479,7 +479,7 @@ export default function CodingInterview() {
                 <ul className="divide-y divide-border border-y border-border">
                   {aiEvaluation.optimizations.map((optimization, index) => (
                     <li key={index} className="flex items-start gap-3 py-3">
-                      <span className="font-mono text-[8px] text-accent/65">
+                      <span className="font-mono text-[8px] text-accent/85">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <span className="text-[12px] leading-[1.7] text-muted-foreground">

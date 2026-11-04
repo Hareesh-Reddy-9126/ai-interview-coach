@@ -648,7 +648,7 @@ export default function Home() {
                   className="group flex flex-col bg-[hsl(var(--surface))] px-6 py-8 transition-colors hover:bg-[hsl(var(--surface-hover))] md:px-8 md:py-10"
                 >
                   <div className="flex items-baseline justify-between">
-                    <span className="font-display text-[54px] font-light leading-none tracking-[-0.06em] text-border-strong/60">
+                    <span className="font-display text-[54px] font-light leading-none tracking-[-0.06em] text-muted-foreground/40">
                       {step.number}
                     </span>
                     <ArrowUpRight
@@ -689,7 +689,7 @@ export default function Home() {
               <div>
                 <div className="mb-6 flex items-center gap-4">
                   <span className="h-px w-8 bg-accent" aria-hidden="true" />
-                  <span className="eyebrow eyebrow-brass">03 — Inside the room</span>
+                  <span className="eyebrow text-sidebar-primary">03 — Inside the room</span>
                 </div>
                 <h2 className="display-section max-w-[16ch] text-[hsl(var(--sidebar-accent-foreground))] reveal stagger-3">
                   A scorecard, not a chat window.

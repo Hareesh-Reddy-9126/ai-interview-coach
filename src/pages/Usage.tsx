@@ -133,7 +133,7 @@ export default function Usage() {
               },
             ].map((item, index) => (
               <div key={item.title} className="flex gap-4 py-5">
-                <span className="font-mono text-[8px] tracking-[0.1em] text-accent/70">
+                <span className="font-mono text-[8px] tracking-[0.1em] text-accent/85">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div>

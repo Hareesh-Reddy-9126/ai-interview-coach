@@ -351,7 +351,7 @@ export default function Analytics() {
                 <ul className="divide-y divide-[hsl(var(--surface-border))] px-5 sm:px-0">
                   {insights.map((insight: string, index: number) => (
                     <li key={index} className="flex gap-2 py-3">
-                      <span className="mt-px font-mono text-[7.5px] tracking-[0.1em] text-accent/50">
+                      <span className="mt-px font-mono text-[7.5px] tracking-[0.1em] text-accent/80">
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <p className="text-[12px] leading-[1.6] text-secondary-foreground">

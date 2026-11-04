@@ -19,7 +19,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Newsreader", "Iowan Old Style", "Georgia", "serif"],
+        display: ["Gambarino", "Newsreader", "Iowan Old Style", "Georgia", "serif"],
+        editorial: ["Newsreader", "Iowan Old Style", "Georgia", "serif"],
         mono: ["JetBrains Mono", "SFMono-Regular", "monospace"],
       },
       colors: {

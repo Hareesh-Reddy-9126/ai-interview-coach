@@ -4,7 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f8f6f1" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Set the product theme before first paint to avoid a light flash on
+      // direct loads of authenticated routes. Layout keeps it in sync on SPA
+      // navigation.
+      (function () {
+        var routes = [
+          "/dashboard",
+          "/interview",
+          "/coding",
+          "/practice",
+          "/analytics",
+          "/history",
+          "/roadmap",
+          "/resume",
+          "/usage",
+          "/settings",
+          "/org",
+        ];
+        var path = location.pathname.replace(/\/+$/, "") || "/";
+        var isProduct = routes.some(function (route) {
+          return path === route || path.indexOf(route + "/") === 0;
+        });
+        if (isProduct) {
+          document.documentElement.classList.add("dark");
+          var theme = document.querySelector('meta[name="theme-color"]');
+          if (theme) theme.setAttribute("content", "#0c1310");
+        }
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
